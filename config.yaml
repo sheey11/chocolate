@@ -1,0 +1,9 @@
+jwt:
+  expiration-days: 30
+srs:
+  api-addr: srs:1985
+  rtmp-addr: srs:1985
+  hls-addr: srs:1985
+  stats:
+    cache-num: 120
+    collect-interval: 30

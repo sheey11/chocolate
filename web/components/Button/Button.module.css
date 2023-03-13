@@ -1,0 +1,14 @@
+.disabled::before {
+    display: block;
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    bottom: -1px;
+    right: -1px;
+    border-radius: 0.25rem;
+    z-index: 1;
+    background-color: #fff;
+    pointer-events: none;
+    opacity: 0.5;
+}

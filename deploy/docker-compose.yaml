@@ -1,0 +1,51 @@
+version: '2'
+services:
+  postgres:
+    image: postgres:alpine3.15
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    environment:
+      POSTGRES_PASSWORD: "Wsmp6HG69ng!&CQUp4dS8@5#1weXaaB3"
+      POSTGRES_USER: "sheey"
+      POSTGRES_DB: "chocolate"
+  srs:
+    image: ossrs/srs:4
+    restart: unless-stopped
+    volumes:
+      - "./srs.conf:/usr/local/srs/srs.conf"
+    command: "./objs/srs -c ./srs.conf"
+    ports:
+      - "1935:1935"
+  chocolate:
+    build: ..
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      CHOCOLATE_DB_HOST: "postgres"
+      CHOCOLATE_DB_PORT: "5432"
+      CHOCOLATE_DB_PASSWORD: "Wsmp6HG69ng!&CQUp4dS8@5#1weXaaB3"
+      CHOCOLATE_DB_USERNAME": "sheey"
+      CHOCOLATE_DB_DB": "chocolate"
+    volumes:
+      - "../config.yaml:/root/config.yaml"
+  web:
+    build: ../web/
+    restart: unless-stopped
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - "./Caddyfile:/etc/caddy/Caddyfile"
+

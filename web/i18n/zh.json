@@ -1,0 +1,33 @@
+{
+  "signin": "登陆",
+  "signout": "注销",
+  "username": "用户名",
+  "password": "密码",
+  "sign_in_to_your_account": "登陆到 Chocolate",
+  "remember_me": "记住我",
+  "forgot_password": "忘记密码？",
+  "chocoloate_current_not_support_registration": "Chocolate 目前不支持注册账号",
+
+  "home_page": "主页",
+  "rooms_page": "房间",
+
+  "traffic": "主机网络活动",
+  "connections": "连接数",
+  "inbound": "入站带宽",
+  "outbound": "出站带宽",
+
+  "perf": "主机性能",
+  "CPU": "CPU",
+  "memory": "内存",
+  "disk": "磁盘",
+  "disk_read": "磁盘读取",
+  "disk_write": "磁盘写入",
+
+  "overview": "总览",
+  "streaming": "直播",
+  "viewers": "观众",
+
+  "more": "更多",
+  
+  "only_a_palceholder": "占位符，让你不用每次都要在上一行加逗号"
+}

@@ -1,0 +1,11 @@
+{
+  "signin": "Sign in",
+  "username": "Username",
+  "password": "Password",
+  "sign_in_to_your_account": "Sign in to your account",
+  "remember_me": "Remember me",
+  "forgot_password": "Forgot your password?",
+  "chocoloate_current_not_support_registration": "Registration is not supported currently at Chocolate",
+
+  "only_a_palceholder": "placeholder"
+}

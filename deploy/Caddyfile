@@ -1,0 +1,6 @@
+:80 {
+    reverse_proxy web:3000
+    handle_path /api/* {
+        reverse_proxy chocolate:4090
+    }
+}
