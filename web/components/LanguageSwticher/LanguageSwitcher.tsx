@@ -3,12 +3,19 @@ import { Fragment } from "react"
 import { useRouter } from "next/router"
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
 import { languages } from './language-specifications'
+import { Noto_Color_Emoji } from "next/font/google"
+
+const notoEmoji = Noto_Color_Emoji({
+    weight: "400",
+    subsets: ['emoji'],
+})
 
 interface LSProps {
     outline?: boolean
+    position?: "bottom" | "top", 
 }
 
-export const LanguageSwitcher = ({ outline }: LSProps) => {
+export const LanguageSwitcher = ({ outline = true, position = "bottom" }: LSProps) => {
     const router = useRouter()
     const { pathname, query } = router
     const { locale, locales } = router
@@ -17,12 +24,22 @@ export const LanguageSwitcher = ({ outline }: LSProps) => {
         router.push({ pathname, query}, router.asPath, { locale: lang })
     }
 
+    let postionClasses = "mt-1 shadow-lg"
+    if (position == "top") {
+        postionClasses = "bottom-10 shadow"
+    }
+
     return (
         <>
             <Listbox value={ locale } onChange={ handleSelect }>
                 <div className="relative mt-1">
-                    <Listbox.Button className="relative w-full cursor-pointer rounded bg-white border border-gray-300 py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:ring focus:ring-blue-300 transition duratin-200 sm:text-sm">
-                        <span className="block truncate">{languages[locale!].icon} {languages[locale!].name}</span>
+                    <Listbox.Button className={`relative w-full min-w-[10rem] cursor-pointer rounded bg-white ${outline ? 'border shadow-sm' : '' } border-gray-300 py-2 pl-3 pr-10 text-left focus:outline-none focus:ring focus:ring-blue-300 transition duratin-200 sm:text-sm`}>
+                        <div className="block truncate">
+                            <span className={notoEmoji.className + " mr-2"}>
+                                {languages[locale!].icon}
+                            </span>
+                            {languages[locale!].name}
+                        </div>
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                             <ChevronUpDownIcon
                                 className="h-5 w-5 text-gray-400"
@@ -39,7 +56,7 @@ export const LanguageSwitcher = ({ outline }: LSProps) => {
                         leaveFrom="opacity-100 scale-100"
                         leaveTo="opacity-0 scale-90"
                     >
-                        <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white border border-gray-200 text-base shadow-lg focus:outline-none focus:ring-blue-200 sm:text-sm">
+                        <Listbox.Options className={`absolute ${postionClasses} max-h-60 w-full overflow-auto rounded bg-white border border-gray-200 text-base focus:outline-none focus:ring-blue-200 sm:text-sm`}>
                             {locales!.map((localeName, idx) => (
                                 <Listbox.Option
                                     key={idx}
@@ -50,9 +67,12 @@ export const LanguageSwitcher = ({ outline }: LSProps) => {
                                 >
                                     {({ selected }) => (
                                         <>
-                                            <span className={`inline-block truncate ml-2 ${ selected ? 'font-medium' : 'font-normal' }`}>
-                                                { languages[localeName].icon + " " + languages[localeName].name }
-                                            </span>
+                                            <div className={`block truncate ml-2 ${ selected ? 'font-medium' : 'font-normal' }`}>
+                                                <span className={notoEmoji.className + " mr-2"}>
+                                                    { languages[localeName!].icon }
+                                                </span>
+                                                { languages[localeName].name }
+                                            </div>
                                             {selected ? (
                                                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600">
                                                     <CheckIcon className="h-5 w-5" aria-hidden="true" />

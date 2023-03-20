@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	cerrors "github.com/sheey11/chocolate/errors"
+	"github.com/sirupsen/logrus"
 
 	"gorm.io/gorm"
 )
@@ -13,12 +14,12 @@ type User struct {
 	gorm.Model
 	Role         Role    `json:"-"`
 	RoleName     string  `gorm:"not null;default:'user';"`
-	Labels       []Label `gorm:"many2many:user_labels;foreiginKey:ID;joinForeignKey:user_id;References:Name;joinReferences:label_name"`
+	Labels       []Label `gorm:"many2many:user_labels;foreiginKey:ID;joinForeignKey:user_id;References:Name;joinReferences:label_name;constraint:OnDelete:CASCADE"`
 	Username     string  `gorm:"type:varchar(32);not null;uniqueIndex" json:"userneam"`
 	Password     string  `gorm:"type:varchar(128);not null" json:"-"`
 	Salt         string  `gorm:"type:varchar(8);not null" json:"-"`
-	MaxRoomCount uint    `gorm:"not null;default:1;" json:"max_room_count"`
-	Rooms        []Room  `gorm:"foreignKey:owner_id"`
+	MaxRoomCount uint    `gorm:"not null;default:0;" json:"max_room_count"`
+	Rooms        []Room  `gorm:"foreignKey:owner_id;constraint:OnDelete:CASCADE"`
 }
 
 func CountAdmins(tx *gorm.DB) (uint, error) {
@@ -97,7 +98,7 @@ func GetUserByName(username string, tx *gorm.DB) (*User, error) {
 	if c.Error != nil {
 		if errors.Is(c.Error, gorm.ErrRecordNotFound) {
 			return nil, cerrors.RequestError{
-				ID:         cerrors.RequestUserNotExist,
+				ID:         cerrors.RequestUserNotFound,
 				InnerError: c.Error,
 				Message:    "user not exist",
 			}
@@ -124,6 +125,9 @@ func GetUserByID(id uint) *User {
 }
 
 func (u *User) SummaryRooms() []map[string]interface{} {
+	if u.Rooms == nil {
+		logrus.Fatalf("no room preloaded")
+	}
 	result := make([]map[string]interface{}, len(u.Rooms))
 	for i, room := range u.Rooms {
 		result[i] = map[string]interface{}{
@@ -182,7 +186,7 @@ func DeleteUser(userid uint, tx *gorm.DB) error {
 	if c.Error != nil {
 		if errors.Is(c.Error, gorm.ErrRecordNotFound) {
 			return cerrors.RequestError{
-				ID:      cerrors.RequestUserNotExist,
+				ID:      cerrors.RequestUserNotFound,
 				Message: "user with such name not found",
 			}
 		} else {
@@ -197,7 +201,7 @@ func DeleteUser(userid uint, tx *gorm.DB) error {
 	}
 	return nil
 }
-func UpdatePassword(username string, salt string, password string) error {
+func UpdateUserPassword(username string, salt string, password string) error {
 	c := db.Model(&User{}).Where("username = ?", username).Updates(map[string]interface{}{
 		"salt":     salt,
 		"password": password,
@@ -214,7 +218,7 @@ func UpdatePassword(username string, salt string, password string) error {
 	return nil
 }
 
-func UpdateRole(username string, role string) error {
+func UpdateUserRole(username string, role string) error {
 	c := db.Model(&User{}).Where("username = ?", username).Updates(map[string]interface{}{
 		"role_name": role,
 	})
@@ -228,4 +232,21 @@ func UpdateRole(username string, role string) error {
 		}
 	}
 	return nil
+}
+
+func (u *User) GetAfflicateRoomCount() (uint, error) {
+	var result int64
+	c := db.Model(&Room{}).Where("owner_id = ?", u.ID).Count(&result)
+	if c.Error != nil {
+		return 0, cerrors.DatabaseError{
+			ID:         cerrors.DatabaseClearRoomPermissionItemError,
+			Message:    "error when counting room",
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+			Context: map[string]interface{}{
+				"user_id": u.ID,
+			},
+		}
+	}
+	return uint(result), nil
 }

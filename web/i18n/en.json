@@ -7,5 +7,46 @@
   "forgot_password": "Forgot your password?",
   "chocoloate_current_not_support_registration": "Registration is not supported currently at Chocolate",
 
+  "home_page": "Home",
+  "rooms_page": "Rooms",
+
+  "traffic": "Host Network Activity",
+  "connections": "Connections",
+  "inbound": "Inbound",
+  "outbound": "Outbound",
+
+  "perf": "Host Performance",
+  "CPU": "CPU",
+  "memory": "Memory",
+  "disk": "Disk",
+  "disk_read": "Disk Read",
+  "disk_write": "Disk Write",
+
+  "overview": "Overview",
+  "streaming": "Streams",
+  "viewers": "Viewers",
+
+  "more": "More",
+
+  "total_room": "Rooms",
+  "search": "Search",
+
+  "room_filter_status_all": "All",
+  "room_filter_status_active": "Streaming",
+  "room_filter_status_idle": "Idle",
+
+  "cut_off_stream": "Cut off",
+  "delete_room": "Delete",
+
+  "room_info": "Room Information",
+  "room_owner": "Owner",
+  "room_permission_type": "Permission Type",
+  "room_permission_type_whitelist": "Whitelist",
+  "room_permission_type_blacklist": "Blacklist",
+  "room_permission_type_whitelist_explain": "Only specified user or users with specified label can watch the stream.",
+  "room_permission_type_blacklist_explain": "Anyone can watch the stream, except the specified user and users with specified label.",
+  "room_stream_preview": "Preview",
+  "room_timeline": "Timeline",
+  
   "only_a_palceholder": "placeholder"
 }

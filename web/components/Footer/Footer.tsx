@@ -1,4 +1,5 @@
 import { Inter } from "next/font/google"
+import { LanguageSwitcher } from "../LanguageSwticher/LanguageSwitcher"
 
 const inter = Inter({
     subsets: ['latin-ext']
@@ -54,6 +55,7 @@ export function Footer() {
                     <span>sheey. All rights reserved.</span>
                 </div>
                 <div className="flex flex-row items-center space-x-4">
+                    <LanguageSwitcher outline={false} position="top" />
                     {socialLinks.map((link) => (
                         <a key={link.name} href={link.link} target="_blank" title={link.name} className={`${link.hover} transition duration-300`}>
                             { link.icon }

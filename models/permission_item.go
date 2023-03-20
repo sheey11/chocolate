@@ -1,12 +1,18 @@
 package models
 
-import "gorm.io/gorm"
+type PermissionSubjectType string
+
+const (
+	PermissionSubjectTypeLabel PermissionSubjectType = "label"
+	PermissionSubjectTypeUser  PermissionSubjectType = "user"
+)
 
 type PermissionItem struct {
-	gorm.Model
-	SubjectType      uint8 `gorm:"not null";` // 0 for user; 1 for label
+	ID               uint                  `gorm:"primaryKey;uniqueIndex:idx_label;uniqueIndex:idx_user"`
+	RoomID           uint                  `gorm:"index;not null"`
+	SubjectType      PermissionSubjectType `gorm:"not null"`
 	SubjectLabel     Label
-	SubjectLabelName string
+	SubjectLabelName string `gorm:"uniqueIndex:idx_label"`
 	SubjectUser      User
-	SubjectUserID    uint
+	SubjectUserID    uint `gorm:"uniqueIndex:idx_user"`
 }

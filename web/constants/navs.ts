@@ -5,6 +5,6 @@ export const dashboardNavs = [
   },
   {
     i18n_key: "rooms_page",
-    href: "/dashboard/rooms/",
+    href: "/dashboard/rooms",
   },
 ]

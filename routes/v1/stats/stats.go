@@ -26,6 +26,7 @@ func handleVersion(c *gin.Context) {
 	version, err := srs.GetVersion()
 
 	if err != nil {
+		logrus.WithError(err).Error("error while requesting srs for stats")
 		c.JSON(http.StatusInternalServerError, common.Response{
 			"code":    errors.RequestInternalServerError,
 			"message": "error while requesting srs for stats",

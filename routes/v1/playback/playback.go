@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sheey11/chocolate/common"
 	"github.com/sheey11/chocolate/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func mountPlaybackRoutes(r *gin.RouterGroup) {
@@ -19,6 +20,7 @@ func handleHlsPlayback(c *gin.Context) {
 	// TODO
 	remote, err := url.Parse("srs:8080")
 	if err != nil {
+		logrus.WithError(err).Error("error handling reverse proxy of hls playback")
 		c.JSON(http.StatusInternalServerError, common.SampleResponse(errors.RequestInternalServerError, "internal server error"))
 	}
 

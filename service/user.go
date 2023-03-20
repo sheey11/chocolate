@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"github.com/sheey11/chocolate/common"
 	"github.com/sheey11/chocolate/errors"
 	cerrors "github.com/sheey11/chocolate/errors"
@@ -84,11 +85,11 @@ func CreateUserAccounts(users []UserCreationInfo) error {
 		if err := PasswordFitConstraint(user.Password); err != nil {
 			return err
 		}
-		if common.Contains(usernames, user.Username) {
+		if lo.Contains(usernames, user.Username) {
 			return cerrors.RequestError{
 				ID:      cerrors.RequestUsernameDuplicate,
 				Message: fmt.Sprintf("username %v already used", user.Username),
-				Explanation: map[string]interface{}{
+				Context: map[string]interface{}{
 					"username": user.Username,
 				},
 			}
@@ -107,14 +108,14 @@ func CreateUserAccounts(users []UserCreationInfo) error {
 		return errors.RequestError{
 			ID:      errors.RequestUsernameTaken,
 			Message: "usernames have been taken",
-			Explanation: map[string]interface{}{
+			Context: map[string]interface{}{
 				"usernames": takenUsernames,
 			},
 		}
 	}
 
 	// checking roles exists
-	roleNames := common.Keys(roles)
+	roleNames := lo.Keys(roles)
 	existRoles, err := models.CheckRoleExists(roleNames, tx)
 	if err != nil {
 		return err
@@ -135,7 +136,7 @@ func CreateUserAccounts(users []UserCreationInfo) error {
 		return errors.RequestError{
 			ID:      errors.ReuqestRoleNotFound,
 			Message: "roles not found",
-			Explanation: map[string]interface{}{
+			Context: map[string]interface{}{
 				"roles": notExistRoles,
 			},
 		}
@@ -149,7 +150,7 @@ func CreateUserAccounts(users []UserCreationInfo) error {
 			Username: userinfo.Username,
 			Password: password,
 			RoleName: userinfo.Role,
-			Labels:   common.Map(userinfo.Labels, func(l string) models.Label { return models.Label{Name: l} }),
+			Labels:   lo.Map(userinfo.Labels, func(l string, _ int) models.Label { return models.Label{Name: l} }),
 		}
 		userModels[i] = user
 	}
@@ -223,18 +224,18 @@ func UsernameFitConstraint(username string) *errors.RequestError {
 	usernameDict := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
 	if len(username) < 6 || len(username) > 16 {
 		err := errors.RequestError{
-			ID:      errors.RequestInvalidUsernameFormat,
+			ID:      errors.RequestUsernameNotMeetConstraint,
 			Message: "username should be at least 6 charactors and less than 16",
-			Explanation: map[string]interface{}{
+			Context: map[string]interface{}{
 				"username": username,
 			},
 		}
 		return &err
 	} else if !stringFitDict(username, usernameDict) {
 		err := errors.RequestError{
-			ID:      errors.RequestInvalidUsernameFormat,
+			ID:      errors.RequestUsernameNotMeetConstraint,
 			Message: "username should only contain numbers, alphabet letters, '_' and '-'",
-			Explanation: map[string]interface{}{
+			Context: map[string]interface{}{
 				"username": username,
 			},
 		}
@@ -247,18 +248,18 @@ func PasswordFitConstraint(password string) *errors.RequestError {
 	passwordDict := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-~!@#$%^&*()_+=`[]{}\\|;:'\",.<>/?"
 	if len(password) < 8 || len(password) > 64 {
 		err := errors.RequestError{
-			ID:      errors.RequestInvalidPasswordFormat,
+			ID:      errors.RequestPasswordNotMeetConstraint,
 			Message: "password should be at least 6 charactors and less than 64.",
-			Explanation: map[string]interface{}{
+			Context: map[string]interface{}{
 				"password": password,
 			},
 		}
 		return &err
 	} else if !stringFitDict(password, passwordDict) {
 		err := errors.RequestError{
-			ID:      errors.RequestInvalidPasswordFormat,
+			ID:      errors.RequestPasswordNotMeetConstraint,
 			Message: "password should only contain numbers, alphabet letters and symbols",
-			Explanation: map[string]interface{}{
+			Context: map[string]interface{}{
 				"password": password,
 			},
 		}
@@ -288,7 +289,7 @@ func DeleteUser(username string) error {
 		if adminNum <= 1 {
 			return cerrors.RequestError{
 				ID:      cerrors.RequestOneLastAdminDeletionNotAllowed,
-				Message: "only one admins left, no deletion allowed",
+				Message: "only one admins left, deletion not allowed",
 			}
 		}
 	}
@@ -309,22 +310,22 @@ func UpdatePassword(username string, password string) error {
 	user, _ := models.GetUserByName(username, nil)
 	if user == nil {
 		return cerrors.RequestError{
-			ID:      cerrors.RequestUserNotExist,
-			Message: "no such user with that username",
+			ID:      cerrors.RequestUserNotFound,
+			Message: "no such user has that username",
 		}
 	}
 	salt := models.GenSalt()
 	password = encryptPassword(password, salt)
-	return models.UpdatePassword(username, salt, password)
+	return models.UpdateUserPassword(username, salt, password)
 }
 
 func UpdateRole(username string, roleName string) error {
 	role, _ := models.GetRoleByName(roleName)
 	if role == nil {
 		return cerrors.RequestError{
-			ID:      cerrors.RequestUserNotExist,
+			ID:      cerrors.RequestUserNotFound,
 			Message: "no such role",
 		}
 	}
-	return models.UpdateRole(username, roleName)
+	return models.UpdateUserRole(username, roleName)
 }

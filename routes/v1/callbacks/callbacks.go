@@ -2,7 +2,7 @@ package callbacks
 
 import (
 	"net/http"
-	"net/url"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sheey11/chocolate/middleware"
@@ -51,33 +51,41 @@ func handlePublish(c *gin.Context) {
 		Stream   string `json:"stream"`
 		Params   string `json:"param"`
 	}{}
-	err := c.Bind(data)
+	// reference:
+	//   ServerID:  vid-d1x7d79
+	//   Action:    on_publish
+	//   ClientID:  88914ni6
+	//   IP:        172.24.0.1
+	//   VHost:     __defaultVhost__
+	//   App:       live
+	//   TCUrl:     rtmp://172.24.0.163/live
+	//   Stream:    114514
+	//   Params:    ?uid=113123&key=dadawdawdaw
+
+	err := c.Bind(&data)
 	if err != nil {
 		logrus.WithError(err).Errorf("error when parse body at on_publish callback")
 		respondeErr(c)
 		return
 	}
 
-	url, err := url.Parse(data.TCUrl)
+	roomId, err := strconv.Atoi(data.Stream)
 	if err != nil {
-		logrus.WithError(err).Errorf("error when parsing tcUrl parameter from on_publish callback data")
 		respondeErr(c)
 		return
 	}
 
-	// check room uid and pushKey
-	roomUid, pushKey := data.Stream, url.Query().Get("pushkey")
-	if roomUid == "" || pushKey == "" {
+	if data.App != "live" {
 		respondeErr(c)
 		return
 	}
 
-	ok := service.CheckRoomStreamPermission(roomUid, pushKey)
+	ok := service.CheckRoomStreamPermission(uint(roomId), data.Params)
 	if !ok {
 		respondeErr(c)
 	} else {
 		respondeOk(c)
-		service.RecordPublishEvent(roomUid)
+		service.RecordPublishEvent(uint(roomId), data.IP)
 	}
 }
 

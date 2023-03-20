@@ -61,7 +61,9 @@ export const Nav = ({ navs, user }: NavProps) => {
                             </div>
                             <div className="relative z-10 flex items-center lg:hidden">
                                 {/* Mobile menu button */}
-                                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                                <Disclosure.Button
+                                    className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring focus:ring-blue-200 transition duration-100"
+                                >
                                     <span className="sr-only">Open menu</span>
                                     {open ? (
                                         <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
@@ -70,7 +72,7 @@ export const Nav = ({ navs, user }: NavProps) => {
                                         )}
                                 </Disclosure.Button>
                             </div>
-                            <div className="hidden lg:relative lg:z-10 lg:ml-4 lg:flex lg:items-center">
+                            <div className="hidden lg:relative lg:ml-4 lg:flex lg:items-center">
                                 <button
                                     type="button"
                                     className="flex-shrink-0 rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -119,7 +121,7 @@ export const Nav = ({ navs, user }: NavProps) => {
                         </div>
                         <nav className="hidden lg:flex lg:space-x-4 lg:pt-2" aria-label="Global">
                             {navs.map((item, index) => (
-                                <a
+                                <Link
                                     key={ item.i18n_key }
                                     href={ item.href }
                                     className={classNames(
@@ -129,7 +131,7 @@ export const Nav = ({ navs, user }: NavProps) => {
                                     aria-current={selected[index] ? 'page' : undefined}
                                 >
                                     { localize(lang, item.i18n_key) }
-                                </a>
+                                </Link>
                             ))}
                         </nav>
                     </div>
@@ -139,15 +141,16 @@ export const Nav = ({ navs, user }: NavProps) => {
                             { navs.map((item, index) => (
                                 <Disclosure.Button
                                     key={ item.i18n_key }
-                                    as="a"
-                                    href={ item.href }
+                                    as="div"
                                     className={classNames(
                                         selected[index] ? 'bg-gray-100 text-gray-900' : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900',
-                                        'block rounded-md py-2 px-3 text-base font-medium'
+                                        'block rounded-md text-base font-medium'
                                     )}
                                     aria-current={selected[index] ? 'page' : undefined}
                                 >
-                                    { localize(lang, item.i18n_key) }
+                                    <Link className="block py-2 px-3" href={ item.href }>
+                                        { localize(lang, item.i18n_key) }
+                                    </Link>
                                 </Disclosure.Button>
                             ))}
                         </div>
@@ -172,11 +175,12 @@ export const Nav = ({ navs, user }: NavProps) => {
                                 {userNavigation.map((item) => (
                                     <Disclosure.Button
                                         key={item.name}
-                                        as="a"
-                                        href={item.href}
-                                        className="block rounded-md py-2 px-3 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                        as="div"
+                                        className="block rounded-md text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                                     >
-                                        {item.name}
+                                        <Link className="block py-2 px-3" href={item.href}>
+                                            {item.name}
+                                        </Link>
                                     </Disclosure.Button>
                                 ))}
                             </div>

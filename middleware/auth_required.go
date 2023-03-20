@@ -11,6 +11,7 @@ import (
 	"github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
+	"github.com/sirupsen/logrus"
 )
 
 func AuthRequired() gin.HandlerFunc {
@@ -139,6 +140,7 @@ func AbilityRequired(ability models.Role) gin.HandlerFunc {
 				})
 				return
 			} else {
+				logrus.WithError(err).Error("error get role by name")
 				c.Abort()
 				c.JSON(http.StatusInternalServerError, common.Response{
 					"code":    errors.RequestInternalServerError,

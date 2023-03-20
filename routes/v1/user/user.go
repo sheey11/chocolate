@@ -43,7 +43,7 @@ func handleInfoLookup(c *gin.Context) {
 
 	user := models.GetUserByID(uint(id))
 	if user == nil {
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUserNotExist, "the given user is not exist"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUserNotFound, "the given user is not exist"))
 		c.Abort()
 		return
 	}

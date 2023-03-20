@@ -28,6 +28,26 @@
   "viewers": "观众",
 
   "more": "更多",
-  
+
+  "total_room": "房间总数",
+  "search": "搜索",
+
+  "room_filter_status_all": "所有房间",
+  "room_filter_status_active": "直播中",
+  "room_filter_status_idle": "闲置",
+
+  "cut_off_stream": "切断",
+  "delete_room": "删除",
+
+  "room_info": "房间信息",
+  "room_owner": "所有者",
+  "room_permission_type": "权限类型",
+  "room_permission_type_whitelist": "白名单",
+  "room_permission_type_blacklist": "黑名单",
+  "room_permission_type_whitelist_explain": "只有指定的用户，或带有指定标签的用户能够观看直播",
+  "room_permission_type_blacklist_explain": "所有人都可以观看直播，除了指定的用户和带有指定标签的用户",
+  "room_stream_preview": "预览",
+  "room_timeline": "时间线",
+
   "only_a_palceholder": "占位符，让你不用每次都要在上一行加逗号"
 }

@@ -19,16 +19,26 @@ table tbody > tr > th:first-child {
     @apply text-black;
 }
 
-.streaming-table tbody > tr > th:first-child {
-    font-family: var(--source-code-pro-font);
+.code, .streaming-table tbody > tr > th:first-child {
+    font-family: var(--fira-code-font), monospace;
+    @apply text-sm font-medium;
 }
 
-.streaming-table tbody > tr > th:first-child::before {
+.code::before, .streaming-table tbody > tr > th:first-child::before {
     content: '`';
     user-select: none;
 }
 
-.streaming-table tbody > tr > th:first-child::after {
+.code::after, .streaming-table tbody > tr > th:first-child::after {
     content: '`';
     user-select: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar{
+    display: none;
+}
+
+.hover-show:hover .hover-show-subject , .hover-show:hover ~ .hover-show-subject, .hover-show-subject:hover {
+    display: block;
+    opacity: 1;
 }

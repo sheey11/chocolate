@@ -1,5 +1,6 @@
 package common
 
+// deprecated, use lo.Map instead
 func Map[T any, U any](array []T, filter func(x T) U) []U {
 	result := make([]U, len(array))
 	for i := range array {
@@ -8,6 +9,7 @@ func Map[T any, U any](array []T, filter func(x T) U) []U {
 	return result
 }
 
+// deprecated, use lo.Contains instead
 func Contains[T comparable](array []T, the_one T) bool {
 	for i := range array {
 		if array[i] == the_one {
@@ -17,6 +19,7 @@ func Contains[T comparable](array []T, the_one T) bool {
 	return false
 }
 
+// deprecated, use lo.Keys instead
 func Keys[T comparable, V any](dict map[T]V) []T {
 	keys := make([]T, len(dict))
 	i := 0

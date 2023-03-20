@@ -3,26 +3,36 @@ package errors
 const (
 	_ RequestErrorCode = iota
 	RequestInternalServerError
-	RequestUnknownContentType
-	RequestInvalidUsernameFormat
-	RequestInvalidPasswordFormat
+	RequestBadRequestData
+	RequestBadParameter
+	ReuqestRoleNotFound
+	RequestUserNotFound
+	RequestRoomNotFound
 	RequestUsernameTaken
 	RequestUsernameDuplicate
-	ReuqestRoleNotFound
-	RequestBadParameter
-	RequestNoSuchRoleFound
 	RequestUsernameNotMeetConstraint
 	RequestPasswordNotMeetConstraint
+	RequestPasswordIncorrect
 	RequestNotLoggedIn
 	RequestPermissionDenied
 	RequestJwtVerificationFailed
 	RequestCorruptJwtPayload
 	RequestSessionExpire
-	RequestUserNotExist
-	RequestPasswordIncorrect
-	RequestOnlyAdminLeftDeletionDenied
+	RequestOneLastAdminDeletionNotAllowed
 	RequestInvalidRoomUID
-	RequestRoomNotFound
+	RequestInvalidRoomID
+	RequestInvalidLogFilter
+	RequestInvalidLogFilterBeforeTimestamp
+	RequestInvalidLogFilterAfterTimestamp
+	RequestNotRoomOwner
+	RequestUnknownRoomActionType
+	RequestUnknownRoomPermissionType
+	RequestUnknownRoomPermissionItemType
+	RequestPermissionItemAlreadyExistError
+	RequestPermissionItemNotExistError
+	RequestLogRetrivalLimitTooBig
+	RequestLogRetrivalInvalidTimeRange
+	RequestRoomCountReachedMax
 )
 
 const (
@@ -30,11 +40,27 @@ const (
 	DatabaseCreateNewSessionError
 	DatabaseCreateAdminAccountError
 	DatabaseCreateUserAccountError
+	DatabaseCreatePermissionItemError
+
 	DatabaseCountAdminAccountError
+	DatabaseCountPermissionItemError
+	DatabaseCountLogsError
+
 	DatabaseLookupUsernamesError
 	DatabaseLookupRolesError
 	DatabaseLookupLabelsError
 	DatabaseLookupUserError
+	DatabaseLookupRoomError
+	DatabaseLookupLogsError
+
 	DatabaseDeleteUserError
-	DatabaseLookupRoomByUIDError
+
+	DatabaseSetUserRoleError
+	DatabaseSetUserPasswordError
+
+	DatabaseUpdateRoomPermissionTypeError
+	DatabaseUpdateRoomStatusError
+	DatabaseUpdareRoomPushKeyError
+
+	DatabaseClearRoomPermissionItemError
 )

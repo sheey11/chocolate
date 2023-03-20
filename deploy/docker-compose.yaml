@@ -1,5 +1,6 @@
 version: '2'
 services:
+
   postgres:
     image: postgres:alpine3.15
     restart: unless-stopped
@@ -14,6 +15,7 @@ services:
       POSTGRES_PASSWORD: "Wsmp6HG69ng!&CQUp4dS8@5#1weXaaB3"
       POSTGRES_USER: "sheey"
       POSTGRES_DB: "chocolate"
+
   srs:
     image: ossrs/srs:4
     restart: unless-stopped
@@ -22,6 +24,7 @@ services:
     command: "./objs/srs -c ./srs.conf"
     ports:
       - "1935:1935"
+
   chocolate:
     build: ..
     restart: unless-stopped
@@ -36,9 +39,12 @@ services:
       CHOCOLATE_DB_DB": "chocolate"
     volumes:
       - "../config.yaml:/root/config.yaml"
+    command: "-m -s -v -l 0.0.0.0:80"
+
   web:
     build: ../web/
     restart: unless-stopped
+
   caddy:
     image: caddy:latest
     restart: unless-stopped

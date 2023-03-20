@@ -107,12 +107,14 @@ function tooltips(lang: string, valueFormatter: (arg0: number) => string) {
   }
 }
 
-function animations(from: number) {
+function animations(from: number, delay?: number) {
+  let delayOptions = delay ? { animation: { delay: delay } } : {}
   return {
+    ...delayOptions,
     animations: {
       y: {
-        easing: 'easeInOutExpo' as 'easeInOutExpo',
-        duration: 800,
+        easing: 'easeOutExpo' as 'easeOutExpo',
+        duration: 600,
         from: (ctx: any) => {
           if(ctx.type === 'data' && ctx.mode === 'default' && !ctx.animated) {
             ctx.animated = true
@@ -137,26 +139,33 @@ const noPoints = {
   },
 }
 
-export const miniChartOptions = {
-  ...aspectRatio,
-  ...noPoints,
-  ...animations(80),
-  layout: {
-    padding: {
-      bottom: -10,
-    },
-  },
-  scales: {
-    x: { grid: { display: false }, border: { display: false }, ticks: { display: false }, },
-    y: { grid: { display: false }, border: { display: false }, ticks: { display: false }, },
-  },
-}
-
-export function getNetworkChartOptions(lang: string) {
+export function getMiniChartOptions(delay?: number) {
   return {
     ...aspectRatio,
     ...noPoints,
-    ...animations(200),
+    ...animations(80, delay),
+    plugins: {
+      tooltip: {
+        enabled: false,
+      },
+    },
+    layout: {
+      padding: {
+        bottom: -10,
+      },
+    },
+    scales: {
+      x: { grid: { display: false }, border: { display: false }, ticks: { display: false }, },
+      y: { grid: { display: false }, border: { display: false }, ticks: { display: false }, },
+    },
+  }
+}
+
+export function getNetworkChartOptions(lang: string, delay?: number) {
+  return {
+    ...aspectRatio,
+    ...noPoints,
+    ...animations(100, delay),
     ...tooltips(lang, humanizeSpeed),
     scales: {
       x: { grid: { display: false, }, ticks: { display: false, }, },
@@ -170,11 +179,11 @@ export function getNetworkChartOptions(lang: string) {
   }
 }
 
-export function getPerfChartOptions(lang: string) {
+export function getPerfChartOptions(lang: string, delay?: number) {
   return {
     ...aspectRatio,
     ...noPoints,
-    ...animations(200),
+    ...animations(200, delay),
     ...tooltips(lang, percentize),
     scales: {
       x: { ticks: { display: false, }, border: { display: false, }, grid: { display: false, }, },
@@ -189,10 +198,10 @@ export function getPerfChartOptions(lang: string) {
   }
 }
 
-export function getDiskChartOptions(lang: string) {
+export function getDiskChartOptions(lang: string, delay?: number) {
   return {
     ...getNetworkChartOptions(lang),
-    ...animations(75),
+    ...animations(75, delay),
     ...tooltips(lang, humanizeSpeed),
   }
 }

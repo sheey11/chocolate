@@ -30,6 +30,7 @@ func mountAccountsRoutes(r *gin.RouterGroup) {
 // any authorization.
 func handleServerInitFirstAdminCreation(c *gin.Context) {
 	if has, err := service.HasAdminAccount(); err != nil {
+		logrus.WithError(err).Error("error when counting admin account count")
 		c.Abort()
 		c.JSON(http.StatusInternalServerError, common.SampleResponse(errors.RequestInternalServerError, "internal server error when count admin accounts"))
 		return
@@ -46,7 +47,7 @@ func handleServerInitFirstAdminCreation(c *gin.Context) {
 	err := c.Bind(&data)
 	if err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUnknownContentType, "unknown content type"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
 		return
 	}
 	err = service.CreateAdminAccount(data.Username, data.Password)
@@ -68,13 +69,13 @@ func handleAccountCreation(c *gin.Context) {
 
 	if err := c.Bind(&users); err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUnknownContentType, "unknown content type"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
 		return
 	}
 
 	if len(users) == 0 {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadParameter, "empty request"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "empty request"))
 		return
 	}
 
@@ -121,7 +122,7 @@ func handleAccountPasswordModification(c *gin.Context) {
 	err := c.Bind(&data)
 	if err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUnknownContentType, "unknown content type"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
 		return
 	}
 
@@ -151,7 +152,7 @@ func handleAccountRoleModification(c *gin.Context) {
 	err := c.Bind(&data)
 	if err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUnknownContentType, "unknown content type"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
 		return
 	}
 

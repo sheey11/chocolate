@@ -12,7 +12,7 @@ interface AuthContext {
 export const AuthContext = createContext<AuthContext>({
     authenticated: false,
     getUser: () => null,
-    login: (username: string, password: string) => { return {ok: false, user: null, accessToken: ""} },
+    login: (username: string, password: string) => { return new Promise((r) => r({ ok: false, user: null, accessToken: "" })) },
     logout: () => {},
 })
 

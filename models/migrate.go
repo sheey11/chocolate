@@ -24,22 +24,20 @@ func Migrate(connStr string) error {
 
 	defaultRoles := []Role{
 		{
-			Name:                       AdministratorRoleName,
-			AbilityManageAdministrator: true,
-			AbilityManageStreamer:      true,
-			AbilityManageUser:          true,
-			AbilityStream:              true,
-			AbilityManageStream:        true,
-			AbilityCreateRoom:          true,
+			Name:                   AdministratorRoleName,
+			AbilityManageAccount:   true,
+			AbilityStream:          true,
+			AbilityManageStream:    true,
+			AbilityCreateRoom:      true,
+			AbilityRetrieveMetrics: true,
 		},
 		{
-			Name:                       UserRoleName,
-			AbilityManageAdministrator: false,
-			AbilityManageStreamer:      false,
-			AbilityManageUser:          false,
-			AbilityStream:              true,
-			AbilityManageStream:        false,
-			AbilityCreateRoom:          true,
+			Name:                   UserRoleName,
+			AbilityManageAccount:   false,
+			AbilityStream:          true,
+			AbilityManageStream:    false,
+			AbilityCreateRoom:      true,
+			AbilityRetrieveMetrics: false,
 		},
 	}
 

@@ -44,8 +44,8 @@ func GetStackTrace() string {
 type RequestError struct {
 	ID          RequestErrorCode
 	Message     string
-	Context     interface{}
-	Explanation interface{}
+	Context     map[string]interface{}
+	Explanation map[string]interface{}
 	InnerError  error
 }
 
@@ -89,7 +89,7 @@ func (e *RequestError) ResponseFriendly(lang string) map[string]interface{} {
 type LogicError struct {
 	ID         uint64
 	Message    string
-	Context    interface{}
+	Context    map[string]interface{}
 	InnerError error
 	StackTrace string
 }
@@ -115,7 +115,7 @@ func (e *LogicError) SetID(raw_id uint64) {
 type DatabaseError struct {
 	ID         DatabaseErrorCode
 	Message    string
-	Context    interface{}
+	Context    map[string]interface{}
 	InnerError error
 	Sql        string
 	StackTrace string

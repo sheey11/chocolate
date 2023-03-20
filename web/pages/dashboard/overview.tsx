@@ -5,23 +5,14 @@ import { ArrowPathIcon, ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/s
 import { useRouter } from "next/router"
 import { localize } from "@/i18n/i18n"
 
-import { Inter, Source_Code_Pro } from 'next/font/google'
-
 import { Chart as ChartJS, LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip } from "chart.js"
 import { Chart } from "react-chartjs-2"
 import { Footer } from "@/components/Footer/Footer"
 
-import { miniChartOptions, getNetworkChartOptions, getPerfChartOptions, getDiskChartOptions, corsair} from "./charts-config"
-import { dashboardNavs } from "./navs"
-
-const inter = Inter({
-  subsets: ['latin'],
-})
-
-const sourceCodePro = Source_Code_Pro({
-  variable: '--source-code-pro-font',
-  subsets: ['latin'],
-})
+import { getNetworkChartOptions, getPerfChartOptions, getDiskChartOptions, corsair, getMiniChartOptions} from "@/constants/charts-config"
+import { dashboardNavs } from "@/constants/navs"
+import Button from "@/components/Button/Button"
+import Link from "next/link"
 
 ChartJS.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip)
 
@@ -170,9 +161,9 @@ export default function AdminPage () {
           </button>
         </div>
         <div className="grid lg:grid-cols-4 lg:grid-rows-1 md:grid-cols-2 md:grid-rows-2 sm:grid-cols-1 sm:grid-rows-4 gap-y-4 lg:gap-y-0 md:gap-x-4">
-          <div className="bg-white rounded h-40 w-full text-indigo-600 flex flex-col font-sans overflow-hidden"> {/* card */}
+          <div className="bg-white rounded-lg shadow h-40 w-full text-indigo-600 flex flex-col font-sans overflow-hidden"> {/* card */}
             <div className="p-5 pb-0">
-              <h2 className={`text-3xl font-bold ${inter.className}`}>
+              <h2 className={`text-3xl font-bold`}>
                 100
               </h2>
               <span>
@@ -180,14 +171,14 @@ export default function AdminPage () {
               </span>
             </div>
             <div className="w-full h-full overflow-hidden">
-              <div className="min-w-full h-full mr-[-5px] ml-[-8px] mt-[4px]">
-                <Chart type="line" height={80} options={miniChartOptions} data={streamingData}/>
+              <div className="min-w-full h-full mr-[-5px] ml-[-8px] mt-[5px]">
+                <Chart type="line" height={80} options={getMiniChartOptions(100)} data={streamingData}/>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded h-40 w-full text-red-600 flex flex-col font-sans overflow-hidden"> {/* card */}
+          <div className="bg-white rounded-lg shadow h-40 w-full text-red-600 flex flex-col font-sans overflow-hidden"> {/* card */}
             <div className="p-5 pb-0">
-              <h2 className={`text-3xl font-bold ${inter.className}`}>
+              <h2 className={`text-3xl font-bold`}>
                 65,535
               </h2>
               <span>
@@ -195,14 +186,14 @@ export default function AdminPage () {
               </span>
             </div>
             <div className="w-full h-full overflow-hidden">
-              <div className="min-w-full h-full mr-[-5px] ml-[-8px] mt-[4px]">
-                <Chart type="line" height={60} width="100%" options={miniChartOptions} data={viewersData}/>
+              <div className="min-w-full h-full mr-[-5px] ml-[-8px] mt-[5px]">
+                <Chart type="line" height={60} width="100%" options={getMiniChartOptions(200)} data={viewersData}/>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded h-40 w-full text-green-600 flex flex-col font-sans overflow-hidden"> {/* card */}
+          <div className="bg-white rounded-lg shadow h-40 w-full text-green-600 flex flex-col font-sans overflow-hidden"> {/* card */}
             <div className="p-5 pb-0">
-              <h2 className={`text-3xl font-bold ${inter.className}`}>
+              <h2 className={`text-3xl font-bold`}>
                 65,535
               </h2>
               <span>
@@ -210,14 +201,14 @@ export default function AdminPage () {
               </span>
             </div>
             <div className="w-full h-full overflow-hidden">
-              <div className="min-w-full h-full mr-[-5px] ml-[-8px] mt-[4px]">
-                <Chart type="line" height={60} options={miniChartOptions} data={usersData}/>
+              <div className="min-w-full h-full mr-[-5px] ml-[-8px] mt-[5px]">
+                <Chart type="line" height={60} options={getMiniChartOptions(300)} data={usersData}/>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded h-40 w-full text-amber-500 flex flex-col font-sans overflow-hidden"> {/* card */}
+          <div className="bg-white rounded-lg shadow h-40 w-full text-amber-500 flex flex-col font-sans overflow-hidden"> {/* card */}
             <div className="p-5 pb-0">
-              <h2 className={`text-3xl font-bold ${inter.className}`}>
+              <h2 className={`text-3xl font-bold`}>
                 65,535
               </h2>
               <span>
@@ -225,14 +216,14 @@ export default function AdminPage () {
               </span>
             </div>
             <div className="w-full h-full overflow-hidden">
-              <div className="min-w-full h-full mr-[-5px] ml-[-8px] mt-[4px]">
-                <Chart type="line" height={60} options={miniChartOptions} data={networkData}/>
+              <div className="min-w-full h-full mr-[-5px] ml-[-8px] mt-[5px]">
+                <Chart type="line" height={60} options={getMiniChartOptions(400)} data={networkData}/>
               </div>
             </div>
           </div>
         </div>
 
-        <div id="traffic" className="p-5 my-5 bg-white">
+        <div id="traffic" className="p-5 my-5 bg-white shadow rounded-lg">
           <div className="flex flex-row justify-between">
             <h2 className="text-xl font-bold">{ localize(lang, "traffic") }</h2>
             <span> TODO: 天/星期/月 selection </span>
@@ -240,8 +231,8 @@ export default function AdminPage () {
           <div className="flex flex-row justify-between my-6">
 
             <div className="flex flex-col items-start">
-              <span className={`${inter.className} font-bold text-lg`}>12,345</span>
-              <span className={`text-gray-500 text-sm ${inter.className}`}>
+              <span className={`font-bold text-lg`}>12,345</span>
+              <span className={`text-gray-500 text-sm`}>
                 { localize(lang, "connections") }
               </span>
             </div>
@@ -252,10 +243,10 @@ export default function AdminPage () {
                   <ArrowUpIcon />
                 </span>
                 <span className="flex flex-col items-start">
-                  <span className={`${inter.className} font-bold text-lg`}>
+                  <span className={`font-bold text-lg`}>
                     123Mbps
                   </span>
-                  <span className={`text-gray-500 text-sm ${inter.className}`}>
+                  <span className={`text-gray-500 text-sm`}>
                     { localize(lang, "outbound") }
                   </span>
                 </span>
@@ -266,10 +257,10 @@ export default function AdminPage () {
                   <ArrowDownIcon />
                 </span>
                 <span className="flex flex-col items-start">
-                  <span className={`${inter.className} font-bold text-lg`}>
+                  <span className={`font-bold text-lg`}>
                     123Mbps
                   </span>
-                  <span className={`text-gray-500 text-sm ${inter.className}`}>
+                  <span className={`text-gray-500 text-sm`}>
                     { localize(lang, "inbound") }
                   </span>
                 </span>
@@ -278,36 +269,40 @@ export default function AdminPage () {
 
           </div>
           <div className="w-full mt-6">
-            <Chart height={200} options={getNetworkChartOptions(lang)} plugins={[corsair]} type="line" data={networkData}/>
+            <Chart height={200} options={getNetworkChartOptions(lang, 500)} plugins={[corsair]} type="line" data={networkData}/>
           </div>
         </div>
 
-        <div id="perf-section" className="p-5 my-5 bg-white">
+        <div id="perf-section" className="shadow rounded-lg p-5 my-5 bg-white">
           <div className="flex flex-row justify-between">
             <h2 className="text-xl font-bold">{ localize(lang, "perf") }</h2>
           </div>
 
-          <h3 className={`my-5 font-bold text-gray-900 ${inter.className}`}> {localize(lang, "CPU")} </h3>
+          <h3 className={`my-5 font-bold text-gray-900`}> {localize(lang, "CPU")} </h3>
           <div className="w-full">
-            <Chart type="line" options={getPerfChartOptions(lang)} plugins={[corsair]} data={cpuData} />
+            <Chart type="line" options={getPerfChartOptions(lang, 600)} plugins={[]} data={cpuData} />
           </div>
-          <h3 className={`my-5 font-bold text-gray-900 ${inter.className}`}> {localize(lang, "memory")} </h3>
+          <h3 className={`my-5 font-bold text-gray-900`}> {localize(lang, "memory")} </h3>
           <div className="w-full">
-            <Chart type="line" options={getPerfChartOptions(lang)} plugins={[corsair]} data={memData} />
+            <Chart type="line" options={getPerfChartOptions(lang, 700)} plugins={[corsair]} data={memData} />
           </div>
-          <h3 className={`my-5 font-bold text-gray-900 ${inter.className}`}> {localize(lang, "disk")} </h3>
+          <h3 className={`my-5 font-bold text-gray-900`}> {localize(lang, "disk")} </h3>
           <div className="w-full">
-            <Chart type="line" options={getDiskChartOptions(lang)} plugins={[corsair]} data={diskData}/>
+            <Chart type="line" options={getDiskChartOptions(lang, 800)} plugins={[corsair]} data={diskData}/>
           </div>
         </div>
 
-        <div id="streaming-section" className="p-5 my-5 w-full bg-white "> {/* card */}
+        <div id="streaming-section" className="shadow rounded-lg p-5 my-5 w-full bg-white "> {/* card */}
           <div className="flex flex-row justify-between">
             <h2 className="text-xl font-bold">{ localize(lang, "streaming") }</h2>
-            <button className="px-2 py-1 rounded text-gray-600 transition duration-100 border focus:ring focus:ring-blue-200 hover:bg-gray-100">{ localize(lang, "more") }</button>
+            <Button type="link">
+              <Link href="/dashboard/rooms/">
+                { localize(lang, "more") }
+              </Link>
+            </Button>
           </div>
           <div className="mt-5 w-full text-gray-600 font-sans">
-            <table className={`streaming-table w-full text-left ${inter.className} ${sourceCodePro.variable}`}>
+            <table className={`streaming-table w-full text-left`}>
               <thead className="text-xs text-black font-bold border-b border-gray-300 uppercase">
                 <tr>
                   <th className="pl-[1.6rem]"> Room ID </th>
