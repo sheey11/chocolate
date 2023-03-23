@@ -9,17 +9,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sheey11/chocolate/common"
 	"github.com/sheey11/chocolate/errors"
+	"github.com/sheey11/chocolate/middleware"
 	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
 	"github.com/sirupsen/logrus"
 )
 
 func mountLogsRoutes(r *gin.RouterGroup) {
+	r.Use(middleware.AbilityRequired(models.Role{AbilityRetrieveMetrics: true}))
 	r.GET("/logs", handleLogsRetrieval)
 }
 
 func handleLogsRetrieval(c *gin.Context) {
-	// TODO
 	filters := c.Query("filter")
 	limit := c.Query("limit")
 	before := c.Query("before")
@@ -38,7 +39,7 @@ func handleLogsRetrieval(c *gin.Context) {
 	}
 
 	limitInt, err := strconv.Atoi(limit)
-	if err != nil {
+	if err != nil || limitInt <= 0 {
 		if err != nil {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidLogFilter, "bad filter format"))

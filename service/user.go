@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/sheey11/chocolate/common"
-	"github.com/sheey11/chocolate/errors"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -17,7 +16,7 @@ import (
 	"github.com/sheey11/chocolate/models"
 )
 
-func HasAdminAccount() (bool, error) {
+func HasAdminAccount() (bool, cerrors.ChocolateError) {
 	count, err := models.CountAdmins(nil)
 	if err != nil {
 		return true, err
@@ -25,7 +24,7 @@ func HasAdminAccount() (bool, error) {
 	return count != 0, nil
 }
 
-func CreateAdminAccount(username, password string) error {
+func CreateAdminAccount(username, password string) cerrors.ChocolateError {
 	salt := models.GenSalt()
 	password = encryptPassword(password, salt)
 	account := &models.User{
@@ -74,7 +73,7 @@ type UserCreationInfo struct {
 // Salts will be generated automatically, and
 // encrypted password will replace the original
 // pasword field.
-func CreateUserAccounts(users []UserCreationInfo) error {
+func CreateUserAccounts(users []UserCreationInfo) cerrors.ChocolateError {
 	usernames := make([]string, len(users))
 	roles := make(map[string]uint8, len(users))
 
@@ -105,8 +104,8 @@ func CreateUserAccounts(users []UserCreationInfo) error {
 	if err != nil {
 		return err
 	} else if len(takenUsernames) != 0 {
-		return errors.RequestError{
-			ID:      errors.RequestUsernameTaken,
+		return cerrors.RequestError{
+			ID:      cerrors.RequestUsernameTaken,
 			Message: "usernames have been taken",
 			Context: map[string]interface{}{
 				"usernames": takenUsernames,
@@ -133,8 +132,8 @@ func CreateUserAccounts(users []UserCreationInfo) error {
 			i++
 		}
 
-		return errors.RequestError{
-			ID:      errors.ReuqestRoleNotFound,
+		return cerrors.RequestError{
+			ID:      cerrors.ReuqestRoleNotFound,
 			Message: "roles not found",
 			Context: map[string]interface{}{
 				"roles": notExistRoles,
@@ -163,7 +162,7 @@ func CreateUserAccounts(users []UserCreationInfo) error {
 	return nil
 }
 
-func authenticate(username string, password string) (*models.User, error) {
+func authenticate(username string, password string) (*models.User, cerrors.ChocolateError) {
 	user, err := models.GetUserByName(username, nil)
 	if err != nil {
 		return nil, err
@@ -172,14 +171,14 @@ func authenticate(username string, password string) (*models.User, error) {
 	if password == user.Password {
 		return user, nil
 	} else {
-		return nil, errors.RequestError{
-			ID:      errors.RequestPasswordIncorrect,
+		return nil, cerrors.RequestError{
+			ID:      cerrors.RequestPasswordIncorrect,
 			Message: "incorrect password",
 		}
 	}
 }
 
-func TryLogin(username, password, ip, ua string) (*models.User, *models.Session, error) {
+func TryLogin(username, password, ip, ua string) (*models.User, *models.Session, cerrors.ChocolateError) {
 	user, err := authenticate(username, password)
 	if err != nil {
 		return nil, nil, err
@@ -189,7 +188,22 @@ func TryLogin(username, password, ip, ua string) (*models.User, *models.Session,
 	return user, session, err
 }
 
-// only call this method **after** verified the jwt.
+func TryGetUserFromContext(c *gin.Context) *models.User {
+	auth := c.GetHeader("Authorization")
+	if len(auth) <= 8 {
+		return nil
+	}
+	jwt := auth[7:]
+	payload, err := common.DecryptJwt(jwt)
+	if err != nil {
+		return nil
+	}
+
+	return models.GetUserByID(payload.User)
+}
+
+// only call this method **after** verified the jwt,
+// otherwise, use TryGetUserFromContext.
 func GetUserFromContext(c *gin.Context) *models.User {
 	auth := c.GetHeader("Authorization")
 	if len(auth) <= 8 {
@@ -220,11 +234,11 @@ func stringFitDict(str, dict string) bool {
 	return true
 }
 
-func UsernameFitConstraint(username string) *errors.RequestError {
+func UsernameFitConstraint(username string) *cerrors.RequestError {
 	usernameDict := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
 	if len(username) < 6 || len(username) > 16 {
-		err := errors.RequestError{
-			ID:      errors.RequestUsernameNotMeetConstraint,
+		err := cerrors.RequestError{
+			ID:      cerrors.RequestUsernameNotMeetConstraint,
 			Message: "username should be at least 6 charactors and less than 16",
 			Context: map[string]interface{}{
 				"username": username,
@@ -232,8 +246,8 @@ func UsernameFitConstraint(username string) *errors.RequestError {
 		}
 		return &err
 	} else if !stringFitDict(username, usernameDict) {
-		err := errors.RequestError{
-			ID:      errors.RequestUsernameNotMeetConstraint,
+		err := cerrors.RequestError{
+			ID:      cerrors.RequestUsernameNotMeetConstraint,
 			Message: "username should only contain numbers, alphabet letters, '_' and '-'",
 			Context: map[string]interface{}{
 				"username": username,
@@ -244,11 +258,11 @@ func UsernameFitConstraint(username string) *errors.RequestError {
 	return nil
 }
 
-func PasswordFitConstraint(password string) *errors.RequestError {
+func PasswordFitConstraint(password string) *cerrors.RequestError {
 	passwordDict := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-~!@#$%^&*()_+=`[]{}\\|;:'\",.<>/?"
 	if len(password) < 8 || len(password) > 64 {
-		err := errors.RequestError{
-			ID:      errors.RequestPasswordNotMeetConstraint,
+		err := cerrors.RequestError{
+			ID:      cerrors.RequestPasswordNotMeetConstraint,
 			Message: "password should be at least 6 charactors and less than 64.",
 			Context: map[string]interface{}{
 				"password": password,
@@ -256,8 +270,8 @@ func PasswordFitConstraint(password string) *errors.RequestError {
 		}
 		return &err
 	} else if !stringFitDict(password, passwordDict) {
-		err := errors.RequestError{
-			ID:      errors.RequestPasswordNotMeetConstraint,
+		err := cerrors.RequestError{
+			ID:      cerrors.RequestPasswordNotMeetConstraint,
 			Message: "password should only contain numbers, alphabet letters and symbols",
 			Context: map[string]interface{}{
 				"password": password,
@@ -268,11 +282,11 @@ func PasswordFitConstraint(password string) *errors.RequestError {
 	return nil
 }
 
-func CheckUsernameTaken(usernames []string, tx *gorm.DB) ([]string, error) {
+func CheckUsernameTaken(usernames []string, tx *gorm.DB) ([]string, cerrors.ChocolateError) {
 	return models.CheckUsernameTaken(usernames, tx)
 }
 
-func DeleteUser(username string) error {
+func DeleteUser(username string) cerrors.ChocolateError {
 	tx := models.Begin()
 	defer tx.Rollback()
 
@@ -302,7 +316,7 @@ func DeleteUser(username string) error {
 	return nil
 }
 
-func UpdatePassword(username string, password string) error {
+func UpdatePassword(username string, password string) cerrors.ChocolateError {
 	if err := PasswordFitConstraint(password); err != nil {
 		return err
 	}
@@ -319,7 +333,7 @@ func UpdatePassword(username string, password string) error {
 	return models.UpdateUserPassword(username, salt, password)
 }
 
-func UpdateRole(username string, roleName string) error {
+func UpdateRole(username string, roleName string) cerrors.ChocolateError {
 	role, _ := models.GetRoleByName(roleName)
 	if role == nil {
 		return cerrors.RequestError{

@@ -4,8 +4,8 @@ services:
   postgres:
     image: postgres:alpine3.15
     restart: unless-stopped
-    ports:
-      - "5432:5432"
+    # ports: # for debug
+    #   - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
       interval: 10s

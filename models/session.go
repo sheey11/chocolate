@@ -16,7 +16,7 @@ type Session struct {
 	ValidUntil time.Time `gorm:"not null;"`
 }
 
-func GenerateSessionForUser(u *User, ip string, ua string) (*Session, error) {
+func GenerateSessionForUser(u *User, ip string, ua string) (*Session, errors.ChocolateError) {
 	s := Session{
 		User:       *u,
 		UserID:     u.ID,

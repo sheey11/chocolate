@@ -16,12 +16,12 @@ func RoomOwnershipRequired(paramName string) gin.HandlerFunc {
 		idStr := c.Param(paramName)
 		if idStr == "" {
 			c.Abort()
-			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadParameter, "empty id parameter given"))
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "empty id parameter given"))
 			return
 		}
 
 		id, err := strconv.Atoi(idStr)
-		if err != nil {
+		if err != nil || id < 0 {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRoomID, "bad id parameter"))
 			return

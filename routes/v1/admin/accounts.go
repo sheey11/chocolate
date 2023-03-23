@@ -14,14 +14,17 @@ import (
 
 func mountAccountsRoutes(r *gin.RouterGroup) {
 	r.POST("/init", handleServerInitFirstAdminCreation)
-	r.Use(middleware.AbilityRequired(models.Role{AbilityManageAccount: true}))
-	r.POST("/account", handleAccountCreation)
-	r.DELETE("/account/:username", handleAccountDeletion)
-	r.PUT("/account/:username/password", handleAccountPasswordModification)
-	r.PUT("/account/:username/role", handleAccountRoleModification)
-	r.PUT("/account/:username/label/:label", handleAccountLabelAppend)
-	r.DELETE("/account/:username/label/:label", handleAccountLabelDeletion)
-	r.PUT("/account/:username/max-rooms", handleAccountMaxRoomModification)
+
+	g := r.Group("account")
+
+	g.Use(middleware.AbilityRequired(models.Role{AbilityManageAccount: true}))
+	g.POST("/", handleAccountCreation)
+	g.DELETE("/:username", handleAccountDeletion)
+	g.PUT("/:username/password", handleAccountPasswordModification)
+	g.PUT("/:username/role", handleAccountRoleModification)
+	g.PUT("/:username/label/:label", handleAccountLabelAppend)
+	g.DELETE("/:username/label/:label", handleAccountLabelDeletion)
+	g.PUT("/:username/max-rooms", handleAccountMaxRoomModification)
 }
 
 // this method is only used when the serve is backed

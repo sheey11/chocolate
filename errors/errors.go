@@ -3,8 +3,8 @@ package errors
 const (
 	_ RequestErrorCode = iota
 	RequestInternalServerError
-	RequestBadRequestData
-	RequestBadParameter
+	RequestInvalidRequestData
+	RequestInvalidParameter
 	ReuqestRoleNotFound
 	RequestUserNotFound
 	RequestRoomNotFound
@@ -33,6 +33,12 @@ const (
 	RequestLogRetrivalLimitTooBig
 	RequestLogRetrivalInvalidTimeRange
 	RequestRoomCountReachedMax
+	RequestRoomTitleTooLong
+)
+
+const (
+	_ LogicErrorCode = iota | (0x01 << 56)
+	LogicNilReference
 )
 
 const (
@@ -41,6 +47,8 @@ const (
 	DatabaseCreateAdminAccountError
 	DatabaseCreateUserAccountError
 	DatabaseCreatePermissionItemError
+	DatabaseCreateRoomError
+	DatabaseCreateChatMessageError
 
 	DatabaseCountAdminAccountError
 	DatabaseCountPermissionItemError
@@ -61,6 +69,9 @@ const (
 	DatabaseUpdateRoomPermissionTypeError
 	DatabaseUpdateRoomStatusError
 	DatabaseUpdareRoomPushKeyError
+	DatabaseIncreaseRoomViewersError
+	DatabaseDecreaseRoomViewersError
 
 	DatabaseClearRoomPermissionItemError
+	DatabaseClearRoomViewersError
 )

@@ -14,10 +14,11 @@ import (
 )
 
 func mountRoomsRoutes(r *gin.RouterGroup) {
-	r.Use(middleware.AuthRequired())
-	r.POST("/create", handleRoomCreation)
-
 	r.GET("/:id", handleRoomInfoRetrievel)
+
+	r.Use(middleware.AuthRequired())
+	r.POST("/create", middleware.AbilityRequired(models.Role{AbilityCreateRoom: true}), handleRoomCreation)
+
 	r.Use(middleware.RoomOwnershipRequired("id"))
 	r.PATCH("/:id/:action", handleRoomAction)
 	r.DELETE("/:id", handleRoomDeletion)
@@ -30,31 +31,17 @@ func mountRoomsRoutes(r *gin.RouterGroup) {
 
 func handleRoomCreation(c *gin.Context) {
 	user := service.GetUserFromContext(c)
-	count, err := user.GetAfflicateRoomCount()
-	if err != nil {
-		logrus.WithError(err).Error("error counting room for user")
-		c.Abort()
-		c.JSON(http.StatusInternalServerError, common.SampleResponse(errors.RequestInternalServerError, "count exists room count failed"))
-		return
-	}
-
-	if count >= user.MaxRoomCount {
-		c.Abort()
-		c.JSON(http.StatusForbidden, common.SampleResponse(errors.RequestRoomCountReachedMax, "you have created max room allowed"))
-		return
-	}
-
 	data := struct {
 		Title string `json:"title"`
 	}{}
-	err = c.Bind(&data)
+	err := c.Bind(&data)
 	if err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
 	}
 
-	err = service.CreateRoomForUser(user, data.Title)
+	room, err := service.CreateRoomForUser(user, data.Title)
 	if err != nil {
 		if rerr, ok := err.(errors.RequestError); ok {
 			c.Abort()
@@ -68,7 +55,12 @@ func handleRoomCreation(c *gin.Context) {
 		}
 	}
 
-	// TODO
+	c.JSON(http.StatusCreated, common.Response{
+		"code":    0,
+		"message": "ok",
+		"room_id": room.ID,
+		"title":   room.Title,
+	})
 }
 
 func handleRoomDeletion(c *gin.Context) {
@@ -76,7 +68,42 @@ func handleRoomDeletion(c *gin.Context) {
 }
 
 func handleRoomInfoRetrievel(c *gin.Context) {
-	// TODO
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id < 0 {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad parameter room id"))
+		return
+	}
+
+	room, cerr := service.GetRoomByID(uint(id))
+	if err != nil {
+		if rerr, ok := cerr.(errors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+		} else {
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
+		}
+		return
+	}
+
+	response := common.Response{
+		"code":     0,
+		"message":  "ok",
+		"id":       room.ID,
+		"title":    room.Title,
+		"status":   room.Status.ToString(),
+		"playback": room.GetPlaybackInfo(),
+		"viewers":  0, // TODO
+	}
+	user := service.TryGetUserFromContext(c)
+	if user != nil && room.OwnerID == user.ID {
+		response["permission_type"] = room.PermissionType
+		response["permission_items"] = room.PermissionItems
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 type RoomAction string
@@ -88,9 +115,9 @@ const (
 
 func handleRoomAction(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
+	if err != nil || id < 0 {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
 	}
 	action := RoomAction(c.Param("action"))
@@ -118,7 +145,7 @@ func handleRoomPermissionModify(c *gin.Context) {
 		err := c.Bind(&data)
 		if err != nil {
 			c.Abort()
-			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 			return
 		}
 	}
@@ -151,9 +178,9 @@ func handleRoomPermissionSubjectAppend(c *gin.Context) {
 	} else if permissionType == models.PermissionSubjectTypeUser {
 		var uid int
 		uid, err = strconv.Atoi(subject)
-		if err != nil {
+		if err != nil || uid < 0 {
 			c.Abort()
-			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "invalid subject"))
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "invalid subject"))
 			return
 		}
 		err = service.AddRoomPermissionItem_User(uint(id), uint(uid))
@@ -192,7 +219,7 @@ func handleRoomPermissionSubjectDelete(c *gin.Context) {
 		uid, err = strconv.Atoi(subject)
 		if err != nil {
 			c.Abort()
-			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "invalid subject"))
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "invalid subject"))
 			return
 		}
 		err = service.DeleteRoomPermissionItem_User(uint(id), uint(uid))

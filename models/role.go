@@ -11,12 +11,12 @@ type Role struct {
 	Name                   string `gorm:"type:varchar(32);primaryKey"`
 	AbilityManageAccount   bool   `json:"-"`
 	AbilityStream          bool   `json:"-"`
-	AbilityManageStream    bool   `json:"-"`
+	AbilityManageRoom      bool   `json:"-"`
 	AbilityCreateRoom      bool   `json:"-"`
 	AbilityRetrieveMetrics bool   `json:"-"`
 }
 
-func GetAllRoles() ([]*Role, error) {
+func GetAllRoles() ([]*Role, cerrors.ChocolateError) {
 	var roles []*Role
 	if err := db.Find(roles).Error; err != nil {
 		return roles, nil
@@ -30,8 +30,8 @@ func GetAllRoles() ([]*Role, error) {
 	}
 }
 
-// @return exist role names
-func CheckRoleExists(roles []string, tx *gorm.DB) ([]string, error) {
+// return exist role names
+func CheckRoleExists(roles []string, tx *gorm.DB) ([]string, cerrors.ChocolateError) {
 	if tx == nil {
 		tx = db
 	}
@@ -50,7 +50,7 @@ func CheckRoleExists(roles []string, tx *gorm.DB) ([]string, error) {
 	return result, nil
 }
 
-func GetRoleByName(name string) (*Role, error) {
+func GetRoleByName(name string) (*Role, cerrors.ChocolateError) {
 	var result Role
 
 	c := db.First(&result, name)

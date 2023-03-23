@@ -35,8 +35,8 @@ func handleMe(c *gin.Context) {
 func handleInfoLookup(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadParameter, "bad id given"))
+	if err != nil || id < 0 {
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad id given"))
 		c.Abort()
 		return
 	}

@@ -6,6 +6,22 @@ import (
 )
 
 type ChocolateError interface {
+	Error() string
+	// to use this method in correct way:
+	//
+	//  err := ...
+	//  if rerr, ok := err.(cerrors.RequestError) {
+	//    c.JSON(http.Status..., rerr.ToResponse())
+	//  } else {
+	//    logrus.WithError(err).Error("error detail...")
+	//    c.Abort()
+	//    c.JSON(http.StatusInternalServerError, err.ToResponse())
+	//    return
+	//  }
+	ToResponse() map[string]interface{}
+}
+
+type ChocolateErrorConstraints interface {
 	RequestError | LogicError | DatabaseError
 }
 
@@ -13,7 +29,7 @@ type RequestErrorCode uint64
 type LogicErrorCode uint64
 type DatabaseErrorCode uint64
 
-type ChocolateErrorCode interface {
+type ChocolateErrorCodeConstraints interface {
 	RequestErrorCode | LogicErrorCode | DatabaseErrorCode
 }
 
@@ -87,7 +103,7 @@ func (e *RequestError) ResponseFriendly(lang string) map[string]interface{} {
 //
 // The `ID` field always start with 0x01
 type LogicError struct {
-	ID         uint64
+	ID         LogicErrorCode
 	Message    string
 	Context    map[string]interface{}
 	InnerError error
@@ -102,7 +118,14 @@ func (e *LogicError) SetID(raw_id uint64) {
 	if raw_id>>56 != 0 {
 		panic("the id given already has a type")
 	}
-	e.ID = raw_id | (0x01 << 56)
+	e.ID = LogicErrorCode(raw_id | (0x01 << 56))
+}
+
+func (e LogicError) ToResponse() map[string]interface{} {
+	return map[string]interface{}{
+		"code":    RequestInternalServerError,
+		"message": "internal server error",
+	}
 }
 
 // `DatabaseError` represents unexpected error
@@ -130,4 +153,11 @@ func (e *DatabaseError) SetID(raw_id uint64) {
 		panic("the id given already has a type")
 	}
 	e.ID = DatabaseErrorCode(raw_id | (0x02 << 56))
+}
+
+func (e DatabaseError) ToResponse() map[string]interface{} {
+	return map[string]interface{}{
+		"code":    RequestInternalServerError,
+		"message": "internal server error",
+	}
 }

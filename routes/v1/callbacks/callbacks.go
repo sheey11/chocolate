@@ -1,6 +1,7 @@
 package callbacks
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -23,6 +24,11 @@ func mountCallbackRoutes(r *gin.RouterGroup) {
 	r.POST("/unpublish", handleUnpublish)
 	r.POST("/play", handlePlay)
 	r.POST("/stop", handleStop)
+}
+
+func MarshalJSON(v interface{}) string {
+	s, _ := json.Marshal(v)
+	return string(s)
 }
 
 type callbackResponse struct {
@@ -70,7 +76,7 @@ func handlePublish(c *gin.Context) {
 	}
 
 	roomId, err := strconv.Atoi(data.Stream)
-	if err != nil {
+	if err != nil || roomId < 0 {
 		respondeErr(c)
 		return
 	}
@@ -85,16 +91,88 @@ func handlePublish(c *gin.Context) {
 		respondeErr(c)
 	} else {
 		respondeOk(c)
-		service.RecordPublishEvent(uint(roomId), data.IP)
+		service.RecordPublishEvent(uint(roomId), MarshalJSON(data))
 	}
 }
 
 func handleUnpublish(c *gin.Context) {
-	// TODO
+	data := struct {
+		ServerID string `json:"server_id"`
+		Action   string `json:"action"`
+		ClientID string `json:"client_id"`
+		IP       string `json:"ip"`
+		VHost    string `json:"vhost"`
+		App      string `json:"app"`
+		Stream   string `json:"stream"`
+	}{}
+	err := c.Bind(&data)
+	if err != nil {
+		logrus.WithError(err).Errorf("error when parse body at on_unpublish callback")
+		respondeErr(c)
+		return
+	}
+
+	roomId, err := strconv.Atoi(data.Stream)
+	if err != nil || roomId < 0 {
+		respondeErr(c)
+		return
+	}
+
+	respondeOk(c)
+	service.RecordUnpublishEvent(uint(roomId), MarshalJSON(data))
 }
 func handlePlay(c *gin.Context) {
-	// TODO
+	data := struct {
+		ServerID string `json:"server_id"`
+		Action   string `json:"action"`
+		ClientID string `json:"client_id"`
+		IP       string `json:"ip"`
+		VHost    string `json:"vhost"`
+		App      string `json:"app"`
+		Stream   string `json:"stream"`
+		PageURL  string `json:"pageUrl"`
+		Params   string `json:"param,optional"`
+	}{}
+	err := c.Bind(&data)
+	if err != nil {
+		logrus.WithError(err).Errorf("error when parse body at on_unpublish callback")
+		respondeErr(c)
+		return
+	}
+
+	roomId, err := strconv.Atoi(data.Stream)
+	if err != nil || roomId < 0 {
+		respondeErr(c)
+		return
+	}
+
+	// TODO: increase viewer count
+	service.RecordPlayEvent(uint(roomId), MarshalJSON(data))
 }
 func handleStop(c *gin.Context) {
 	// TODO
+	data := struct {
+		ServerID string `json:"server_id"`
+		Action   string `json:"action"`
+		ClientID string `json:"client_id"`
+		IP       string `json:"ip"`
+		VHost    string `json:"vhost"`
+		App      string `json:"app"`
+		Stream   string `json:"stream"`
+	}{}
+	err := c.Bind(&data)
+	if err != nil {
+		logrus.WithError(err).Errorf("error when parse body at on_unpublish callback")
+		respondeErr(c)
+		return
+	}
+
+	roomId, err := strconv.Atoi(data.Stream)
+	if err != nil || roomId < 0 {
+		respondeErr(c)
+		return
+	}
+
+	// TODO: increase viewer count
+	service.RecordStopEvent(uint(roomId), MarshalJSON(data))
 }

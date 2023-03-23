@@ -22,7 +22,7 @@ type User struct {
 	Rooms        []Room  `gorm:"foreignKey:owner_id;constraint:OnDelete:CASCADE"`
 }
 
-func CountAdmins(tx *gorm.DB) (uint, error) {
+func CountAdmins(tx *gorm.DB) (uint, cerrors.ChocolateError) {
 	if tx == nil {
 		tx = db
 	}
@@ -40,7 +40,7 @@ func CountAdmins(tx *gorm.DB) (uint, error) {
 	return uint(count), nil
 }
 
-func AddAdminAccount(user *User) error {
+func AddAdminAccount(user *User) cerrors.ChocolateError {
 	user.RoleName = AdministratorRoleName
 	tx := db.Begin()
 	var count int64 = 0
@@ -75,7 +75,16 @@ func AddAdminAccount(user *User) error {
 		return err
 	}
 
-	return tx.Commit().Error
+	if tx.Commit().Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseCreateAdminAccountError,
+			Message:    "error on commiting changes while creating admin account",
+			Sql:        tx.Statement.SQL.String(),
+			InnerError: tx.Error,
+			StackTrace: cerrors.GetStackTrace(),
+		}
+	}
+	return nil
 }
 
 func GenSalt() string {
@@ -88,7 +97,7 @@ func GenSalt() string {
 	return salt
 }
 
-func GetUserByName(username string, tx *gorm.DB) (*User, error) {
+func GetUserByName(username string, tx *gorm.DB) (*User, cerrors.ChocolateError) {
 	if tx == nil {
 		tx = db
 	}
@@ -138,7 +147,7 @@ func (u *User) SummaryRooms() []map[string]interface{} {
 	return result
 }
 
-func AddUsers(users []User, tx *gorm.DB) error {
+func AddUsers(users []User, tx *gorm.DB) cerrors.ChocolateError {
 	if tx == nil {
 		tx = db
 	}
@@ -157,7 +166,7 @@ func AddUsers(users []User, tx *gorm.DB) error {
 }
 
 // returns those username exists
-func CheckUsernameTaken(usernames []string, tx *gorm.DB) ([]string, error) {
+func CheckUsernameTaken(usernames []string, tx *gorm.DB) ([]string, cerrors.ChocolateError) {
 	if tx == nil {
 		tx = db
 	}
@@ -168,7 +177,7 @@ func CheckUsernameTaken(usernames []string, tx *gorm.DB) ([]string, error) {
 		err := cerrors.DatabaseError{
 			ID:         cerrors.DatabaseLookupUsernamesError,
 			InnerError: c.Error,
-			Message:    "an error occured when lookup usernames",
+			Message:    "an cerrors.ChocolateError occured when lookup usernames",
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 		}
@@ -177,7 +186,7 @@ func CheckUsernameTaken(usernames []string, tx *gorm.DB) ([]string, error) {
 	return result, nil
 }
 
-func DeleteUser(userid uint, tx *gorm.DB) error {
+func DeleteUser(userid uint, tx *gorm.DB) cerrors.ChocolateError {
 	if tx == nil {
 		tx = db
 	}
@@ -201,7 +210,7 @@ func DeleteUser(userid uint, tx *gorm.DB) error {
 	}
 	return nil
 }
-func UpdateUserPassword(username string, salt string, password string) error {
+func UpdateUserPassword(username string, salt string, password string) cerrors.ChocolateError {
 	c := db.Model(&User{}).Where("username = ?", username).Updates(map[string]interface{}{
 		"salt":     salt,
 		"password": password,
@@ -218,7 +227,7 @@ func UpdateUserPassword(username string, salt string, password string) error {
 	return nil
 }
 
-func UpdateUserRole(username string, role string) error {
+func UpdateUserRole(username string, role string) cerrors.ChocolateError {
 	c := db.Model(&User{}).Where("username = ?", username).Updates(map[string]interface{}{
 		"role_name": role,
 	})
@@ -234,7 +243,7 @@ func UpdateUserRole(username string, role string) error {
 	return nil
 }
 
-func (u *User) GetAfflicateRoomCount() (uint, error) {
+func (u *User) GetAfflicateRoomCount() (uint, cerrors.ChocolateError) {
 	var result int64
 	c := db.Model(&Room{}).Where("owner_id = ?", u.ID).Count(&result)
 	if c.Error != nil {
