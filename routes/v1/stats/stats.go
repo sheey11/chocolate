@@ -16,7 +16,7 @@ func mountStatsRoutes(r *gin.RouterGroup) {
 	r.Use(middleware.AbilityRequired(models.Role{AbilityRetrieveMetrics: true}))
 	r.GET("/version", handleVersion)
 	r.GET("/summries", handleSummries)
-	r.GET("/meminfo", handleMeminfo)
+	r.GET("/meminfo", handleMemInfo)
 	r.GET("/vhosts", handleVHosts)
 	r.GET("/streams", handleStreams)
 	r.GET("/clients", handleClients)
@@ -50,9 +50,37 @@ func handleVersion(c *gin.Context) {
 	})
 }
 func handleSummries(c *gin.Context) {
-
+	c.JSON(http.StatusOK, common.Response{
+		"code":    0,
+		"message": "ok",
+		"summary": srs.GetSummariesHistory(),
+	})
 }
-func handleMeminfo(c *gin.Context) {}
-func handleVHosts(c *gin.Context)  {}
-func handleStreams(c *gin.Context) {}
-func handleClients(c *gin.Context) {}
+func handleMemInfo(c *gin.Context) {
+	c.JSON(http.StatusOK, common.Response{
+		"code":    0,
+		"message": "ok",
+		"summary": srs.GetMemInfoHistory(),
+	})
+}
+func handleVHosts(c *gin.Context) {
+	c.JSON(http.StatusOK, common.Response{
+		"code":    0,
+		"message": "ok",
+		"summary": srs.GetVHostsHistory(),
+	})
+}
+func handleStreams(c *gin.Context) {
+	c.JSON(http.StatusOK, common.Response{
+		"code":    0,
+		"message": "ok",
+		"summary": srs.GetStreamsHistory(),
+	})
+}
+func handleClients(c *gin.Context) {
+	c.JSON(http.StatusOK, common.Response{
+		"code":    0,
+		"message": "ok",
+		"summary": srs.GetClientsHistory(),
+	})
+}

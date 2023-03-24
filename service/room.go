@@ -150,3 +150,10 @@ func DeleteRoom(roomid uint) cerrors.ChocolateError {
 func RetriveRoomTimeline(roomid uint) ([]*models.Log, cerrors.ChocolateError) {
 	return models.RetriveLogsForRoom(roomid)
 }
+
+func IncreaseRoomViewer(roomid uint) cerrors.ChocolateError {
+	return models.IncreaseRoomViewer(roomid)
+}
+func DecreaseRoomViewer(roomid uint) cerrors.ChocolateError {
+	return models.DecreaseRoomViewer(roomid)
+}

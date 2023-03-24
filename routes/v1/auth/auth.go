@@ -23,7 +23,7 @@ func handlePasswordAuthenticate(c *gin.Context) {
 	err := c.Bind(&data)
 	if err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
 	}
 

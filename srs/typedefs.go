@@ -1,5 +1,7 @@
 package srs
 
+import "time"
+
 type ServerInfo struct {
 	ResponseCode uint   `json:"code"`
 	ServerID     string `json:"server"`
@@ -118,7 +120,8 @@ type VHost struct {
 
 type VHosts struct {
 	ServerInfo
-	VHostList []VHost `json:"vhosts"`
+	SampleTime uint    `json:"sample_time"`
+	VHostList  []VHost `json:"vhosts"`
 }
 
 type Stream struct {
@@ -158,6 +161,7 @@ type Stream struct {
 
 type Streams struct {
 	ServerInfo
+	SampleTime uint     `json:"sample_time"`
 	StreamList []Stream `json:"streams"`
 }
 
@@ -184,5 +188,34 @@ type Client struct {
 
 type Clients struct {
 	ServerInfo
+	SampleTime uint     `json:"sample_time"`
 	ClientList []Client `json:"clients"`
+}
+
+func (v *Version) SetSampleTime(time.Time) {
+	// do nothing
+}
+
+func (s *Summaries) SetSampleTime(t time.Time) {
+	s.Timestamp = uint(t.Unix())
+}
+
+func (s *MemInfo) SetSampleTime(t time.Time) {
+	s.SampleTime = uint(t.Unix())
+}
+
+func (s *Features) SetSampleTime(time.Time) {
+	// do nothing
+}
+
+func (s *VHosts) SetSampleTime(t time.Time) {
+	s.SampleTime = uint(t.Unix())
+}
+
+func (s *Streams) SetSampleTime(t time.Time) {
+	s.SampleTime = uint(t.Unix())
+}
+
+func (s *Clients) SetSampleTime(t time.Time) {
+	s.SampleTime = uint(t.Unix())
 }

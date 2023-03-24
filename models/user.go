@@ -219,9 +219,9 @@ func UpdateUserPassword(username string, salt string, password string) cerrors.C
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseSetUserPasswordError,
 			Message:    "set password error",
+			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
-			InnerError: c.Error,
 		}
 	}
 	return nil
@@ -239,6 +239,11 @@ func UpdateUserRole(username string, role string) cerrors.ChocolateError {
 			StackTrace: cerrors.GetStackTrace(),
 			InnerError: c.Error,
 		}
+	} else if c.RowsAffected == 0 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestUserNotFound,
+			Message: "user not found",
+		}
 	}
 	return nil
 }
@@ -250,6 +255,7 @@ func (u *User) GetAfflicateRoomCount() (uint, cerrors.ChocolateError) {
 		return 0, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseClearRoomPermissionItemError,
 			Message:    "error when counting room",
+			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{
@@ -258,4 +264,112 @@ func (u *User) GetAfflicateRoomCount() (uint, cerrors.ChocolateError) {
 		}
 	}
 	return uint(result), nil
+}
+
+func AddLabelToUser(username, label string) cerrors.ChocolateError {
+	labelObj := Label{}
+	db.Find(&labelObj, label)
+	if labelObj.Name != label {
+		labelObj = Label{
+			Name: label,
+		}
+		c := db.Create(&label)
+		if c != nil {
+			return cerrors.DatabaseError{
+				ID:         cerrors.DatabaseCreateLabelError,
+				Message:    "error creating new label",
+				InnerError: c.Error,
+				Sql:        c.Statement.SQL.String(),
+				StackTrace: cerrors.GetStackTrace(),
+			}
+		}
+	}
+
+	user, err := GetUserByName(username, nil)
+	if err != nil {
+		return err
+	}
+
+	record := map[string]interface{}{
+		"label_name": label,
+		"user_id":    user.ID,
+	}
+
+	var cnt int64
+	c := db.Table("user_labels").Where(record).Count(&cnt)
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseClearRoomPermissionItemError,
+			Message:    "error querying exsiting user-label record",
+			InnerError: c.Error,
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+		}
+	} else if cnt != 0 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestLabelExists,
+			Message: "label exists on user",
+		}
+	}
+
+	c = db.Table("user_labels").Create(record)
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseCreateUserLabelError,
+			Message:    "error creating user-label record",
+			InnerError: c.Error,
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+		}
+	}
+
+	return nil
+}
+
+func DeleteUserLabel(username, label string) cerrors.ChocolateError {
+	user, err := GetUserByName(username, nil)
+	if err != nil {
+		return err
+	}
+
+	record := map[string]interface{}{
+		"label_name": label,
+		"user_id":    user.ID,
+	}
+
+	c := db.Table("user_labels").Delete(record)
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseCreateUserLabelError,
+			Message:    "error creating user-label record",
+			InnerError: c.Error,
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+		}
+	} else if c.RowsAffected == 0 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestUserNotHaveLabel,
+			Message: "user do not have that label",
+		}
+	}
+	return nil
+}
+
+func ModifyUserMaxRoom(username string, maxRooms uint) cerrors.ChocolateError {
+	c := db.Model(&User{}).Where("username = ?", username).Update("max_room_count", maxRooms)
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseClearRoomPermissionItemError,
+			Message:    "error updating user's max_room_count",
+			InnerError: c.Error,
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+		}
+	} else if c.RowsAffected == 0 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestUserNotFound,
+			Message: "user not found",
+		}
+	}
+	return nil
 }

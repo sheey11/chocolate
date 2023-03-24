@@ -34,6 +34,8 @@ const (
 	RequestLogRetrivalInvalidTimeRange
 	RequestRoomCountReachedMax
 	RequestRoomTitleTooLong
+	RequestLabelExists
+	RequestUserNotHaveLabel
 )
 
 const (
@@ -49,6 +51,8 @@ const (
 	DatabaseCreatePermissionItemError
 	DatabaseCreateRoomError
 	DatabaseCreateChatMessageError
+	DatabaseCreateLabelError
+	DatabaseCreateUserLabelError
 
 	DatabaseCountAdminAccountError
 	DatabaseCountPermissionItemError

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sheey11/chocolate/common"
@@ -24,7 +25,7 @@ func mountAccountsRoutes(r *gin.RouterGroup) {
 	g.PUT("/:username/role", handleAccountRoleModification)
 	g.PUT("/:username/label/:label", handleAccountLabelAppend)
 	g.DELETE("/:username/label/:label", handleAccountLabelDeletion)
-	g.PUT("/:username/max-rooms", handleAccountMaxRoomModification)
+	g.PUT("/:username/max-room/:count", handleAccountMaxRoomModification)
 }
 
 // this method is only used when the serve is backed
@@ -50,7 +51,7 @@ func handleServerInitFirstAdminCreation(c *gin.Context) {
 	err := c.Bind(&data)
 	if err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
 	}
 	err = service.CreateAdminAccount(data.Username, data.Password)
@@ -72,13 +73,13 @@ func handleAccountCreation(c *gin.Context) {
 
 	if err := c.Bind(&users); err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
 	}
 
 	if len(users) == 0 {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "empty request"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "empty request"))
 		return
 	}
 
@@ -125,7 +126,7 @@ func handleAccountPasswordModification(c *gin.Context) {
 	err := c.Bind(&data)
 	if err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
 	}
 
@@ -155,7 +156,7 @@ func handleAccountRoleModification(c *gin.Context) {
 	err := c.Bind(&data)
 	if err != nil {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestBadRequestData, "bad request payload"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
 	}
 
@@ -177,13 +178,66 @@ func handleAccountRoleModification(c *gin.Context) {
 }
 
 func handleAccountLabelAppend(c *gin.Context) {
-	// TODO
+	username := c.Param("username")
+	label := c.Param("label")
+
+	cerr := service.AddLabelToUser(username, label)
+	if cerr != nil {
+		if rerr, ok := cerr.(errors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
+			return
+		}
+	}
+
+	c.JSON(http.StatusCreated, common.SampleResponse(0, "added"))
 }
 
 func handleAccountLabelDeletion(c *gin.Context) {
-	// TODO
+	username := c.Param("username")
+	label := c.Param("label")
+
+	cerr := service.DeleteUserLabel(username, label)
+	if cerr != nil {
+		if rerr, ok := cerr.(errors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
+			return
+		}
+	}
+	c.JSON(http.StatusOK, common.SampleResponse(0, "deleted"))
 }
 
 func handleAccountMaxRoomModification(c *gin.Context) {
-	// TODO
+	username := c.Param("username")
+	countStr := c.Param("count")
+
+	count, err := strconv.Atoi(countStr)
+	if err != nil || count < 0 {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRoomID, "bad count parameter"))
+		return
+	}
+
+	cerr := service.ModifyUserMaxRoom(username, uint(count))
+	if cerr != nil {
+		if rerr, ok := cerr.(errors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
+			return
+		}
+	}
+	c.JSON(http.StatusOK, common.SampleResponse(0, "modified"))
 }

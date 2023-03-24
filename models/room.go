@@ -403,6 +403,7 @@ func CreateRoomForUser(user *User, title string) (*Room, cerrors.ChocolateError)
 		return nil, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreateRoomError,
 			Message:    "error on creating room",
+			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 		}
@@ -416,6 +417,7 @@ func IncreaseRoomViewer(id uint) cerrors.ChocolateError {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseIncreaseRoomViewersError,
 			Message:    "error update room viewer",
+			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{
@@ -432,6 +434,7 @@ func DecreaseRoomViewer(id uint) cerrors.ChocolateError {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseDecreaseRoomViewersError,
 			Message:    "error decrease room viewer",
+			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{
@@ -465,6 +468,7 @@ func ListRooms(status *RoomStatus, filterId *uint, filterTitle *string) ([]*Room
 		return nil, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseClearRoomPermissionItemError,
 			Message:    "error on listing rooms",
+			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{
@@ -489,6 +493,7 @@ func DeleteRoom(roomid uint) cerrors.ChocolateError {
 			return cerrors.DatabaseError{
 				ID:         cerrors.DatabaseDeleteUserError,
 				Message:    "error deleting room",
+				InnerError: c.Error,
 				Sql:        c.Statement.SQL.String(),
 				StackTrace: cerrors.GetStackTrace(),
 				Context: map[string]interface{}{

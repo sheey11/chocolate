@@ -3,6 +3,7 @@ package srs
 import (
 	"encoding/json"
 	"errors"
+	"time"
 )
 
 type dataProbe struct {
@@ -10,10 +11,14 @@ type dataProbe struct {
 }
 
 type statTypes interface {
-	Version | Summaries | MemInfo | Features | VHosts | Streams | Clients
+	*Version | *Summaries | *MemInfo | *Features | *VHosts | *Streams | *Clients
+	SetSampleTime(time.Time)
 }
 
-func getStatsContainedInData[T Version | Summaries | MemInfo | Features](url string, i *T) (*T, error) {
+// funcs in this package is extremly confusion,
+// all function start with an underscroe is a
+// helper function.
+func _getStatsContainedInData[T Version | Summaries | MemInfo | Features](url string, i *T) (*T, error) {
 	body, err := get(apiCollection.versionUrl)
 	if err != nil {
 		return i, errors.Join(errors.New("unable to retrive server info"), err)
@@ -36,7 +41,7 @@ func getStatsContainedInData[T Version | Summaries | MemInfo | Features](url str
 	return i, nil
 }
 
-func getStats[T VHosts | Streams | Clients](url string, i *T) (*T, error) {
+func _getStats[T VHosts | Streams | Clients](url string, i *T) (*T, error) {
 	body, err := get(apiCollection.versionUrl)
 	if err != nil {
 		return i, errors.Join(errors.New("unable to retrive server info"), err)
@@ -50,36 +55,36 @@ func getStats[T VHosts | Streams | Clients](url string, i *T) (*T, error) {
 
 func GetVersion() (*Version, error) {
 	v := &Version{}
-	v, err := getStatsContainedInData(apiCollection.versionUrl, v)
+	v, err := _getStatsContainedInData(apiCollection.versionUrl, v)
 	return v, err
 }
 
-func GetSummaries() (*Summaries, error) {
+func getSummaries() (*Summaries, error) {
 	v := &Summaries{}
-	return getStatsContainedInData(apiCollection.summaryUrl, v)
+	return _getStatsContainedInData(apiCollection.summaryUrl, v)
 }
 
-func GetMeminfo() (*MemInfo, error) {
+func getMeminfo() (*MemInfo, error) {
 	v := &MemInfo{}
-	return getStatsContainedInData(apiCollection.memInfoUrl, v)
+	return _getStatsContainedInData(apiCollection.memInfoUrl, v)
 }
 
-func GetFeatures() (*Features, error) {
+func getFeatures() (*Features, error) {
 	v := &Features{}
-	return getStatsContainedInData(apiCollection.featuresUrl, v)
+	return _getStatsContainedInData(apiCollection.featuresUrl, v)
 }
 
-func GetVHosts() (*VHosts, error) {
+func getVHosts() (*VHosts, error) {
 	v := &VHosts{}
-	return getStats(apiCollection.vhostsUrl, v)
+	return _getStats(apiCollection.vhostsUrl, v)
 }
 
-func GetStreams() (*Streams, error) {
+func getStreams() (*Streams, error) {
 	v := &Streams{}
-	return getStats(apiCollection.streamsUrl, v)
+	return _getStats(apiCollection.streamsUrl, v)
 }
 
-func GetClients() (*Clients, error) {
+func getClients() (*Clients, error) {
 	v := &Clients{}
-	return getStats(apiCollection.clientsUrl, v)
+	return _getStats(apiCollection.clientsUrl, v)
 }

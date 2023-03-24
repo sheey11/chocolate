@@ -8,3 +8,7 @@ import (
 func GetRoleByName(name string) (*models.Role, cerrors.ChocolateError) {
 	return models.GetRoleByName(name)
 }
+
+func ListRoles() ([]*models.Role, cerrors.ChocolateError) {
+	return models.ListRoles()
+}

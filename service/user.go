@@ -337,9 +337,21 @@ func UpdateRole(username string, roleName string) cerrors.ChocolateError {
 	role, _ := models.GetRoleByName(roleName)
 	if role == nil {
 		return cerrors.RequestError{
-			ID:      cerrors.RequestUserNotFound,
+			ID:      cerrors.ReuqestRoleNotFound,
 			Message: "no such role",
 		}
 	}
 	return models.UpdateUserRole(username, roleName)
+}
+
+func AddLabelToUser(username string, label string) cerrors.ChocolateError {
+	return models.AddLabelToUser(username, label)
+}
+
+func DeleteUserLabel(username string, label string) cerrors.ChocolateError {
+	return models.DeleteUserLabel(username, label)
+}
+
+func ModifyUserMaxRoom(username string, count uint) cerrors.ChocolateError {
+	return models.ModifyUserMaxRoom(username, count)
 }

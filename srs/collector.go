@@ -53,11 +53,12 @@ type collector struct {
 
 var metricsCollector collector
 
-func collect[T statTypes](getter func() (*T, error)) *T {
+func collect[T statTypes](getter func() (T, error)) T {
 	metrics, err := getter()
 	if err != nil {
 		logrus.WithError(err).Error("error when collecting metrics")
 	}
+	metrics.SetSampleTime(time.Now())
 	return metrics
 }
 
@@ -69,12 +70,12 @@ func (c collector) StartCollect(interval uint) {
 	c.stop = make(chan struct{}, 0)
 	go func() {
 		for {
-			// TODO: use interface & struct method may be better
-			cacheSummries.Append(collect(GetSummaries))
-			cacheMemInfos.Append(collect(GetMeminfo))
-			cacheVHosts.Append(collect(GetVHosts))
-			cacheStreams.Append(collect(GetStreams))
-			cacheClients.Append(collect(GetClients))
+			// FIXME: use interface & struct method may be better
+			cacheSummries.Append(collect(getSummaries))
+			cacheMemInfos.Append(collect(getMeminfo))
+			cacheVHosts.Append(collect(getVHosts))
+			cacheStreams.Append(collect(getStreams))
+			cacheClients.Append(collect(getClients))
 
 			select {
 			case <-time.After(time.Second * time.Duration(interval)):

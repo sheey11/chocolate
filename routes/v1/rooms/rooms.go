@@ -64,7 +64,27 @@ func handleRoomCreation(c *gin.Context) {
 }
 
 func handleRoomDeletion(c *gin.Context) {
-	// TODO
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id < 0 {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad parameter room id"))
+		return
+	}
+
+	cerr := service.DeleteRoom(uint(id))
+	if cerr != nil {
+		if rerr, ok := cerr.(errors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+		} else {
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, common.SampleResponse(0, "deleted"))
 }
 
 func handleRoomInfoRetrievel(c *gin.Context) {
@@ -77,7 +97,7 @@ func handleRoomInfoRetrievel(c *gin.Context) {
 	}
 
 	room, cerr := service.GetRoomByID(uint(id))
-	if err != nil {
+	if cerr != nil {
 		if rerr, ok := cerr.(errors.RequestError); ok {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
@@ -95,7 +115,7 @@ func handleRoomInfoRetrievel(c *gin.Context) {
 		"title":    room.Title,
 		"status":   room.Status.ToString(),
 		"playback": room.GetPlaybackInfo(),
-		"viewers":  0, // TODO
+		"viewers":  room.Viewers,
 	}
 	user := service.TryGetUserFromContext(c)
 	if user != nil && room.OwnerID == user.ID {

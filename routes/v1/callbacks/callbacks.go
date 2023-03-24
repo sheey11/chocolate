@@ -146,11 +146,15 @@ func handlePlay(c *gin.Context) {
 		return
 	}
 
-	// TODO: increase viewer count
+	// FIXME: use chat ping-pong heartbeat message to
+	// count active viewers instead.
+	cerr := service.DecreaseRoomViewer(uint(roomId))
+	if cerr != nil {
+		logrus.WithError(cerr).Error("failed to decrease room viewer")
+	}
 	service.RecordPlayEvent(uint(roomId), MarshalJSON(data))
 }
 func handleStop(c *gin.Context) {
-	// TODO
 	data := struct {
 		ServerID string `json:"server_id"`
 		Action   string `json:"action"`
@@ -173,6 +177,11 @@ func handleStop(c *gin.Context) {
 		return
 	}
 
-	// TODO: increase viewer count
+	// FIXME: use chat ping-pong heartbeat message to
+	// count active viewers instead.
+	cerr := service.IncreaseRoomViewer(uint(roomId))
+	if cerr != nil {
+		logrus.WithError(cerr).Error("failed to increase room viewer")
+	}
 	service.RecordStopEvent(uint(roomId), MarshalJSON(data))
 }

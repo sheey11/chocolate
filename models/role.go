@@ -16,9 +16,9 @@ type Role struct {
 	AbilityRetrieveMetrics bool   `json:"-"`
 }
 
-func GetAllRoles() ([]*Role, cerrors.ChocolateError) {
+func ListRoles() ([]*Role, cerrors.ChocolateError) {
 	var roles []*Role
-	if err := db.Find(roles).Error; err != nil {
+	if err := db.Find(roles).Error; err == nil {
 		return roles, nil
 	} else {
 		return roles, cerrors.DatabaseError{

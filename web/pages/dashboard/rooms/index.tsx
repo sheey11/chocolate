@@ -110,6 +110,7 @@ export default function RoomIndex() {
                 </Listbox>
               </div>
             </div>
+            { /*
             <div>
               <Button className="hidden md:block z-10">
                 <span className="inline-block h-4 w-4 pt-[0.15rem]">
@@ -118,6 +119,7 @@ export default function RoomIndex() {
                 <span> New room </span>
               </Button>
             </div>
+            */ }
           </div>
           <div className="my-5 w-full overflow-x-scroll md:overflow-x-hidden">
             <table className="w-full">
