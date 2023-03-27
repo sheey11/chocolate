@@ -15,7 +15,7 @@ import (
 func mountStatsRoutes(r *gin.RouterGroup) {
 	r.Use(middleware.AbilityRequired(models.Role{AbilityRetrieveMetrics: true}))
 	r.GET("/version", handleVersion)
-	r.GET("/summries", handleSummries)
+	r.GET("/summaries", handleSummaries)
 	r.GET("/meminfo", handleMemInfo)
 	r.GET("/vhosts", handleVHosts)
 	r.GET("/streams", handleStreams)
@@ -49,7 +49,7 @@ func handleVersion(c *gin.Context) {
 		},
 	})
 }
-func handleSummries(c *gin.Context) {
+func handleSummaries(c *gin.Context) {
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",

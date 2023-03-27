@@ -35,7 +35,7 @@ func RecordEvent[T uint | string](t LogType, subjectId T) cerrors.ChocolateError
 		Subject: fmt.Sprintf("%v", subjectId),
 		Time:    time.Now(),
 	}
-	c := db.Create(log)
+	c := db.Create(&log)
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreateAdminAccountError,
@@ -54,7 +54,7 @@ func RecordEventWithDetail[T uint | string](t LogType, subjectId T, detail strin
 		Time:    time.Now(),
 		Detail:  detail,
 	}
-	c := db.Create(log)
+	c := db.Create(&log)
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreateAdminAccountError,

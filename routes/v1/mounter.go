@@ -5,6 +5,7 @@ import (
 	"github.com/sheey11/chocolate/routes/v1/admin"
 	"github.com/sheey11/chocolate/routes/v1/auth"
 	"github.com/sheey11/chocolate/routes/v1/callbacks"
+	"github.com/sheey11/chocolate/routes/v1/playback"
 	"github.com/sheey11/chocolate/routes/v1/rooms"
 	"github.com/sheey11/chocolate/routes/v1/stats"
 	"github.com/sheey11/chocolate/routes/v1/user"
@@ -18,4 +19,5 @@ func Mount(engine *gin.Engine) {
 	stats.Mount(g)
 	user.Mount(g)
 	callbacks.Mount(g)
+	playback.Mount(g)
 }

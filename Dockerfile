@@ -3,10 +3,12 @@ FROM golang:1.20.1-alpine AS builder
 RUN go env -w GO111MODULE=on && \
     go env -w GOPROXY=https://goproxy.cn,direct
 
-COPY . /go/src/github.com/sheey11/chocolate
-
 WORKDIR /go/src/github.com/sheey11/chocolate
-RUN go get
+COPY ./go.mod ./go.mod
+COPY ./go.sum ./go.sum
+RUN go mod download
+
+COPY . /go/src/github.com/sheey11/chocolate
 
 # VERSION=`git describe --abbrev=0 --tag` \
 # BUILD=`git rev-parse --short HEAD`

@@ -7,10 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 	"github.com/sheey11/chocolate/common"
+	"github.com/sheey11/chocolate/errors"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/middleware"
 	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
+	"github.com/sirupsen/logrus"
 )
 
 func mountRoomRoutes(r *gin.RouterGroup) {
@@ -26,6 +28,46 @@ func mountRoomRoutes(r *gin.RouterGroup) {
 func handleListRooms(c *gin.Context) {
 	status := c.Query("status")
 	search := c.Query("search")
+	limitStr := c.Query("limit")
+	pageStr := c.Query("page")
+
+	var limit = 20
+	var page = 1
+
+	if pageStr != "" {
+		var err error
+		page, err = strconv.Atoi(pageStr)
+		if err != nil {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad parameter page"))
+			return
+		}
+		if page <= 0 {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "invalid page"))
+			return
+		}
+	}
+
+	if limitStr != "" {
+		var err error
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad parameter limit"))
+			return
+		}
+		if limit <= 0 {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "invalid limit"))
+			return
+		}
+		if limit > 100 {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too large"))
+			return
+		}
+	}
 
 	var statusFilter *models.RoomStatus
 
@@ -42,13 +84,14 @@ func handleListRooms(c *gin.Context) {
 			}
 		}
 	}
-	rooms, err := service.ListRooms(statusFilter, search)
+	rooms, err := service.ListRooms(nil, statusFilter, search, uint(limit), uint(page))
 	if err != nil {
 		if rerr, ok := err.(cerrors.RequestError); ok {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
 			return
 		} else {
+			logrus.WithError(err).Error("error when handling list rooms")
 			c.Abort()
 			c.JSON(http.StatusInternalServerError, err.ToResponse())
 			return
@@ -102,6 +145,7 @@ func handleRoomInfoRetrival(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
 			return
 		} else {
+			logrus.WithError(cerr).Error("error when room info retrival")
 			c.Abort()
 			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
 			return
@@ -161,6 +205,7 @@ func handleRoomActions(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
 			return
 		} else {
+			logrus.WithError(cerr).Error("error when handling room actions")
 			c.Abort()
 			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
 			return
@@ -168,6 +213,11 @@ func handleRoomActions(c *gin.Context) {
 	}
 
 	u := service.GetUserFromContext(c)
+	if u == nil {
+		c.Abort()
+		c.JSON(http.StatusInternalServerError, common.SampleResponse(cerrors.RequestInternalServerError, "internal server error"))
+		return
+	}
 
 	switch RoomAction(action) {
 	case RoomActionCut:
@@ -178,11 +228,13 @@ func handleRoomActions(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, rerr.ToResponse())
 				return
 			} else {
+				logrus.WithError(cerr).Error("error when handling room actions")
 				c.Abort()
 				c.JSON(http.StatusInternalServerError, cerr.ToResponse())
 				return
 			}
 		}
+		c.JSON(http.StatusOK, common.SampleResponse(0, "ok"))
 	default:
 		c.Abort()
 		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestUnknownRoomActionType, "unknown action"))
@@ -206,6 +258,7 @@ func handleRoomDeletion(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
 			return
 		} else {
+			logrus.WithError(cerr).Error("error when handling room deletion")
 			c.Abort()
 			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
 			return
@@ -231,6 +284,7 @@ func handleRoomTimelineRetrival(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
 			return
 		} else {
+			logrus.WithError(cerr).Error("error when handling room timeline retrival")
 			c.Abort()
 			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
 			return

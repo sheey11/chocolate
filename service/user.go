@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -148,6 +149,7 @@ func CreateUserAccounts(users []UserCreationInfo) cerrors.ChocolateError {
 		user := models.User{
 			Username: userinfo.Username,
 			Password: password,
+			Salt:     salt,
 			RoleName: userinfo.Role,
 			Labels:   lo.Map(userinfo.Labels, func(l string, _ int) models.Label { return models.Label{Name: l} }),
 		}
@@ -202,6 +204,15 @@ func TryGetUserFromContext(c *gin.Context) *models.User {
 	return models.GetUserByID(payload.User)
 }
 
+func GetUserFromToken(token string) *models.User {
+	payload, err := common.DecryptJwt(token)
+	if err != nil {
+		return nil
+	}
+
+	return models.GetUserByID(payload.User)
+}
+
 // only call this method **after** verified the jwt,
 // otherwise, use TryGetUserFromContext.
 func GetUserFromContext(c *gin.Context) *models.User {
@@ -234,7 +245,7 @@ func stringFitDict(str, dict string) bool {
 	return true
 }
 
-func UsernameFitConstraint(username string) *cerrors.RequestError {
+func UsernameFitConstraint(username string) cerrors.ChocolateError {
 	usernameDict := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
 	if len(username) < 6 || len(username) > 16 {
 		err := cerrors.RequestError{
@@ -244,7 +255,7 @@ func UsernameFitConstraint(username string) *cerrors.RequestError {
 				"username": username,
 			},
 		}
-		return &err
+		return err
 	} else if !stringFitDict(username, usernameDict) {
 		err := cerrors.RequestError{
 			ID:      cerrors.RequestUsernameNotMeetConstraint,
@@ -253,22 +264,22 @@ func UsernameFitConstraint(username string) *cerrors.RequestError {
 				"username": username,
 			},
 		}
-		return &err
+		return err
 	}
 	return nil
 }
 
-func PasswordFitConstraint(password string) *cerrors.RequestError {
+func PasswordFitConstraint(password string) cerrors.ChocolateError {
 	passwordDict := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-~!@#$%^&*()_+=`[]{}\\|;:'\",.<>/?"
 	if len(password) < 8 || len(password) > 64 {
 		err := cerrors.RequestError{
 			ID:      cerrors.RequestPasswordNotMeetConstraint,
-			Message: "password should be at least 6 charactors and less than 64.",
+			Message: "password should be at least 8 charactors and less than 64.",
 			Context: map[string]interface{}{
 				"password": password,
 			},
 		}
-		return &err
+		return err
 	} else if !stringFitDict(password, passwordDict) {
 		err := cerrors.RequestError{
 			ID:      cerrors.RequestPasswordNotMeetConstraint,
@@ -277,7 +288,7 @@ func PasswordFitConstraint(password string) *cerrors.RequestError {
 				"password": password,
 			},
 		}
-		return &err
+		return err
 	}
 	return nil
 }
@@ -354,4 +365,28 @@ func DeleteUserLabel(username string, label string) cerrors.ChocolateError {
 
 func ModifyUserMaxRoom(username string, count uint) cerrors.ChocolateError {
 	return models.ModifyUserMaxRoom(username, count)
+}
+
+func ListUsers(search string, roleSearch string, limit uint, page uint) ([]*models.User, cerrors.ChocolateError) {
+	var role *models.Role
+	if roleSearch != "" {
+		role, _ = GetRoleByName(roleSearch)
+	}
+
+	var filterId *uint = nil
+	var filterName *string = nil
+	if search != "" {
+		filterName = &search
+		id, err := strconv.Atoi(search)
+		if err == nil && id > 0 {
+			uId := uint(id)
+			filterId = &uId
+		}
+	}
+
+	return models.ListUsers(role, filterId, filterName, limit, page)
+}
+
+func GetUserByUsername(username string) (*models.User, cerrors.ChocolateError) {
+	return GetUserByUsername(username)
 }

@@ -78,11 +78,13 @@ func handlePublish(c *gin.Context) {
 	roomId, err := strconv.Atoi(data.Stream)
 	if err != nil || roomId < 0 {
 		respondeErr(c)
+		logrus.WithField("room_id", data.Stream).Debug("room publish not permitted, room_id atoi failed")
 		return
 	}
 
 	if data.App != "live" {
 		respondeErr(c)
+		logrus.WithField("room_id", roomId).Debug("room publish not permitted, reason: app != live")
 		return
 	}
 
@@ -153,6 +155,8 @@ func handlePlay(c *gin.Context) {
 		logrus.WithError(cerr).Error("failed to decrease room viewer")
 	}
 	service.RecordPlayEvent(uint(roomId), MarshalJSON(data))
+
+	respondeOk(c)
 }
 func handleStop(c *gin.Context) {
 	data := struct {
@@ -184,4 +188,6 @@ func handleStop(c *gin.Context) {
 		logrus.WithError(cerr).Error("failed to increase room viewer")
 	}
 	service.RecordStopEvent(uint(roomId), MarshalJSON(data))
+
+	respondeOk(c)
 }

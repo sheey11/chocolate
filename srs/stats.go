@@ -19,7 +19,7 @@ type statTypes interface {
 // all function start with an underscroe is a
 // helper function.
 func _getStatsContainedInData[T Version | Summaries | MemInfo | Features](url string, i *T) (*T, error) {
-	body, err := get(apiCollection.versionUrl)
+	body, err := get(url)
 	if err != nil {
 		return i, errors.Join(errors.New("unable to retrive server info"), err)
 	}

@@ -26,6 +26,8 @@ export interface AuthResult {
 export async function login(username: string, password: string): Promise<AuthResult> {
     // axios
     
+    api.post
+    
     return {
         ok: true,
         user: await fetchCurrentUserInfo(),

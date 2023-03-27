@@ -36,11 +36,13 @@ const (
 	RequestRoomTitleTooLong
 	RequestLabelExists
 	RequestUserNotHaveLabel
+	RequestRoomBanned
 )
 
 const (
 	_ LogicErrorCode = iota | (0x01 << 56)
 	LogicNilReference
+	LogicDatabaseAffiliatedFieldsMissing
 )
 
 const (
@@ -65,7 +67,11 @@ const (
 	DatabaseLookupRoomError
 	DatabaseLookupLogsError
 
+	DatabaseListRoomsError
+	DatabaseListAccountsError
+
 	DatabaseDeleteUserError
+	DatabaseDeleteRoomError
 
 	DatabaseSetUserRoleError
 	DatabaseSetUserPasswordError
@@ -73,6 +79,7 @@ const (
 	DatabaseUpdateRoomPermissionTypeError
 	DatabaseUpdateRoomStatusError
 	DatabaseUpdareRoomPushKeyError
+	DatabaseUpdateRoomTitleError
 	DatabaseIncreaseRoomViewersError
 	DatabaseDecreaseRoomViewersError
 

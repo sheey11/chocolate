@@ -2,6 +2,7 @@ package chat
 
 import (
 	"sync"
+	"time"
 
 	"github.com/sheey11/chocolate/models"
 	"github.com/sirupsen/logrus"
@@ -41,6 +42,7 @@ func (h *Hub) saveToDatabase(message *models.ChatMessage) {
 	if err := models.CreateChat(message); err != nil {
 		logrus.WithError(err).Error("error when writing chat message to database")
 	}
+	message.CreatedAt = time.Now()
 }
 
 func (h *Hub) subscribe(uid int64, ch chan<- *models.ChatMessage) {

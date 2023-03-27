@@ -145,7 +145,7 @@ type DatabaseError struct {
 }
 
 func (e DatabaseError) Error() string {
-	return fmt.Sprintf("Database error: id: %v, message: %v, inner: %v, sql: %v, stack trace:\n%v", e.ID, e.Message, e.InnerError, e.Sql, e.StackTrace)
+	return fmt.Sprintf("Database error: id: %v, message: %v, inner: %v, sql: %v, stack trace:\n%v\ncontext: %v", e.ID, e.Message, e.InnerError, e.Sql, e.StackTrace, e.Context)
 }
 
 func (e *DatabaseError) SetID(raw_id uint64) {

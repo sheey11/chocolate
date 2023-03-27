@@ -22,6 +22,9 @@ func mountChatRoutes(r *gin.RouterGroup) {
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 var chatSubscriberUniqueId int64 = -1
@@ -34,12 +37,13 @@ type WebsocketChatMessageRecv struct {
 }
 
 type WebsocketChatMessageSend struct {
-	MessageType models.ChatMessageType `json:"type"`
-	Content     string                 `json:"content"`
-	SenderName  string                 `json:"sender"`
-	SenderID    uint                   `json:"sender_id"`
-	SenderRole  string                 `json:"sender_role"`
-	Timestamp   time.Time              `json:"time"`
+	MessageType             models.ChatMessageType `json:"type"`
+	Content                 string                 `json:"content"`
+	SenderName              string                 `json:"sender"`
+	SenderID                uint                   `json:"sender_id"`
+	SenderRole              string                 `json:"sender_role"`
+	AdministrationMessageID uint                   `json:"admin_msg_id"`
+	Timestamp               time.Time              `json:"time"`
 }
 
 func handleChatConnect(c *gin.Context) {
@@ -51,9 +55,9 @@ func handleChatConnect(c *gin.Context) {
 		return
 	}
 
-	room, err := service.GetRoomByID(uint(roomId))
-	if err != nil {
-		if _, ok := err.(cerrors.RequestError); ok {
+	room, cerr := service.GetRoomByID(uint(roomId))
+	if cerr != nil {
+		if _, ok := cerr.(cerrors.RequestError); ok {
 			c.Status(http.StatusBadRequest)
 			c.Abort()
 			return
@@ -71,8 +75,41 @@ func handleChatConnect(c *gin.Context) {
 		return
 	}
 
-	user := service.TryGetUserFromContext(c)
+	type auth struct {
+		Authenticated *bool  `json:"authenticated"`
+		Token         string `json:"token,omitempty"`
+	}
+	authInfo := auth{}
+	conn.SetReadDeadline(time.Now().Add(time.Second * 5))
+	err = conn.ReadJSON(&authInfo)
+	if err != nil {
+		c.Abort()
+		conn.Close()
+		return
+	}
+
+	var user *models.User = nil
 	var uid int64 = 0
+	if authInfo.Authenticated != nil && *authInfo.Authenticated {
+		user = service.GetUserFromToken(authInfo.Token)
+	} else if authInfo.Authenticated == nil {
+		c.Abort()
+		conn.Close()
+		return
+	}
+
+	allowed := service.IsUserAllowedForRoom(room, user)
+	if !allowed {
+		c.Abort()
+		conn.WriteJSON(WebsocketChatMessageSend{
+			MessageType:             models.ChetMessageTypeAdministration,
+			Content:                 "you have been banned from this room",
+			AdministrationMessageID: uint(cerrors.RequestRoomBanned),
+		})
+		conn.Close()
+		return
+	}
+
 	if user == nil {
 		chatSubscriberMutex.Lock()
 		chatSubscriberUniqueId -= 1
@@ -97,21 +134,36 @@ func handleChatConnect(c *gin.Context) {
 					stop = true
 				}
 
-				if len(websocketChat.Content) > 32 ||
-					websocketChat.MessageType == models.ChatMessageTypePong ||
-					websocketChat.MessageType == models.ChatMessageTypePing {
+				if len(websocketChat.Content) > 32 || len(websocketChat.Content) == 0 {
 					continue
 				}
 
-				message := models.ChatMessage{
-					Type:     websocketChat.MessageType,
-					Room:     *room,
-					RoomID:   room.ID,
-					Sender:   *user,
-					SenderID: user.ID,
-					Message:  websocketChat.Content,
+				switch websocketChat.MessageType {
+				case models.ChatMessageTypeMessage:
+					message := models.ChatMessage{
+						Type:     websocketChat.MessageType,
+						Room:     *room,
+						RoomID:   room.ID,
+						Sender:   *user,
+						SenderID: user.ID,
+						Message:  websocketChat.Content,
+					}
+					chat.SendMessage(&message)
+				case models.ChatMessageTypePong:
+					// TODO
+					// after timeout 5s of sending ping message,
+					// if no pong message send, consider the
+					// connection as closed.
 				}
-				chat.SendMessage(&message)
+			}
+		}()
+	} else {
+		// to clear buffer
+		go func() {
+			for !stop {
+				websocketChat := WebsocketChatMessageRecv{}
+				conn.ReadJSON(&websocketChat)
+				continue
 			}
 		}()
 	}
@@ -132,7 +184,8 @@ func handleChatConnect(c *gin.Context) {
 					SenderName:  message.Sender.Username,
 					SenderID:    message.Sender.ID,
 					SenderRole:  message.Sender.RoleName,
-					Timestamp:   message.CreatedAt,
+					// FIXME: timestamp is zero
+					Timestamp: message.CreatedAt,
 				}
 				conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
 				err := conn.WriteJSON(websocketChat)
@@ -142,6 +195,7 @@ func handleChatConnect(c *gin.Context) {
 			case <-ticker.C:
 				websocketChat := WebsocketChatMessageSend{
 					MessageType: models.ChatMessageTypePing,
+					Timestamp:   time.Now(),
 				}
 				conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
 				err := conn.WriteJSON(websocketChat)

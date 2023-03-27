@@ -5,8 +5,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"github.com/sheey11/chocolate/common"
 	"github.com/sheey11/chocolate/errors"
+	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/middleware"
 	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
@@ -19,7 +21,9 @@ func mountAccountsRoutes(r *gin.RouterGroup) {
 	g := r.Group("account")
 
 	g.Use(middleware.AbilityRequired(models.Role{AbilityManageAccount: true}))
+	g.GET("/", handleAccountList)
 	g.POST("/", handleAccountCreation)
+	g.GET("/:username", handleAccountInfoLookup)
 	g.DELETE("/:username", handleAccountDeletion)
 	g.PUT("/:username/password", handleAccountPasswordModification)
 	g.PUT("/:username/role", handleAccountRoleModification)
@@ -68,6 +72,93 @@ func handleServerInitFirstAdminCreation(c *gin.Context) {
 	c.JSON(http.StatusCreated, common.SampleResponse(0, "ok"))
 }
 
+func handleAccountList(c *gin.Context) {
+	role := c.Query("role")
+	search := c.Query("search")
+	limitStr := c.Query("limit")
+	pageStr := c.Query("page")
+
+	var limit = 20
+	var page = 1
+
+	if pageStr != "" {
+		var err error
+		page, err = strconv.Atoi(pageStr)
+		if err != nil {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad parameter page"))
+			return
+		}
+		if page <= 0 {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "invalid page"))
+			return
+		}
+	}
+
+	if limitStr != "" {
+		var err error
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad parameter limit"))
+			return
+		}
+		if limit <= 0 {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "invalid limit"))
+			return
+		}
+		if limit > 100 {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too large"))
+			return
+		} else if limit < 20 {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too small"))
+			return
+		}
+	}
+
+	users, err := service.ListUsers(search, role, uint(limit), uint(page))
+	if err != nil {
+		if rerr, ok := err.(cerrors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			logrus.WithError(err).Error("error when handling list users")
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, err.ToResponse())
+			return
+		}
+	}
+
+	type userAdminListInfo struct {
+		Role     string   `json:"role"`
+		Labels   []string `json:"labels"`
+		Username string   `json:"username"`
+		MaxRoom  uint     `json:"max_rooms"`
+	}
+
+	result := lo.Map(users, func(user *models.User, _ int) userAdminListInfo {
+		return userAdminListInfo{
+			Labels: lo.Map(user.Labels, func(l models.Label, _ int) string {
+				return l.Name
+			}),
+			Role:     user.RoleName,
+			Username: user.Username,
+			MaxRoom:  user.MaxRoomCount,
+		}
+	})
+
+	c.JSON(http.StatusOK, common.Response{
+		"code":    0,
+		"message": "ok",
+		"users":   result,
+	})
+}
+
 func handleAccountCreation(c *gin.Context) {
 	users := make([]service.UserCreationInfo, 0)
 
@@ -94,6 +185,53 @@ func handleAccountCreation(c *gin.Context) {
 			return
 		}
 	}
+
+	c.JSON(http.StatusCreated, common.SampleResponse(0, "created"))
+}
+
+func handleAccountInfoLookup(c *gin.Context) {
+	username := c.Param("username")
+	if username == "" {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "invalid username"))
+		return
+	}
+
+	user, err := service.GetUserByUsername(username)
+	if err != nil {
+		if rerr, ok := err.(errors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ResponseFriendly("zh"))
+			return
+		} else {
+			logrus.WithError(err).Error("error when handle account deletion")
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, common.SampleResponse(errors.RequestInternalServerError, "internal server err"))
+			return
+		}
+	}
+
+	type userAdminInfo struct {
+		Role     string   `json:"role"`
+		Username string   `json:"username"`
+		Labels   []string `json:"labels"`
+		MaxRoom  uint     `json:"max_rooms"`
+	}
+
+	info := userAdminInfo{
+		Username: user.Username,
+		Role:     user.RoleName,
+		Labels: lo.Map(user.Labels, func(l models.Label, _ int) string {
+			return l.Name
+		}),
+		MaxRoom: user.MaxRoomCount,
+	}
+
+	c.JSON(http.StatusOK, common.Response{
+		"code":      0,
+		"message":   "ok",
+		"user_info": info,
+	})
 }
 
 func handleAccountDeletion(c *gin.Context) {
@@ -101,7 +239,6 @@ func handleAccountDeletion(c *gin.Context) {
 
 	err := service.DeleteUser(username)
 	if err != nil {
-
 		if rerr, ok := err.(errors.RequestError); ok {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, rerr.ResponseFriendly("zh"))

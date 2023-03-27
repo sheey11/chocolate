@@ -2,8 +2,10 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 
+	"github.com/samber/lo"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sirupsen/logrus"
 
@@ -372,4 +374,57 @@ func ModifyUserMaxRoom(username string, maxRooms uint) cerrors.ChocolateError {
 		}
 	}
 	return nil
+}
+
+// including labesl
+func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint, page uint) ([]*User, cerrors.ChocolateError) {
+	statement := db.Model(&User{}).Preload("Labels").Limit(int(limit)).Offset(int((page - 1) * limit))
+	if filterRole != nil {
+		statement = statement.Where("role = ?", filterRole.Name)
+	}
+	if filterName != nil {
+		statement = statement.Where("username like ?", fmt.Sprintf("%%%s%%", *filterName))
+	}
+	if filterId != nil {
+		statement = db.Raw(
+			"? UNION ?",
+			db.Model(&User{}).Preload("Labels").Where("id = ?", *filterId, *filterId),
+			statement,
+		)
+	}
+
+	var count int64
+	c := statement.Count(&count)
+	if c != nil {
+		return nil, cerrors.DatabaseError{
+			ID:         cerrors.DatabaseListAccountsError,
+			Message:    "error on counting qualified users",
+			InnerError: c.Error,
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+			Context: map[string]interface{}{
+				"role_filter": lo.If(filterRole == nil, "nil").Else(filterRole.Name),
+				"id_filter":   filterId,
+				"name_filter": filterName,
+			},
+		}
+	}
+
+	var result []*User
+	c = statement.Find(&result)
+	if c.Error != nil {
+		return nil, cerrors.DatabaseError{
+			ID:         cerrors.DatabaseListAccountsError,
+			Message:    "error on listing users",
+			InnerError: c.Error,
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+			Context: map[string]interface{}{
+				"role_filter": lo.If(filterRole == nil, "nil").Else(filterRole.Name),
+				"id_filter":   filterId,
+				"name_filter": filterName,
+			},
+		}
+	}
+	return result, nil
 }

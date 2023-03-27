@@ -10,6 +10,7 @@ type ChatMessageType string
 const (
 	ChatMessageTypeUnknown              ChatMessageType = ""
 	ChetMessageTypeAdministrationCutOff ChatMessageType = "cut_off"
+	ChetMessageTypeAdministration       ChatMessageType = "admin"
 	ChatMessageTypePing                 ChatMessageType = "ping"
 	ChatMessageTypePong                 ChatMessageType = "pong"
 	ChatMessageTypeEnteringRoom         ChatMessageType = "entering_room"
@@ -31,10 +32,11 @@ type ChatMessage struct {
 
 func CreateChat(msg *ChatMessage) cerrors.ChocolateError {
 	c := db.Create(msg)
-	if c != nil {
+	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreateChatMessageError,
 			Message:    "error when creating chat message",
+			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{

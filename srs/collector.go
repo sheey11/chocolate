@@ -8,8 +8,8 @@ import (
 
 type FixedLengthArray[T any] struct {
 	underlay []*T
-	start    uint
-	end      uint
+	start    int
+	end      int
 }
 
 func (arr *FixedLengthArray[T]) Init(len uint) {
@@ -18,16 +18,16 @@ func (arr *FixedLengthArray[T]) Init(len uint) {
 
 func (arr *FixedLengthArray[T]) Append(v *T) {
 	arr.underlay[arr.end] = v
-	arr.end = (arr.end + 1) % uint(len(arr.underlay))
-	if arr.end >= arr.start {
-		arr.start = (arr.start + 1) * uint(len(arr.underlay))
+	arr.end = (arr.end + 1) % len(arr.underlay)
+	if arr.end == arr.start {
+		arr.start = (arr.start + 1) % len(arr.underlay)
 	}
 }
 
-func (arr *FixedLengthArray[T]) Len() uint {
+func (arr *FixedLengthArray[T]) Len() int {
 	psedoLen := arr.end - arr.start
 	if psedoLen < 0 {
-		return psedoLen + uint(len(arr.underlay))
+		return psedoLen + len(arr.underlay)
 	} else {
 		return psedoLen
 	}
@@ -38,7 +38,7 @@ func (arr *FixedLengthArray[T]) ToList() []*T {
 	if arr.start < arr.end {
 		copy(list, arr.underlay[arr.start:arr.end])
 	} else {
-		firstPartLen := uint(len(arr.underlay)) - arr.start - 1
+		firstPartLen := len(arr.underlay) - arr.start - 1
 		copy(list, arr.underlay[arr.start:])
 		copy(list[firstPartLen:], arr.underlay[:arr.end])
 	}
@@ -53,10 +53,10 @@ type collector struct {
 
 var metricsCollector collector
 
-func collect[T statTypes](getter func() (T, error)) T {
+func collect[T statTypes](metric string, getter func() (T, error)) T {
 	metrics, err := getter()
 	if err != nil {
-		logrus.WithError(err).Error("error when collecting metrics")
+		logrus.WithError(err).WithField("metric", metric).Error("error when collecting metrics")
 	}
 	metrics.SetSampleTime(time.Now())
 	return metrics
@@ -71,11 +71,11 @@ func (c collector) StartCollect(interval uint) {
 	go func() {
 		for {
 			// FIXME: use interface & struct method may be better
-			cacheSummries.Append(collect(getSummaries))
-			cacheMemInfos.Append(collect(getMeminfo))
-			cacheVHosts.Append(collect(getVHosts))
-			cacheStreams.Append(collect(getStreams))
-			cacheClients.Append(collect(getClients))
+			cacheSummries.Append(collect("summaries", getSummaries))
+			cacheMemInfos.Append(collect("meminfo", getMeminfo))
+			cacheVHosts.Append(collect("vhosts", getVHosts))
+			cacheStreams.Append(collect("streams", getStreams))
+			cacheClients.Append(collect("clients", getClients))
 
 			select {
 			case <-time.After(time.Second * time.Duration(interval)):
@@ -111,4 +111,5 @@ func initMetricsCollector(nCaches uint, interval uint) {
 	cacheClients.Init(nCaches)
 
 	metricsCollector.StartCollect(interval)
+	logrus.Info("srs stats collector start collecting")
 }

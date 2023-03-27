@@ -20,16 +20,16 @@ type Summaries struct {
 	ServerInfo
 	Timestamp uint `json:"now_ms"`
 	Self      struct {
-		Version       string
-		PID           uint `json:"pid"`
-		PPID          uint `json:"ppid"`
-		Argv          string
+		Version       string  `json:"version"`
+		PID           uint    `json:"pid"`
+		PPID          uint    `json:"ppid"`
+		Argv          string  `json:"argv"`
 		CWD           string  `json:"cwd"`
 		MemoryKBytes  uint    `json:"mem_kbyte"`
 		MemoryPercent float64 `json:"mem_percent"`
 		CPUPercent    float64 `json:"cpu_percent"`
 		Uptime        uint    `json:"srs_uptime"`
-	}
+	} `json:"self"`
 	System struct {
 		CPUPercent        float64 `json:"cpu_percent"`
 		DiskReadKBps      uint    `json:"disk_read_KBps"`
@@ -40,8 +40,8 @@ type Summaries struct {
 		MemorySwapPercent float64 `json:"men_swap_percent"`
 		CPUCount          uint    `json:"cpus"`
 		CPUOnline         uint    `json:"cpus_online"`
-		Uptime            uint    `json:"uptime"`
-		IdleTime          uint    `json:"ilde_time"`
+		Uptime            float64 `json:"uptime"`
+		IdleTime          float64 `json:"ilde_time"` // srs have a typo
 		Load1M            float64 `json:"load_1m"`
 		Load5M            float64 `json:"load_5m"`
 		Load15M           float64 `json:"load_15m"`
@@ -58,7 +58,7 @@ type Summaries struct {
 		SysConnTw         uint    `json:"conn_sys_tw"`
 		SysConnUDP        uint    `json:"conn_sys_udp"`
 		SrsConn           uint    `json:"conn_srs"`
-	}
+	} `json:"system"`
 }
 
 type MemInfo struct {
@@ -115,7 +115,7 @@ type VHost struct {
 	HLS struct {
 		Enabled  bool
 		Fragment uint
-	}
+	} `json:"hls"`
 }
 
 type VHosts struct {
@@ -143,20 +143,20 @@ type Stream struct {
 	Publish struct {
 		Active bool
 		CID    string
-	}
+	} `json:"publish"`
 	Video struct {
 		Codec   string
 		Profile string
 		Level   string
 		Width   uint
 		Height  uint
-	}
+	} `json:"video"`
 	Audio struct {
 		Codec      string
 		SampleRate uint `json:"sample_rate"`
 		Channel    uint
 		Profile    string
-	}
+	} `json:"audio"`
 }
 
 type Streams struct {

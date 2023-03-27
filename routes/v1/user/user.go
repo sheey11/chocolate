@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sheey11/chocolate/common"
-	"github.com/sheey11/chocolate/errors"
+	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/middleware"
 	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
@@ -19,6 +19,11 @@ func mountUserRoutes(r *gin.RouterGroup) {
 
 func handleMe(c *gin.Context) {
 	user := service.GetUserFromContext(c)
+	if user == nil {
+		c.Abort()
+		c.JSON(http.StatusInternalServerError, common.SampleResponse(cerrors.RequestInternalServerError, "internal server error"))
+		return
+	}
 	session := service.GetSessionFromContext(c)
 	c.JSON(http.StatusOK, common.Response{
 		"code":           0,
@@ -36,14 +41,15 @@ func handleInfoLookup(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id < 0 {
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad id given"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestInvalidParameter, "bad id given"))
 		c.Abort()
 		return
 	}
 
+	// FIXME: -- not preloaded label
 	user := models.GetUserByID(uint(id))
 	if user == nil {
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUserNotFound, "the given user is not exist"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestUserNotFound, "the given user is not exist"))
 		c.Abort()
 		return
 	}

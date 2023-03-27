@@ -5,7 +5,7 @@ import (
 )
 
 func Mount(r *gin.RouterGroup) {
-	r.Group("rooms")
-	mountRoomsRoutes(r)
-	mountChatRoutes(r)
+	rooms := r.Group("rooms")
+	mountChatRoutes(rooms)
+	mountRoomsRoutes(rooms)
 }

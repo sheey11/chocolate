@@ -53,7 +53,7 @@ func CheckRoleExists(roles []string, tx *gorm.DB) ([]string, cerrors.ChocolateEr
 func GetRoleByName(name string) (*Role, cerrors.ChocolateError) {
 	var result Role
 
-	c := db.First(&result, name)
+	c := db.First(&result, "name = ?", name)
 	if c.Error != nil {
 		if errors.Is(c.Error, gorm.ErrRecordNotFound) {
 			return nil, cerrors.RequestError{

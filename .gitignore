@@ -1,3 +1,4 @@
 logs/
 web/public/
 node_modules/
+deploy/jwt-key/

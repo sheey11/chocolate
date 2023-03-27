@@ -1,11 +1,13 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/sheey11/chocolate/chat"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/models"
+	"github.com/sirupsen/logrus"
 )
 
 func CheckRoomStreamPermission(roomId uint, params string) bool {
@@ -14,7 +16,7 @@ func CheckRoomStreamPermission(roomId uint, params string) bool {
 		return false
 	}
 	key := room.GetStreamKey()
-	return params == key
+	return fmt.Sprintf("%d%s", roomId, params) == key
 }
 
 func GetRoomByUID(uid string) (*models.Room, cerrors.ChocolateError) {
@@ -28,11 +30,11 @@ func GetRoomByUID(uid string) (*models.Room, cerrors.ChocolateError) {
 }
 
 func GetRoomByID(id uint) (*models.Room, cerrors.ChocolateError) {
-	return models.GetRoomByID(id, []string{"permission_items"})
+	return models.GetRoomByID(id, []string{"PermissionItems"})
 }
 
 func GetRoomByIDWithDetail(id uint) (*models.Room, cerrors.ChocolateError) {
-	return models.GetRoomByID(id, []string{"owner", "permission_items"})
+	return models.GetRoomByID(id, []string{"Owner", "PermissionItems"})
 }
 
 // this method also generates push key before setting
@@ -46,6 +48,14 @@ func SetRoomStartStreaming(id uint) cerrors.ChocolateError {
 }
 
 func SetRoomStopStreaming(id uint) cerrors.ChocolateError {
+	room, err := models.GetRoomByID(id, []string{"permission_items"})
+	if err != nil {
+		return err
+	}
+	err = CutOffStream(room, 0)
+	if err != nil {
+		return err
+	}
 	return models.SetRoomStatus(id, models.RoomStatusIdle)
 }
 
@@ -106,7 +116,7 @@ func CreateRoomForUser(user *models.User, title string) (*models.Room, cerrors.C
 	count, err := user.GetAfflicateRoomCount()
 	if err != nil {
 		return nil, err
-	} else if count >= user.MaxRoomCount {
+	} else if count >= user.MaxRoomCount && user.RoleName != "administrator" { // TODO: use Role.ManageRooms instead of user.RoleName
 		return nil, cerrors.RequestError{
 			ID:      cerrors.RequestRoomCountReachedMax,
 			Message: "you have created max room allowed",
@@ -117,7 +127,7 @@ func CreateRoomForUser(user *models.User, title string) (*models.Room, cerrors.C
 }
 
 // includes owner
-func ListRooms(status *models.RoomStatus, search string) ([]*models.Room, cerrors.ChocolateError) {
+func ListRooms(owner *models.User, status *models.RoomStatus, search string, limit uint, page uint) ([]*models.Room, cerrors.ChocolateError) {
 	var filterId *uint = nil
 	var filterTitle *string = nil
 	if search != "" {
@@ -129,7 +139,7 @@ func ListRooms(status *models.RoomStatus, search string) ([]*models.Room, cerror
 		}
 	}
 
-	return models.ListRooms(status, filterId, filterTitle)
+	return models.ListRooms(owner, status, filterId, filterTitle, limit, page)
 }
 
 func CutOffStream(room *models.Room, operator uint) cerrors.ChocolateError {
@@ -156,4 +166,27 @@ func IncreaseRoomViewer(roomid uint) cerrors.ChocolateError {
 }
 func DecreaseRoomViewer(roomid uint) cerrors.ChocolateError {
 	return models.DecreaseRoomViewer(roomid)
+}
+
+func IsUserAllowedForRoom(room *models.Room, user *models.User) bool {
+	if room == nil {
+		err := cerrors.LogicError{
+			ID:         cerrors.LogicNilReference,
+			Message:    "you have passed a nil room argument to service.IsUserForbiddenForRoom, check your code",
+			StackTrace: cerrors.GetStackTrace(),
+		}
+		logrus.WithError(err).Error("nil reference detected")
+		return false
+	}
+	return models.IsUserAllowedForRoom(room, user)
+}
+
+func ModifyRoomTitle(roomid uint, title string) cerrors.ChocolateError {
+	if len(title) > 32 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestRoomTitleTooLong,
+			Message: "title is too long",
+		}
+	}
+	return models.ModifyRoomTitle(roomid, title)
 }

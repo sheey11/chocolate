@@ -88,7 +88,7 @@ func generateRoomPushKey() string {
 
 func GenerateRoomPushKeyForRoom(id uint) cerrors.ChocolateError {
 	key := generateRoomPushKey()
-	c := db.Model(&Room{}).Update("push_key", key)
+	c := db.Model(&Room{}).Where("id = ?", id).Update("push_key", key)
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseUpdareRoomPushKeyError,
@@ -139,7 +139,7 @@ func GetRoomByID(id uint, preloads []string) (*Room, cerrors.ChocolateError) {
 	statement := db
 	if len(preloads) > 0 {
 		for _, preload := range preloads {
-			statement.Preload(preload)
+			statement = statement.Preload(preload)
 		}
 	}
 
@@ -224,9 +224,9 @@ func AddRoomPermissionItem_Label(id uint, label string) cerrors.ChocolateError {
 	item := PermissionItem{
 		RoomID:           id,
 		SubjectType:      PermissionSubjectTypeLabel,
-		SubjectLabelName: label,
+		SubjectLabelName: &label,
 	}
-	if tx := db.Save(item); tx.Error != nil {
+	if tx := db.Save(&item); tx.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreatePermissionItemError,
 			Message:    "error on creating room permissions",
@@ -269,9 +269,9 @@ func AddRoomPermissionItem_User(id uint, uid uint) cerrors.ChocolateError {
 	item := PermissionItem{
 		RoomID:        id,
 		SubjectType:   PermissionSubjectTypeUser,
-		SubjectUserID: uid,
+		SubjectUserID: &uid,
 	}
-	if tx := db.Save(item); tx.Error != nil {
+	if tx := db.Save(&item); tx.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreatePermissionItemError,
 			Message:    "error on creating room permissions",
@@ -311,7 +311,7 @@ func DeleteRoomPermissionItem_Label(id uint, label string) cerrors.ChocolateErro
 			Message: "permission item not exists",
 		}
 	}
-	c = db.Model(&PermissionItem{}).Delete("room_id = ? and subject_label_name = ?", id, label)
+	c = db.Delete(&PermissionItem{}, "room_id = ? and subject_label_name = ?", id, label)
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreatePermissionItemError,
@@ -353,7 +353,7 @@ func DeleteRoomPermissionItem_User(id uint, uid uint) cerrors.ChocolateError {
 		}
 	}
 
-	c = db.Model(&PermissionItem{}).Delete("room_id = ? and subject_user_id = ?", id, uid)
+	c = db.Delete(&PermissionItem{}, "room_id = ? and subject_user_id = ?", id, uid)
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreatePermissionItemError,
@@ -371,7 +371,7 @@ func DeleteRoomPermissionItem_User(id uint, uid uint) cerrors.ChocolateError {
 }
 
 func SetRoomStatus(id uint, status RoomStatus) cerrors.ChocolateError {
-	c := db.Model(&Room{}).Update("status", status)
+	c := db.Model(&Room{}).Where("id = ?", id).Update("status", status)
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseUpdateRoomStatusError,
@@ -398,7 +398,7 @@ func CreateRoomForUser(user *User, title string) (*Room, cerrors.ChocolateError)
 		OwnerID: user.ID,
 	}
 
-	c := db.Create(room)
+	c := db.Create(&room)
 	if c.Error != nil {
 		return nil, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreateRoomError,
@@ -429,7 +429,7 @@ func IncreaseRoomViewer(id uint) cerrors.ChocolateError {
 }
 
 func DecreaseRoomViewer(id uint) cerrors.ChocolateError {
-	c := db.Model(&Room{}).Where("id = ?", id).Update("viewers", gorm.Expr("MAX(viewers - ?, ?)", 1, 0))
+	c := db.Model(&Room{}).Where("id = ?", id).Update("viewers", gorm.Expr("GREATEST(viewers - ?, ?)", 1, 0))
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseDecreaseRoomViewersError,
@@ -446,26 +446,46 @@ func DecreaseRoomViewer(id uint) cerrors.ChocolateError {
 }
 
 // includes owner
-func ListRooms(status *RoomStatus, filterId *uint, filterTitle *string) ([]*Room, cerrors.ChocolateError) {
-	statement := db.Model(&Room{}).Preload("owner")
+func ListRooms(owner *User, status *RoomStatus, filterId *uint, filterTitle *string, limit uint, page uint) (uint, []*Room, cerrors.ChocolateError) {
+	statement := db.Model(&Room{}).Preload("Owner")
+	if owner != nil {
+		statement = statement.Where("owner_id = ?", owner.ID)
+	}
 	if status != nil {
-		statement.Where("status = ?", *status)
+		statement = statement.Where("status = ?", *status)
 	}
 	if filterTitle != nil {
-		statement.Where("title like ?", fmt.Sprintf("%%%s%%", *filterTitle))
+		statement = statement.Where("title like ?", fmt.Sprintf("%%%s%%", *filterTitle))
 	}
-	if filterId != nil {
+	if filterId != nil && page == 1 {
 		statement = db.Raw(
 			"? UNION ?",
-			db.Model(&Room{}).Preload("owner").Where("id = ? OR owner_id = ?", *filterId, *filterId),
+			db.Model(&Room{}).Preload("Owner").Where("id = ? OR owner_id = ?", *filterId, *filterId),
 			statement,
 		)
 	}
 
+	var count int64
+	c := statement.Count(&count)
+	if c != nil {
+		return 0, nil, cerrors.DatabaseError{
+			ID:         cerrors.DatabaseListRoomsError,
+			Message:    "error on counting qualified rooms",
+			InnerError: c.Error,
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+			Context: map[string]interface{}{
+				"status_filter": status,
+				"id_filter":     filterId,
+				"title_filter":  filterTitle,
+			},
+		}
+	}
+
 	var result []*Room
-	c := statement.Find(&result)
+	c = statement.Limit(int(limit)).Offset(int((page - 1) * limit)).Find(&result)
 	if c.Error != nil {
-		return nil, cerrors.DatabaseError{
+		return 0, nil, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseClearRoomPermissionItemError,
 			Message:    "error on listing rooms",
 			InnerError: c.Error,
@@ -478,11 +498,11 @@ func ListRooms(status *RoomStatus, filterId *uint, filterTitle *string) ([]*Room
 			},
 		}
 	}
-	return result, nil
+	return uint(count), result, nil
 }
 
 func DeleteRoom(roomid uint) cerrors.ChocolateError {
-	c := db.Model(&Room{}).Delete(roomid)
+	c := db.Delete(&Room{}, roomid)
 	if c.Error != nil {
 		if errors.Is(c.Error, gorm.ErrRecordNotFound) {
 			return cerrors.RequestError{
@@ -491,8 +511,37 @@ func DeleteRoom(roomid uint) cerrors.ChocolateError {
 			}
 		} else {
 			return cerrors.DatabaseError{
-				ID:         cerrors.DatabaseDeleteUserError,
+				ID:         cerrors.DatabaseDeleteRoomError,
 				Message:    "error deleting room",
+				InnerError: c.Error,
+				Sql:        c.Statement.SQL.String(),
+				StackTrace: cerrors.GetStackTrace(),
+				Context: map[string]interface{}{
+					"room_id": roomid,
+				},
+			}
+		}
+	} else if c.RowsAffected == 0 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestRoomNotFound,
+			Message: "the room requested is not found",
+		}
+	}
+	return nil
+}
+
+func ModifyRoomTitle(roomid uint, title string) cerrors.ChocolateError {
+	c := db.Model(&Room{}).Where("id = ?", roomid).Update("title", title)
+	if c.Error != nil {
+		if errors.Is(c.Error, gorm.ErrRecordNotFound) {
+			return cerrors.RequestError{
+				ID:      cerrors.RequestRoomNotFound,
+				Message: "the room requested is not found",
+			}
+		} else {
+			return cerrors.DatabaseError{
+				ID:         cerrors.DatabaseUpdateRoomTitleError,
+				Message:    "error updating room title",
 				InnerError: c.Error,
 				Sql:        c.Statement.SQL.String(),
 				StackTrace: cerrors.GetStackTrace(),
