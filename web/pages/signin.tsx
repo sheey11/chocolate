@@ -4,27 +4,37 @@ import { useRouter } from 'next/router'
 import { localize } from '@/i18n/i18n'
 import Button from '@/components/Button/Button'
 
-import { LanguageSwitcher } from "@/components/LanguageSwticher/LanguageSwitcher"
-
-type LoginInfo = {
-  username: string,
-  password: string
-}
+import { Footer } from '@/components/Footer/Footer'
+import { AuthContext } from '@/contexts/AuthContext'
 
 export default function Login() {
   const router = useRouter()
   const lang = router.locale!
 
   const [errMsg, setErrMsg] = React.useState('');
-  const [loginErr, setLoginErr] = React.useState(false);
 
-  const handleSubmit = (data: LoginInfo) => {
-    console.log(data)
+  const [username, setUsername] = React.useState('')
+  const [password, setPassword] = React.useState('')
+
+  const { signin } = React.useContext(AuthContext)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    signin(username, password)
+      .then((response) => {
+        console.log(response)
+        // TODO
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+    return false
   }
 
   return (
     <>
-      <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="flex min-h-[calc(100vh-7.5rem)] flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <img
             className="mx-auto h-12 w-auto"
@@ -39,7 +49,7 @@ export default function Login() {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            <form className="space-y-6" action="#" method="POST">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="username-field" className="block text-sm font-medium text-gray-700">
                   {localize(lang, 'username')}
@@ -51,6 +61,8 @@ export default function Login() {
                     type="text"
                     autoComplete="username"
                     required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="block w-full appearance-none rounded border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none focus:ring focus:ring-blue-300 sm:text-sm transition ease duration-200"
                   />
                 </div>
@@ -67,6 +79,8 @@ export default function Login() {
                     type="password"
                     autoComplete="current-password"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="block w-full appearance-none rounded border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:ring focus:ring-blue-300 sm:text-sm transition ease duration-200"
                   />
                 </div>
@@ -154,12 +168,10 @@ export default function Login() {
                 </div>
               </div>
             </div>
-            <div className='mt-8'>
-              <LanguageSwitcher/>
-            </div>
           </div>
         </div>
       </div>
+      <Footer />
     </>
   )
 }

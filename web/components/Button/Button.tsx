@@ -63,7 +63,7 @@ export default function Button({ type = "primary", children, onClick, size, disa
     return (
         <button
             type={ submit ? "submit" : "button" }
-            className={`${colorClass} ${sizeClass} ${disabledClass} ${widthClass} ${shadow ? "shadow-sm hover:shadow" : "" } py-1 rounded transition duration-300 ease select-none drop-shadow-sm focus:ring ${ringClass} ${className}`}
+            className={`${colorClass} ${sizeClass} ${disabledClass} ${widthClass} ${shadow ? "shadow-sm hover:shadow" : "" } py-1 rounded transition duration-300 ease select-none drop-shadow-sm focus:outline-none focus:ring ${ringClass} ${className}`}
             onClick={handleClick}
             disabled={disabled}
             aria-disabled={disabled}

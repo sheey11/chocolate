@@ -45,17 +45,22 @@ const socialLinks = [
     },
 ]
 
-export function Footer() {
+interface FooterProps {
+    padding?: boolean
+    background?: boolean
+}
+
+export function Footer({ padding = true, background = true }: FooterProps) {
     return (
         <div className="w-full bg-white text-slate-500">
-            <div className="p-10 mx-auto max-w-7xl sm:px-4 lg:px-8 w-full h-full bg-white flex flex-row justify-between items-center">
+            <div className={`p-10 mx-auto ${padding ? "max-w-7xl sm:px-4 lg:px-8" : "px-8" } w-full h-full bg-white flex sm:flex-col-reverse md:flex-row justify-between items-center`}>
                 <div className={`text-xs select-none ${inter.className}`}>
                     <span>{"© "}</span>
                     <span> { new Date().getFullYear() } </span>
                     <span>sheey. All rights reserved.</span>
                 </div>
                 <div className="flex flex-row items-center space-x-4">
-                    <LanguageSwitcher outline={false} position="top" />
+                    <LanguageSwitcher outline={false} position="top" background={background} />
                     {socialLinks.map((link) => (
                         <a key={link.name} href={link.link} target="_blank" title={link.name} className={`${link.hover} transition duration-300`}>
                             { link.icon }

@@ -367,8 +367,8 @@ func ModifyUserMaxRoom(username string, count uint) cerrors.ChocolateError {
 	return models.ModifyUserMaxRoom(username, count)
 }
 
-func ListUsers(search string, roleSearch string, limit uint, page uint) ([]*models.User, cerrors.ChocolateError) {
-	var role *models.Role
+func ListUsers(search string, roleSearch string, limit uint, page uint) (uint, []*models.User, cerrors.ChocolateError) {
+	var role *models.Role = nil
 	if roleSearch != "" {
 		role, _ = GetRoleByName(roleSearch)
 	}
@@ -388,5 +388,5 @@ func ListUsers(search string, roleSearch string, limit uint, page uint) ([]*mode
 }
 
 func GetUserByUsername(username string) (*models.User, cerrors.ChocolateError) {
-	return GetUserByUsername(username)
+	return models.GetUserByName(username, nil)
 }

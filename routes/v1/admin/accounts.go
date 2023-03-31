@@ -120,7 +120,7 @@ func handleAccountList(c *gin.Context) {
 		}
 	}
 
-	users, err := service.ListUsers(search, role, uint(limit), uint(page))
+	total, users, err := service.ListUsers(search, role, uint(limit), uint(page))
 	if err != nil {
 		if rerr, ok := err.(cerrors.RequestError); ok {
 			c.Abort()
@@ -135,26 +135,32 @@ func handleAccountList(c *gin.Context) {
 	}
 
 	type userAdminListInfo struct {
-		Role     string   `json:"role"`
-		Labels   []string `json:"labels"`
-		Username string   `json:"username"`
-		MaxRoom  uint     `json:"max_rooms"`
+		ID         uint     `json:"id"`
+		Role       string   `json:"role"`
+		Labels     []string `json:"labels"`
+		Username   string   `json:"username"`
+		MaxRoom    uint     `json:"max_rooms"`
+		OwnedRooms uint     `json:"owned_rooms"`
 	}
 
 	result := lo.Map(users, func(user *models.User, _ int) userAdminListInfo {
+		roomCount, _ := user.GetAfflicateRoomCount()
 		return userAdminListInfo{
 			Labels: lo.Map(user.Labels, func(l models.Label, _ int) string {
 				return l.Name
 			}),
-			Role:     user.RoleName,
-			Username: user.Username,
-			MaxRoom:  user.MaxRoomCount,
+			ID:         user.ID,
+			Role:       user.RoleName,
+			Username:   user.Username,
+			MaxRoom:    user.MaxRoomCount,
+			OwnedRooms: roomCount,
 		}
 	})
 
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",
+		"total":   total,
 		"users":   result,
 	})
 }
@@ -212,10 +218,11 @@ func handleAccountInfoLookup(c *gin.Context) {
 	}
 
 	type userAdminInfo struct {
-		Role     string   `json:"role"`
-		Username string   `json:"username"`
-		Labels   []string `json:"labels"`
-		MaxRoom  uint     `json:"max_rooms"`
+		Role     string                   `json:"role"`
+		Username string                   `json:"username"`
+		Labels   []string                 `json:"labels"`
+		MaxRoom  uint                     `json:"max_rooms"`
+		Rooms    []map[string]interface{} `json:"rooms"`
 	}
 
 	info := userAdminInfo{
@@ -225,6 +232,7 @@ func handleAccountInfoLookup(c *gin.Context) {
 			return l.Name
 		}),
 		MaxRoom: user.MaxRoomCount,
+		Rooms:   user.SummaryRooms(true),
 	}
 
 	c.JSON(http.StatusOK, common.Response{

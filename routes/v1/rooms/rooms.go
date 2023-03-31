@@ -191,7 +191,7 @@ func handleListRooms(c *gin.Context) {
 			}
 		}
 	}
-	rooms, err := service.ListRooms(user, statusFilter, search, uint(limit), uint(page))
+	total, rooms, err := service.ListRooms(user, statusFilter, search, uint(limit), uint(page))
 	if err != nil {
 		if rerr, ok := err.(cerrors.RequestError); ok {
 			c.Abort()
@@ -228,6 +228,7 @@ func handleListRooms(c *gin.Context) {
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",
+		"total":   total,
 		"rooms":   result,
 	})
 }

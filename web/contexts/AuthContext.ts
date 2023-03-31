@@ -1,18 +1,18 @@
 import { createContext } from "react";
-import { AuthResult } from "@/api/v1/account"
 import { User } from "@/hooks/useAuth";
+import { AuthResponse } from "@/api/v1/account";
 
 interface AuthContext {
     authenticated: boolean,
     getUser: () => User | null,
-    login: (username: string, password: string) => Promise<AuthResult>,
-    logout: () => void,
+    signin: (username: string, password: string) => Promise<AuthResponse>,
+    signout: () => void,
 }
 
 export const AuthContext = createContext<AuthContext>({
     authenticated: false,
     getUser: () => null,
-    login: (username: string, password: string) => { return new Promise((r) => r({ ok: false, user: null, accessToken: "" })) },
-    logout: () => {},
+    signin: (_: string, __: string) => { return new Promise((_, reject) => reject("not implemented")) },
+    signout: () => {},
 })
 

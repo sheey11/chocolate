@@ -128,22 +128,28 @@ func GetUserByName(username string, tx *gorm.DB) (*User, cerrors.ChocolateError)
 
 func GetUserByID(id uint) *User {
 	user := User{}
-	tx := db.Joins("Role").Preload("Rooms").First(&user, id)
+	tx := db.Joins("Role").Preload("Labels").Preload("Rooms").First(&user, id)
 	if tx.Error != nil {
 		return nil
 	}
 	return &user
 }
 
-func (u *User) SummaryRooms() []map[string]interface{} {
+func (u *User) SummaryRooms(includePermType bool) []map[string]interface{} {
 	if u.Rooms == nil {
 		logrus.Fatalf("no room preloaded")
 	}
 	result := make([]map[string]interface{}, len(u.Rooms))
 	for i, room := range u.Rooms {
 		result[i] = map[string]interface{}{
-			"id":    room.ID,
-			"title": room.Title,
+			"id":      room.ID,
+			"uid":     room.UID,
+			"title":   room.Title,
+			"status":  room.Status.ToString(),
+			"viewers": room.Viewers,
+		}
+		if includePermType {
+			result[i]["permission_type"] = room.PermissionType
 		}
 	}
 	return result
@@ -276,7 +282,7 @@ func AddLabelToUser(username, label string) cerrors.ChocolateError {
 			Name: label,
 		}
 		c := db.Create(&label)
-		if c != nil {
+		if c.Error != nil {
 			return cerrors.DatabaseError{
 				ID:         cerrors.DatabaseCreateLabelError,
 				Message:    "error creating new label",
@@ -377,10 +383,10 @@ func ModifyUserMaxRoom(username string, maxRooms uint) cerrors.ChocolateError {
 }
 
 // including labesl
-func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint, page uint) ([]*User, cerrors.ChocolateError) {
+func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint, page uint) (uint, []*User, cerrors.ChocolateError) {
 	statement := db.Model(&User{}).Preload("Labels").Limit(int(limit)).Offset(int((page - 1) * limit))
 	if filterRole != nil {
-		statement = statement.Where("role = ?", filterRole.Name)
+		statement = statement.Where("role_name = ?", filterRole.Name)
 	}
 	if filterName != nil {
 		statement = statement.Where("username like ?", fmt.Sprintf("%%%s%%", *filterName))
@@ -388,22 +394,22 @@ func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint,
 	if filterId != nil {
 		statement = db.Raw(
 			"? UNION ?",
-			db.Model(&User{}).Preload("Labels").Where("id = ?", *filterId, *filterId),
+			db.Model(&User{}).Preload("Labels").Where("id = ?", *filterId),
 			statement,
 		)
 	}
 
 	var count int64
-	c := statement.Count(&count)
-	if c != nil {
-		return nil, cerrors.DatabaseError{
+	c := db.Table("(?) as foo", statement).Select("COUNT(*)").Scan(&count)
+	if c.Error != nil {
+		return 0, nil, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseListAccountsError,
 			Message:    "error on counting qualified users",
 			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{
-				"role_filter": lo.If(filterRole == nil, "nil").Else(filterRole.Name),
+				"role_filter": lo.If(filterRole == nil, "nil").ElseF(func() string { return filterRole.Name }),
 				"id_filter":   filterId,
 				"name_filter": filterName,
 			},
@@ -413,18 +419,18 @@ func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint,
 	var result []*User
 	c = statement.Find(&result)
 	if c.Error != nil {
-		return nil, cerrors.DatabaseError{
+		return 0, nil, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseListAccountsError,
 			Message:    "error on listing users",
 			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{
-				"role_filter": lo.If(filterRole == nil, "nil").Else(filterRole.Name),
+				"role_filter": lo.If(filterRole == nil, "nil").ElseF(func() string { return filterRole.Name }),
 				"id_filter":   filterId,
 				"name_filter": filterName,
 			},
 		}
 	}
-	return result, nil
+	return uint(count), result, nil
 }

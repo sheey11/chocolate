@@ -46,7 +46,7 @@ func IsUserAllowedForRoom(room *Room, user *User) bool {
 				Context: map[string]interface{}{
 					"room_permission_type": room.PermissionType,
 					"room_id":              room,
-					"user_id":              lo.If(user == nil, 0).Else(int(user.ID)),
+					"user_id":              lo.If(user == nil, 0).ElseF(func() int { return int(user.ID) }),
 				},
 			}
 			logrus.WithError(err).Error("error when check user watching room permission")
@@ -82,7 +82,7 @@ func IsUserAllowedForRoom(room *Room, user *User) bool {
 				Context: map[string]interface{}{
 					"room_permission_type": room.PermissionType,
 					"room_id":              room,
-					"user_id":              lo.If(user == nil, 0).Else(int(user.ID)),
+					"user_id":              lo.If(user == nil, 0).ElseF(func() int { return int(user.ID) }),
 				},
 			}
 			logrus.WithError(err).Error("error when check user watching room permission")
@@ -109,7 +109,7 @@ func IsUserAllowedForRoom(room *Room, user *User) bool {
 				Context: map[string]interface{}{
 					"room_permission_type": room.PermissionType,
 					"room_id":              room,
-					"user_id":              lo.If(user == nil, 0).Else(int(user.ID)),
+					"user_id":              lo.If(user == nil, 0).ElseF(func() int { return int(user.ID) }),
 				},
 			}
 			logrus.WithError(err).Error("error when check user watching room permission")
@@ -145,7 +145,7 @@ func IsUserAllowedForRoom(room *Room, user *User) bool {
 				Context: map[string]interface{}{
 					"room_permission_type": room.PermissionType,
 					"room_id":              room,
-					"user_id":              lo.If(user == nil, 0).Else(int(user.ID)),
+					"user_id":              lo.If(user == nil, 0).ElseF(func() int { return int(user.ID) }),
 				},
 			}
 			logrus.WithError(err).Error("error when check user watching room permission")

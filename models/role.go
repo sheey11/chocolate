@@ -18,7 +18,7 @@ type Role struct {
 
 func ListRoles() ([]*Role, cerrors.ChocolateError) {
 	var roles []*Role
-	if err := db.Find(roles).Error; err == nil {
+	if err := db.Find(&roles).Error; err == nil {
 		return roles, nil
 	} else {
 		return roles, cerrors.DatabaseError{

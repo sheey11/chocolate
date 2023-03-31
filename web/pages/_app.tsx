@@ -14,11 +14,11 @@ const firaMono = Fira_Code({
 })
 
 export default function App({ Component, pageProps }: AppProps) {
-  const { authenticated, getUser, login, logout } = useAuth()
+  const { authenticated, getUser, signin, signout } = useAuth()
 
   return (
     <div className={`${inter.className} ${firaMono.variable}`}>
-      <AuthContext.Provider value={{ authenticated, getUser, login, logout }}>
+      <AuthContext.Provider value={{ authenticated, getUser, signin, signout }}>
         <Component {...pageProps} />
       </AuthContext.Provider>
     </div>

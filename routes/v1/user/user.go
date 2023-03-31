@@ -2,9 +2,9 @@ package user
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"github.com/sheey11/chocolate/common"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/middleware"
@@ -14,7 +14,7 @@ import (
 
 func mountUserRoutes(r *gin.RouterGroup) {
 	r.GET("/me", middleware.AuthRequired(), handleMe)
-	r.GET("/:id", handleInfoLookup)
+	r.GET("/:username", handleInfoLookup)
 }
 
 func handleMe(c *gin.Context) {
@@ -28,36 +28,43 @@ func handleMe(c *gin.Context) {
 	c.JSON(http.StatusOK, common.Response{
 		"code":           0,
 		"message":        "ok",
+		"id":             user.ID,
 		"username":       user.Username,
 		"role":           user.Role.Name,
 		"session_expire": session.ValidUntil,
-		"labels":         user.Labels,
+		"labels":         lo.Map(user.Labels, func(label models.Label, _ int) string { return label.Name }),
 		"max_rooms":      user.MaxRoomCount,
-		"rooms":          user.SummaryRooms(),
+		"rooms":          user.SummaryRooms(true),
 	})
 }
 
 func handleInfoLookup(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil || id < 0 {
-		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestInvalidParameter, "bad id given"))
+	username := c.Param("username")
+	if username == "" {
+		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestInvalidParameter, "invalid username"))
 		c.Abort()
 		return
 	}
 
-	// FIXME: -- not preloaded label
-	user := models.GetUserByID(uint(id))
-	if user == nil {
-		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestUserNotFound, "the given user is not exist"))
-		c.Abort()
-		return
+	user, err := service.GetUserByUsername(username)
+	if err != nil {
+		if rerr, ok := err.(cerrors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			c.JSON(http.StatusBadRequest, err.ToResponse())
+			c.Abort()
+			return
+		}
 	}
 	c.JSON(http.StatusOK, common.Response{
 		"code":     0,
 		"message":  "ok",
+		"id":       user.ID,
 		"username": user.Username,
 		"role":     user.Role.Name,
 		"labels":   user.Labels,
+		"rooms":    user.SummaryRooms(false),
 	})
 }

@@ -48,5 +48,10 @@
   "room_stream_preview": "Preview",
   "room_timeline": "Timeline",
   
+  "play": "Play",
+  "pause": "Pause",
+  "reload": "Reload",
+  "fullscreen": "Fullscreen",
+
   "only_a_palceholder": "placeholder"
 }

@@ -26,6 +26,10 @@ func handleLogsRetrieval(c *gin.Context) {
 	before := c.Query("before")
 	after := c.Query("after")
 
+	if filters == "" {
+		filters = "0,1,2,3,4"
+	}
+
 	types := strings.Split(filters, ",")
 	allowedTypes := make([]models.LogType, len(types))
 	for i, t := range types {
@@ -38,11 +42,15 @@ func handleLogsRetrieval(c *gin.Context) {
 		}
 	}
 
+	if limit == "" {
+		limit = "20"
+	}
+
 	limitInt, err := strconv.Atoi(limit)
-	if err != nil || limitInt <= 0 {
+	if err != nil || limitInt <= 0 || limitInt > 100 {
 		if err != nil {
 			c.Abort()
-			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidLogFilter, "bad filter format"))
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidLogFilter, "invalid limit format or invalid range"))
 			return
 		}
 	}

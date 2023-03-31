@@ -127,7 +127,7 @@ func CreateRoomForUser(user *models.User, title string) (*models.Room, cerrors.C
 }
 
 // includes owner
-func ListRooms(owner *models.User, status *models.RoomStatus, search string, limit uint, page uint) ([]*models.Room, cerrors.ChocolateError) {
+func ListRooms(owner *models.User, status *models.RoomStatus, search string, limit uint, page uint) (uint, []*models.Room, cerrors.ChocolateError) {
 	var filterId *uint = nil
 	var filterTitle *string = nil
 	if search != "" {

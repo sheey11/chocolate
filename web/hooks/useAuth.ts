@@ -1,14 +1,13 @@
-import { api } from "@/api/api"
 import { useState } from "react"
 import { useLocalStorage } from "./useLocalStorage"
-import * as account from "@/api/v1/account"
+import * as accountApis from "@/api/v1/account"
 
 export interface User {
     username: string
     role: string,
     max_rooms: number,
     labels: string[],
-    session_expire: string,
+    session_expire: Date,
 }
 
 export const useAuth = () => {
@@ -28,13 +27,34 @@ export const useAuth = () => {
         setAuthenticated(false)
     }
 
-    const login = async (username: string, password: string) => {
-        return await account.login(username, password)
+    const signin = async (username: string, password: string): Promise<accountApis.AuthResponse> => {
+        return new Promise(async (resolve, reject) => {
+            accountApis.passwordAuth(username, password)
+                .then(async (response) => {
+                    setToken(response.jwt)
+
+                    debugger
+                    let info = await accountApis.fetchCurrentUserInfo()
+                    const user: User = {
+                        username:       info.username,
+                        role:           info.role,
+                        max_rooms:      info.max_rooms,
+                        labels:         info.labels,
+                        session_expire: info.session_expire,
+                    }
+                    set(user, response.jwt)
+                    resolve(response)
+                })
+                .catch((e) =>{
+                    remove()
+                    reject(e)
+                })
+        })
     }
 
-    const logout = () => {
-
+    const signout = () => {
+        remove()
     }
 
-    return { authenticated, getUser, login, logout }
+    return { authenticated, getUser, signin, signout }
 }

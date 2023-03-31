@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/sheey11/chocolate/errors"
@@ -24,7 +25,7 @@ const (
 type Log struct {
 	gorm.Model `json:"-"`
 	Type       LogType   `gorm:"not null;" json:"type"`
-	Subject    string    `gorm:"not null;" json:"subject"`
+	Subject    string    `gorm:"not null;" json:"subject"` // non-signed in user have string subject
 	Time       time.Time `gorm:"not null;" json:"time"`
 	Detail     string    `json:"detail"`
 }
@@ -101,7 +102,8 @@ func RetriveLogs(allowedTypes []LogType, limit int, before *time.Time, after *ti
 	clause := db.
 		Model(&Log{}).
 		Where("type in ?", allowedTypes).
-		Limit(limit)
+		Limit(limit).
+		Order("created_at DESC")
 
 	if before != nil {
 		clause.Where("time < ?", before)
@@ -133,14 +135,16 @@ func RetriveLogs(allowedTypes []LogType, limit int, before *time.Time, after *ti
 func RetriveLogsForRoom(roomid uint) ([]*Log, cerrors.ChocolateError) {
 	var result []*Log
 	c := db.
-		Where("subject = ?", roomid).
+		Where("subject = ?", strconv.FormatUint(uint64(roomid), 10)).
 		Where("type in ?", []LogType{LogTypePublish, LogTypeUnpublish, LogTypeCutOff}). // check here
+		Order("created_at DESC").
 		Limit(20).
 		Find(&result)
 	if c.Error != nil {
 		return nil, errors.DatabaseError{
 			ID:         errors.DatabaseLookupLogsError,
 			Message:    "error when lookup logs for specified room",
+			InnerError: c.Error,
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: errors.GetStackTrace(),
 			Context: map[string]interface{}{

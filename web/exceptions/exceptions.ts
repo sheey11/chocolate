@@ -15,24 +15,44 @@
 //   })
 // }
 // ```
-class RequestException extends Error {
+
+class ChocolateError extends Error {
+    type: string
+    constructor(message: string) {
+        super(message)
+        this.type = ""
+    }
+}
+
+class InternalServerError extends Error {
+    inner: any
+    constructor(inner: any) {
+        super("internal server error")
+        this.inner = inner
+    }
+}
+
+class RequestError<T> extends Error {
     code: number
     message: string
 
+    inner?: T
+
     handled: boolean
 
-    constructor(code: number, message: string) {
+    constructor(code: number, message: string, inner: T | undefined) {
         super(message)
         this.code = code
         this.message = message
         this.handled = false
+        this.inner = inner
     }
 
     isInternalServerError() {
         return false
     }
 
-    handle(code: number, callback: (e: RequestException) => void) {
+    handle(code: number, callback: (e: RequestError<T>) => void) {
         if(this.code == code) {
             this.handled = true
             callback(this)
@@ -40,11 +60,19 @@ class RequestException extends Error {
         return this
     }
 
-    other(callback: (e: RequestException) => void) {
+    other(callback: (e: RequestError<T>) => void) {
         if(!this.handled) {
             callback(this)
         }
     }
 }
 
-export { RequestException }
+class OtherError extends Error {
+    inner: any
+    constructor(inner: any) {
+        super("other error")
+        this.inner = inner
+    }
+}
+
+export { InternalServerError, RequestError }

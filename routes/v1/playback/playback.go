@@ -73,6 +73,10 @@ func handleHlsPlayback(c *gin.Context) {
 		proxy := httputil.NewSingleHostReverseProxy(remote)
 		proxy.ModifyResponse = func(r *http.Response) error {
 			r.Header.Del("Server")
+			r.Header.Del("Access-Control-Allow-Headers")
+			r.Header.Del("Access-Control-Allow-Methods")
+			r.Header.Del("Access-Control-Allow-Origin")
+			r.Header.Del("Access-Control-Expose-Headers")
 			return nil
 		}
 		proxy.Director = func(r *http.Request) {
@@ -136,6 +140,10 @@ func handleFlvPlayback(c *gin.Context) {
 		proxy := httputil.NewSingleHostReverseProxy(remote)
 		proxy.ModifyResponse = func(r *http.Response) error {
 			r.Header.Del("Server")
+			r.Header.Del("Access-Control-Allow-Headers")
+			r.Header.Del("Access-Control-Allow-Methods")
+			r.Header.Del("Access-Control-Allow-Origin")
+			r.Header.Del("Access-Control-Expose-Headers")
 			return nil
 		}
 		proxy.Director = func(r *http.Request) {

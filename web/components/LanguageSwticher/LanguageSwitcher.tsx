@@ -13,9 +13,10 @@ const notoEmoji = Noto_Color_Emoji({
 interface LSProps {
     outline?: boolean
     position?: "bottom" | "top", 
+    background?: boolean
 }
 
-export const LanguageSwitcher = ({ outline = true, position = "bottom" }: LSProps) => {
+export const LanguageSwitcher = ({ outline = true, position = "bottom", background = true }: LSProps) => {
     const router = useRouter()
     const { pathname, query } = router
     const { locale, locales } = router
@@ -33,7 +34,7 @@ export const LanguageSwitcher = ({ outline = true, position = "bottom" }: LSProp
         <>
             <Listbox value={ locale } onChange={ handleSelect }>
                 <div className="relative mt-1">
-                    <Listbox.Button className={`relative w-full min-w-[10rem] cursor-pointer rounded bg-white ${outline ? 'border shadow-sm' : '' } border-gray-300 py-2 pl-3 pr-10 text-left focus:outline-none focus:ring focus:ring-blue-300 transition duratin-200 sm:text-sm`}>
+                    <Listbox.Button className={`relative w-full min-w-[10rem] cursor-pointer rounded ${background ? "bg-white" : '' } ${outline ? 'border shadow-sm' : '' } border-gray-300 py-2 pl-3 pr-10 text-left focus:outline-none focus:ring focus:ring-blue-300 transition duratin-200 sm:text-sm`}>
                         <div className="block truncate">
                             <span className={notoEmoji.className + " mr-2"}>
                                 {languages[locale!].icon}

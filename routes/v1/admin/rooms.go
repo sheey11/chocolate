@@ -66,6 +66,10 @@ func handleListRooms(c *gin.Context) {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too large"))
 			return
+		} else if limit < 20 {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too small"))
+			return
 		}
 	}
 
@@ -84,7 +88,7 @@ func handleListRooms(c *gin.Context) {
 			}
 		}
 	}
-	rooms, err := service.ListRooms(nil, statusFilter, search, uint(limit), uint(page))
+	total, rooms, err := service.ListRooms(nil, statusFilter, search, uint(limit), uint(page))
 	if err != nil {
 		if rerr, ok := err.(cerrors.RequestError); ok {
 			c.Abort()
@@ -125,6 +129,7 @@ func handleListRooms(c *gin.Context) {
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",
+		"total":   total,
 		"rooms":   result,
 	})
 }

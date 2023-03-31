@@ -39,6 +39,9 @@ table tbody > tr > th:first-child {
 }
 
 .hover-show:hover .hover-show-subject , .hover-show:hover ~ .hover-show-subject, .hover-show-subject:hover {
-    display: block;
+    opacity: 1;
+}
+
+.video-wrapper:hover .controls, .controls:hover {
     opacity: 1;
 }

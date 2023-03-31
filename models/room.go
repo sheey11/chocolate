@@ -457,7 +457,7 @@ func ListRooms(owner *User, status *RoomStatus, filterId *uint, filterTitle *str
 	if filterTitle != nil {
 		statement = statement.Where("title like ?", fmt.Sprintf("%%%s%%", *filterTitle))
 	}
-	if filterId != nil && page == 1 {
+	if filterId != nil {
 		statement = db.Raw(
 			"? UNION ?",
 			db.Model(&Room{}).Preload("Owner").Where("id = ? OR owner_id = ?", *filterId, *filterId),
@@ -466,8 +466,8 @@ func ListRooms(owner *User, status *RoomStatus, filterId *uint, filterTitle *str
 	}
 
 	var count int64
-	c := statement.Count(&count)
-	if c != nil {
+	c := db.Table("(?) as foo", statement).Select("COUNT(*)").Scan(&count)
+	if c.Error != nil {
 		return 0, nil, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseListRoomsError,
 			Message:    "error on counting qualified rooms",
