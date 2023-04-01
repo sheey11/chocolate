@@ -1,33 +1,55 @@
 import React from 'react'
 
 import { useRouter } from 'next/router'
-import { localize } from '@/i18n/i18n'
+import { localize, localizeError } from '@/i18n/i18n'
 import Button from '@/components/Button/Button'
 
 import { Footer } from '@/components/Footer/Footer'
 import { AuthContext } from '@/contexts/AuthContext'
+import { ExclamationCircleIcon, HandRaisedIcon } from '@heroicons/react/24/solid'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 
 export default function Login() {
   const router = useRouter()
   const lang = router.locale!
 
   const [errMsg, setErrMsg] = React.useState('');
+  const [welcomeMsg, setWelcomeMsg] = React.useState('');
 
   const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
+  
+  const [loginSuccess, setLoginSuccess] = React.useState(false)
+  const [isSigninOnGoing, setIsSigninOnGoing] = React.useState(false)
 
   const { signin } = React.useContext(AuthContext)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSigninOnGoing(true)
 
     signin(username, password)
       .then((response) => {
-        console.log(response)
-        // TODO
+        setWelcomeMsg(response.username)
+        setErrMsg("")
+        setLoginSuccess(true)
+
+        let jump = "/"
+        if(response.role === "administrator") {
+          jump = "/dashboard/overview"
+        }
+        setTimeout(() => {
+          router.push(jump)
+        }, 1000)
       })
       .catch((error) => {
         console.error(error)
+        if (error.response) {
+          setErrMsg(localizeError(lang, error.response.data.code))
+        }
+      })
+      .finally(() => {
+        setIsSigninOnGoing(false)
       })
     return false
   }
@@ -49,6 +71,33 @@ export default function Login() {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+
+            {
+              errMsg != '' ? (
+                <div className='py-2 px-3 mb-4 rounded bg-red-500 text-white font-semibold flex items-center justify-between'>
+                  <div className="h-full flex items-center">
+                    <ExclamationCircleIcon className="h-4 w-4 mx-2 inline-block"/>
+                    { errMsg }
+                  </div>
+                  <button
+                    className="h-full rounded focus:outline-none focus:ring focus:ring-blue-100 transition duraion-200"
+                    onClick={() => setErrMsg('')}
+                  >
+                    <XMarkIcon className="h-4 w-4"/>
+                  </button>
+                </div> 
+              ) : <></>
+            }
+
+            {
+              welcomeMsg != '' ? (
+                <div className='py-2 px-3 mb-4 rounded bg-green-500 text-white font-semibold flex items-center'>
+                    <HandRaisedIcon className="h-4 w-4 ml-1 mr-2 rotate-[30deg] inline-block"/>
+                    { `${localize(lang, 'welcome_back')}${welcomeMsg}` }
+                </div> 
+              ) : <></>
+            }
+
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="username-field" className="block text-sm font-medium text-gray-700">
@@ -101,14 +150,25 @@ export default function Login() {
                 </div>
 
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+                  <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring focus:ring-blue-200">
                     {localize(lang, "forgot_password")}
                   </a>
                 </div>
               </div>
 
               <div>
-                <Button type="primary" size="large" fullWidth submit>{localize(lang, "signin")}</Button>
+                <Button disabled={loginSuccess || isSigninOnGoing} type="primary" size="large" fullWidth submit>
+                  { isSigninOnGoing ? (
+                    <svg className="animate-spin inline-block mx-2 -mt-1 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : <></>
+                  }
+                  <span>
+                    { localize(lang, "signin") }
+                  </span>
+                </Button>
               </div>
             </form>
 
@@ -118,7 +178,9 @@ export default function Login() {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                  <span className="bg-white px-2 text-gray-500">
+                    { localize(lang, "or_continue_with") }
+                  </span>
                 </div>
               </div>
 

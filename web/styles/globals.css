@@ -45,3 +45,30 @@ table tbody > tr > th:first-child {
 .video-wrapper:hover .controls, .controls:hover {
     opacity: 1;
 }
+
+.volume-wrapper input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.volume-wrapper input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    @apply bg-indigo-200;
+}
+
+.volume-wrapper input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    margin-top: -4px;
+    height: 12px;
+    width: 12px;
+    transition: ease-in-out 200ms;
+    @apply shadow-md;
+    @apply rounded-full;
+    @apply bg-indigo-200;
+}
+
+.volume-wrapper input[type="range"]:focus::-webkit-slider-thumb {
+    @apply ring;
+    @apply ring-blue-100/50;
+}

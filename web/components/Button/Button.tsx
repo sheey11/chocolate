@@ -47,7 +47,13 @@ export default function Button({ type = "primary", children, onClick, size, disa
 
     let disabledClass = ""
     if (disabled) {
-        disabledClass = style.disabled
+        if (type == "primary" || type == undefined) {
+            disabledClass = "hover:bg-indigo-500 hover:border-indigo-500 cursor-not-allowed"
+        } else if (type == "secondary") {
+            colorClass = "hover:bg-slate-200 hover:border-slate-200 cursor-not-allowed"
+        } else if (type == "destructive") {
+            colorClass = "hover:bg-red-500 hover:border-5ed-400 cursor-not-allowed"
+        }
     }
 
     let widthClass = ""

@@ -12,7 +12,7 @@ export interface User {
 
 export const useAuth = () => {
     const { getItem: getUser, setItem: setUser, removeItem: removeUser } = useLocalStorage<User>('user')
-    const { getItem: getToken, setItem: setToken, removeItem: removeToken} = useLocalStorage<string>('access_token')
+    const { setItem: setToken, removeItem: removeToken} = useLocalStorage<string>('access_token')
     const [authenticated, setAuthenticated] = useState(false)
 
     const set = (user: User, token: string) => {
@@ -33,7 +33,6 @@ export const useAuth = () => {
                 .then(async (response) => {
                     setToken(response.jwt)
 
-                    debugger
                     let info = await accountApis.fetchCurrentUserInfo()
                     const user: User = {
                         username:       info.username,

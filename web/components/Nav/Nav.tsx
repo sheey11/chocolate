@@ -7,6 +7,12 @@ import { Fragment } from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { LanguageSwitcher } from "../LanguageSwticher/LanguageSwitcher"
+import { Contrail_One } from "next/font/google"
+
+const sail = Contrail_One({
+    weight: "400",
+    subsets: ['latin'],
+})
 
 interface Navigation {
     i18n_key: string,
@@ -50,14 +56,16 @@ export const Nav = ({ navs, user }: NavProps) => {
                     <div className="mx-auto max-w-7xl px-2 sm:px-4 lg:divide-y lg:divide-gray-200 lg:px-8">
                         <div className="relative flex h-16 justify-between">
                             <div className="relative z-10 flex px-2 lg:px-0">
-                                <div className="flex flex-shrink-0 items-center">
+                                <Link className="flex flex-shrink-0 items-center" href="/">
                                     <img
                                         className="block h-8 w-auto"
                                         src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
                                         alt="Your Company"
                                     />
-                                    <span className="px-2 font-bold text-lg"> Chocolate </span>
-                                </div>
+                                    <span className={`px-2 text-xl pt-1 ${sail.className}`}>
+                                        Chocolate
+                                    </span>
+                                </Link>
                             </div>
                             <div className="relative z-10 flex items-center lg:hidden">
                                 {/* Mobile menu button */}
