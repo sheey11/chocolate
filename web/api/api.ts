@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 
 const getAccessToken = () => {
-    const str = localStorage.getItem('access_token')
+    const str = localStorage.getItem('access-token')
     if (str != null) {
         return JSON.parse(str)
     } else {
@@ -10,7 +10,7 @@ const getAccessToken = () => {
 }
 
 export const api = axios.create({
-    baseURL: "http://localhost", // only for debug
+    // baseURL: "http://localhost", // only for debug
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',

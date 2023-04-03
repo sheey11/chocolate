@@ -1,11 +1,13 @@
 import { Nav } from "@/components/Nav/Nav";
 import { Footer } from "@/components/Footer/Footer";
 import { AuthContext } from "@/contexts/AuthContext";
-import { useCallback, useContext, useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { useRouter } from "next/router";
-import Button from "@/components/Button/Button";
 import { localize } from "@/i18n/i18n";
-import { SpeakerWaveIcon, SpeakerXMarkIcon } from "@heroicons/react/24/solid";
+import { fetchRoomInfo } from "@/api/v1/room";
+import StreamVideoBox from "@/components/StreamVideoBox/StreamVideoBox";
+import ChatBox from "@/components/ChatBox/ChatBox";
+import RoomInfo from "@/components/RoomInfo/RoomInfo";
 
 const userNavs = [
   {
@@ -14,116 +16,75 @@ const userNavs = [
   },
 ]
 
+function classNames(...classes: string[]) {
+    return classes.filter(Boolean).join(' ')
+}
+
 export default function Room() {
   const auth = useContext(AuthContext)
   const user = auth.getUser()
   const router = useRouter()
   const lang = router.locale!
 
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const videoWrapperRef = useRef<HTMLDivElement | null>(null)
+  const id = router.query.id as string | undefined
 
-  const [volume, _setVolume] = useState(100)
+  const [theatherMode, setThreaterMode] = useState(false)
 
-  let player = useRef<any | null>(null)
+  const [playbackUrl, setPlaybackUrl] = useState<string | undefined>(undefined)
+  const [websocketUrl, setWebsocketUrl] = useState<string | undefined>(undefined)
 
-  const { id } = router.query
-  // http://localhost/api/v1/playback/1/flv
-  // TODO: Debug
-  // on production: remove "http://localhost" part
-  const playbackUrl = `http://localhost/api/v1/playback/${id}/flv`
-
-  const reloadVideo = useCallback(() => {
-    import("mpegts.js" ).then((Mpegts: any) => {
-      if (Mpegts.getFeatureList().mseLivePlayback) {
-        if(player.current != null)  {
-          player.current?.pause()
-          player.current?.unload()
-          player.current?.detachMediaElement()
-          player.current?.destroy()
-        }
-        
-        player.current = Mpegts.createPlayer({
-          type: "flv",
-          isLive: true,
-          url: playbackUrl,
-        })
-
-        player.current?.attachMediaElement(videoRef.current)
-        player.current?.load()
-        player.current?.play()
-      }
-    })
-  }, [playbackUrl])
+  const [invalidRoomId, setInvalidRoomId] = useState(false)
 
   useEffect(() => {
-    if (typeof window === 'undefined' || id === undefined) { return }
-    reloadVideo()
-  }, [id, playbackUrl, reloadVideo])
+    if (id === undefined) { return }
 
-  const handlePlay = () => {
-    player.current?.play()
-  }
-
-  const handlePause = () => {
-    player.current?.pause()
-  }
-
-  const toggleFullscreen = () => {
-    if (document.fullscreenElement === videoWrapperRef.current) {
-      document.exitFullscreen()
-    } else {
-      videoWrapperRef.current?.requestFullscreen()
+    if (isNaN(parseInt(id))) {
+      console.log("id", id)
+      setInvalidRoomId(true)
     }
-  }
 
-  const setVolume = (value: number) => {
-    if (videoRef.current != null) {
-      videoRef.current.volume = (value / 100)
-      _setVolume(value)
-    }
+    setPlaybackUrl(`/api/v1/playback/${id}/flv`)
+    setWebsocketUrl(`${window.location.protocol == "http:" ? "ws:" : "wss:"}//${window.location.host}/api/v1/rooms/${id}/chat`)
+  }, [id])
+
+  if(invalidRoomId) {
+    return (
+      <>
+        <Nav navs={userNavs} user={{name: user?.username!, role: user?.role!}}/>
+        <main className="pb-10 mx-auto max-w-7xl lg:pt-8 h-[70vh] lg:h-[77vh] flex flex-col items-center justify-center">
+          <h1 className="text-7xl">400</h1>
+          <span className="text-sm">
+            Bad Room ID
+          </span>
+        </main>
+        <Footer />
+      </>
+    )
   }
 
   return (
     <>
       <Nav navs={userNavs} user={{name: user?.username!, role: user?.role!}}/>
-      <main className="pt-10 pb-10 mx-auto max-w-7xl px-2 sm:px-4 lg:px-8">
-        <div ref={videoWrapperRef} className="video-wrapper w-full relative hover-display">
-          <video ref={videoRef} autoPlay className="w-full">
-            Your browser is too old to support HTML5 video.
-          </video>
-          <div className="bg-black/30 px-2 absolute z-10 bottom-0 w-full h-10 opacity-0 transition duration-200 controls">
-            <div className="h-full w-full flex flex-row items-center justify-between">
-              <div className="flex flex-row space-x-2 items-center">
-                <Button onClick={handlePlay}>
-                  { localize(lang, "play") }
-                </Button>
-                <Button onClick={handlePause}>
-                  { localize(lang, "pause") }
-                </Button>
-                <Button onClick={reloadVideo}>
-                  { localize(lang, "reload") }
-                </Button>
-                <span className="volume-wrapper text-white flex items-center space-x-4">
-                  <label htmlFor="volume">
-                    <button aria-label="mute" onClick={() => setVolume(0)}>
-                      { volume != 0 ? 
-                        <SpeakerWaveIcon className="h-4 w-4 inline-block"/>
-                        :
-                        <SpeakerXMarkIcon className="h-4 w-4 inline-block"/>
-                      }
-                    </button>
-                  </label>
-                  <input value={volume} onChange={(e) => { setVolume(e.target.valueAsNumber) }} id="volume" name="volume" min="0" max="100" type="range" className="inline-block"/>
-                </span>
-              </div>
-              <div>
-                <Button type="secondary"onClick={toggleFullscreen}>
-                  { localize(lang, "fullscreen") }
-                </Button>
-              </div>
-            </div>
-          </div>
+      <main className={ classNames(
+        "pb-10 mx-auto",
+        theatherMode ? "" : "max-w-7xl lg:pt-8"
+      )}>
+        <StreamVideoBox theaterMode={theatherMode} setTheaterMode={setThreaterMode} playbackUrl={playbackUrl}/>
+        <div className={classNames(
+          "m-auto w-full",
+          "lg:mt-5",
+          "flex flex-col-reverse space-y-reverse space-y-4",
+          "lg:space-y-0 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-4",
+          theatherMode ?  "max-w-7xl pt-8" : ""
+        )}>
+
+          <section className="col-span-3 lg:rounded-lg shadow bg-white" aria-label="room information">
+            <RoomInfo id={id} onError={(code) => {setInvalidRoomId(true); console.log(code)}} />
+          </section>
+
+          <section className="col-span-1 lg:rounded-lg shadow bg-white" aria-labelledby="chat-section-title">
+            <ChatBox websocketUrl={websocketUrl}/>
+          </section>
         </div>
       </main>
       <Footer />

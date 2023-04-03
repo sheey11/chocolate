@@ -30,6 +30,12 @@ export interface OwnedRoomInformation {
     viewers: number
 }
 
+export interface AuthResponse extends ChocolcateResponse {
+    jwt: string
+    role: string
+    username: string
+}
+
 export interface SelfInfoResponse extends ChocolcateResponse {
     id: number
     labels: string[]
@@ -39,3 +45,15 @@ export interface SelfInfoResponse extends ChocolcateResponse {
     session_expire: Date
     username: string
 }
+
+export interface RoomInfoResponse extends ChocolcateResponse {
+    id: number
+    playback: {
+        flv: string
+        hls: string
+    }
+    status: string
+    title: string
+    viewers: number
+}
+

@@ -54,7 +54,7 @@ table tbody > tr > th:first-child {
 
 .volume-wrapper input[type="range"]::-webkit-slider-runnable-track {
     height: 4px;
-    @apply bg-indigo-200;
+    @apply bg-white;
 }
 
 .volume-wrapper input[type="range"]::-webkit-slider-thumb {
@@ -65,7 +65,7 @@ table tbody > tr > th:first-child {
     transition: ease-in-out 200ms;
     @apply shadow-md;
     @apply rounded-full;
-    @apply bg-indigo-200;
+    @apply bg-white;
 }
 
 .volume-wrapper input[type="range"]:focus::-webkit-slider-thumb {

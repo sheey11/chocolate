@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useLocalStorage } from "./useLocalStorage"
 import * as accountApis from "@/api/v1/account"
+import { AuthResponse } from "@/api/v1/datatypes"
 
 export interface User {
     username: string
@@ -12,8 +13,12 @@ export interface User {
 
 export const useAuth = () => {
     const { getItem: getUser, setItem: setUser, removeItem: removeUser } = useLocalStorage<User>('user')
-    const { setItem: setToken, removeItem: removeToken} = useLocalStorage<string>('access_token')
+    const { getItem: getToken, setItem: setToken, removeItem: removeToken } = useLocalStorage<string>('access-token')
     const [authenticated, setAuthenticated] = useState(false)
+
+    useEffect(() => {
+        setAuthenticated(getToken() != null)
+    }, [getToken])
 
     const set = (user: User, token: string) => {
         setUser(user)
@@ -27,7 +32,7 @@ export const useAuth = () => {
         setAuthenticated(false)
     }
 
-    const signin = async (username: string, password: string): Promise<accountApis.AuthResponse> => {
+    const signin = async (username: string, password: string): Promise<AuthResponse> => {
         return new Promise(async (resolve, reject) => {
             accountApis.passwordAuth(username, password)
                 .then(async (response) => {

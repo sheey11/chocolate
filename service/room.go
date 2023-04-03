@@ -146,7 +146,7 @@ func CutOffStream(room *models.Room, operator uint) cerrors.ChocolateError {
 	chat.SendMessage(&models.ChatMessage{
 		Room:   *room,
 		RoomID: room.ID,
-		Type:   models.ChetMessageTypeAdministrationCutOff,
+		Type:   models.ChatMessageTypeAdministrationCutOff,
 	})
 
 	RecordCutOffEvent(room.ID, operator)
@@ -176,6 +176,10 @@ func IsUserAllowedForRoom(room *models.Room, user *models.User) bool {
 			StackTrace: cerrors.GetStackTrace(),
 		}
 		logrus.WithError(err).Error("nil reference detected")
+		return false
+	}
+
+	if user == nil && room.PermissionType == models.RoomPermissionWhitelist {
 		return false
 	}
 	return models.IsUserAllowedForRoom(room, user)

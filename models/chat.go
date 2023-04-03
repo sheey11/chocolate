@@ -9,8 +9,8 @@ type ChatMessageType string
 
 const (
 	ChatMessageTypeUnknown              ChatMessageType = ""
-	ChetMessageTypeAdministrationCutOff ChatMessageType = "cut_off"
-	ChetMessageTypeAdministration       ChatMessageType = "admin"
+	ChatMessageTypeAdministrationCutOff ChatMessageType = "cut_off"
+	ChatMessageTypeAdministration       ChatMessageType = "admin"
 	ChatMessageTypePing                 ChatMessageType = "ping"
 	ChatMessageTypePong                 ChatMessageType = "pong"
 	ChatMessageTypeEnteringRoom         ChatMessageType = "entering_room"
@@ -18,6 +18,7 @@ const (
 	ChatMessageTypeLike                 ChatMessageType = "like"
 	ChatMessageTypeGift                 ChatMessageType = "gift"
 	ChatMessageTypeSuperChat            ChatMessageType = "superchat"
+	ChatMessageAuthenticationInfo       ChatMessageType = "auth"
 )
 
 type ChatMessage struct {

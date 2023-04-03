@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -102,7 +103,7 @@ func handleChatConnect(c *gin.Context) {
 	if !allowed {
 		c.Abort()
 		conn.WriteJSON(WebsocketChatMessageSend{
-			MessageType:             models.ChetMessageTypeAdministration,
+			MessageType:             models.ChatMessageTypeAdministration,
 			Content:                 "you have been banned from this room",
 			AdministrationMessageID: uint(cerrors.RequestRoomBanned),
 		})
@@ -120,15 +121,24 @@ func handleChatConnect(c *gin.Context) {
 		uid = chatSubscriberUniqueId
 	} else {
 		uid = int64(user.ID)
+		conn.WriteJSON(WebsocketChatMessageSend{
+			MessageType: models.ChatMessageAuthenticationInfo,
+			Content:     fmt.Sprintf("{\"username\": \"%s\"}", user.Username),
+		})
 	}
 
 	var stop = false
+	conn.SetCloseHandler(func(code int, text string) error {
+		stop = true
+		return nil
+	})
 
 	if user != nil {
 		// read from websocket and pump it to hub
 		go func() {
 			for !stop {
 				websocketChat := WebsocketChatMessageRecv{}
+				conn.SetReadDeadline(time.Time{})
 				err := conn.ReadJSON(&websocketChat)
 				if err != nil {
 					stop = true
@@ -162,8 +172,11 @@ func handleChatConnect(c *gin.Context) {
 		go func() {
 			for !stop {
 				websocketChat := WebsocketChatMessageRecv{}
-				conn.ReadJSON(&websocketChat)
-				continue
+				conn.SetReadDeadline(time.Time{})
+				err := conn.ReadJSON(&websocketChat)
+				if err != nil {
+					stop = true
+				}
 			}
 		}()
 	}
@@ -184,8 +197,7 @@ func handleChatConnect(c *gin.Context) {
 					SenderName:  message.Sender.Username,
 					SenderID:    message.Sender.ID,
 					SenderRole:  message.Sender.RoleName,
-					// FIXME: timestamp is zero
-					Timestamp: message.CreatedAt,
+					Timestamp:   time.Now(),
 				}
 				conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
 				err := conn.WriteJSON(websocketChat)

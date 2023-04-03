@@ -53,19 +53,21 @@ interface FooterProps {
 export function Footer({ padding = true, background = true }: FooterProps) {
     return (
         <div className="w-full bg-white text-slate-500">
-            <div className={`p-10 mx-auto ${padding ? "max-w-7xl sm:px-4 lg:px-8" : "px-8" } w-full h-full bg-white flex sm:flex-col-reverse md:flex-row justify-between items-center`}>
+            <div className={`p-5 md:p-10 mx-auto ${padding ? "max-w-7xl sm:px-4 lg:px-8" : "px-8" } w-full h-full bg-white flex flex-col-reverse items-center space-y-2 space-y-reverse md:flex-row md:justify-between md:space-y-0`}>
                 <div className={`text-xs select-none ${inter.className}`}>
                     <span>{"© "}</span>
                     <span> { new Date().getFullYear() } </span>
                     <span>sheey. All rights reserved.</span>
                 </div>
-                <div className="flex flex-row items-center space-x-4">
+                <div className="flex flex-col-reverse items-center space-y-2 space-y-reverse sm:flex-row sm:space-x-4 sm:space-y-0">
                     <LanguageSwitcher outline={false} position="top" background={background} />
+                    <div className="flex flex-row items-center space-x-4">
                     {socialLinks.map((link) => (
                         <a key={link.name} href={link.link} target="_blank" title={link.name} className={`${link.hover} transition duration-300`}>
                             { link.icon }
                         </a>
                     ))}
+                    </div>
                 </div>
             </div>
         </div>

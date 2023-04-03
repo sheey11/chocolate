@@ -54,6 +54,11 @@
   "pause": "Pause",
   "reload": "Reload",
   "fullscreen": "Fullscreen",
+  "chat": "STREAM CHAT",
+  "send_to_chat": "Send a message",
+  "welcome_to_chat": "Welcome to chat",
+
+  "to_chat": " to send chat messages",
 
   "only_a_palceholder": "placeholder"
 }

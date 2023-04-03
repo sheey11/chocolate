@@ -1,6 +1,6 @@
 import { createContext } from "react";
 import { User } from "@/hooks/useAuth";
-import { AuthResponse } from "@/api/v1/account";
+import { AuthResponse } from "@/api/v1/datatypes";
 
 interface AuthContext {
     authenticated: boolean,

@@ -55,6 +55,11 @@
   "pause": "暂停",
   "reload": "重新加载",
   "fullscreen": "全屏",
+  "chat": "聊天",
+  "send_to_chat": "发送消息",
+  "welcome_to_chat": "欢迎来到聊天",
+
+  "to_chat": "以发送聊天信息",
 
   "errors": {
     "1":  "服务器处理请求时出现错误",
