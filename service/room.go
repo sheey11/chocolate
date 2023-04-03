@@ -182,6 +182,14 @@ func IsUserAllowedForRoom(room *models.Room, user *models.User) bool {
 	if user == nil && room.PermissionType == models.RoomPermissionWhitelist {
 		return false
 	}
+
+	if room.OwnerID == user.ID {
+		return true
+	}
+
+	if user.Role.AbilityManageRoom {
+		return true
+	}
 	return models.IsUserAllowedForRoom(room, user)
 }
 

@@ -9,18 +9,16 @@ import Link from "next/link";
 import { LanguageSwitcher } from "@/components/LanguageSwticher/LanguageSwitcher";
 import { Footer } from "@/components/Footer/Footer";
 
-const navigation = [
-  { name: 'Product', href: '#' },
-  { name: 'Features', href: '#' },
-  { name: 'Marketplace', href: '#' },
-  { name: 'Company', href: '#' },
-]
-
-
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const lang = router.locale!
+
+  const navigation = [
+    { name: localize(lang, 'dashboard'), href: '/dashboard/overview' },
+  ]
+
+  const [id, setId] = useState('')
 
   return (
     <>
@@ -145,8 +143,16 @@ export default function Home() {
                 fugiat veniam occaecat fugiat aliqua.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
-                <input className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring focus:ring-bule-200 transition duraion-200" placeholder="Room ID"/>
-                <Button className="py-2 px-5 rouned-lg" type="primary" size="large"> GO </Button>
+                <input
+                  type="number"
+                  min={1}
+                  value={id}
+                  onChange={(e) => setId(e.target.value)}
+                  className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 transition duraion-200"
+                  placeholder="Room ID"/>
+                <Button className="py-2 px-5 rouned-lg" type="primary" size="large" onClick={() => id == "" ? null : router.push(`/room/${id}`)}>
+                  GO
+                </Button>
               </div>
             </div>
           </div>
@@ -159,6 +165,7 @@ export default function Home() {
                 fill="url(#ecb5b0c9-546c-4772-8c71-4d3f06d544bc)"
                 fillOpacity=".3"
                 d="M317.219 518.975L203.852 678 0 438.341l317.219 80.634 204.172-286.402c1.307 132.337 45.083 346.658 209.733 145.248C936.936 126.058 882.053-94.234 1031.02 41.331c119.18 108.451 130.68 295.337 121.53 375.223L855 299l21.173 362.054-558.954-142.079z"
+
               />
               <defs>
                 <linearGradient

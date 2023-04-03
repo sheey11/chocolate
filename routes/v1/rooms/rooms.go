@@ -253,6 +253,13 @@ func handleRoomInfoRetrievel(c *gin.Context) {
 		}
 		return
 	}
+	user := service.TryGetUserFromContext(c)
+	allowed := service.IsUserAllowedForRoom(room, user)
+	if !allowed {
+		c.Abort()
+		c.JSON(http.StatusForbidden, common.SampleResponse(errors.RequestRoomBanned, "banned user"))
+		return
+	}
 
 	response := common.Response{
 		"code":     0,
@@ -263,7 +270,7 @@ func handleRoomInfoRetrievel(c *gin.Context) {
 		"playback": room.GetPlaybackInfo(),
 		"viewers":  room.Viewers,
 	}
-	user := service.TryGetUserFromContext(c)
+
 	if user != nil && room.OwnerID == user.ID {
 		response["permission_type"] = room.PermissionType
 		response["permission_items"] = room.PermissionItems

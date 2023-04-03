@@ -10,7 +10,6 @@ const getAccessToken = () => {
 }
 
 export const api = axios.create({
-    // baseURL: "http://localhost", // only for debug
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',

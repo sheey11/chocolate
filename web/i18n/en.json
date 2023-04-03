@@ -60,5 +60,41 @@
 
   "to_chat": " to send chat messages",
 
-  "only_a_palceholder": "placeholder"
+  "errors": {
+    "1":  "Internal Server Error",
+    "2":  "Invalid request data",
+    "3":  "Invalid request parameters",
+    "4":  "Role not exists",
+    "5":  "User not exists",
+    "6":  "Room not exists",
+    "7":  "Username has been taken",
+    "8":  "Duplications in usernames",
+    "9":  "Username format error",
+    "10": "Password format error",
+    "11": "Password not correct",
+    "12": "Sign in required",
+    "13": "Access denied",
+    "14": "Token authentication failed",
+    "15": "Token corrupted",
+    "16": "Session expire",
+    "17": "Last admin account deletion not allowed",
+    "18": "Invalid room UID",
+    "19": "Invalid room ID",
+    "20": "Invalid log filter",
+    "21": "Invalid start time",
+    "22": "Invalid end time",
+    "23": "Not room owner",
+    "24": "Unknown room action",
+    "25": "Invalid room permission type",
+    "26": "Invalid room permission item type",
+    "27": "Room permission type item exists",
+    "28": "Room permission type item not exists",
+    "29": "Limit is too large",
+    "30": "Invalid time range",
+    "31": "You have created max rooms allowed",
+    "32": "Room title is too long",
+    "33": "Label exists",
+    "34": "Label not exists on user",
+    "35": "You have been banned from access to this room"
+  }
 }

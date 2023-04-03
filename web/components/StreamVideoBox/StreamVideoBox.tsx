@@ -40,9 +40,10 @@ interface StreamBoxProps {
     theaterMode: boolean
     playbackUrl: string | undefined
     setTheaterMode: (arg0: boolean) => void
+    streamingStatus: string
 }
 
-export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMode }: StreamBoxProps){
+export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMode, streamingStatus }: StreamBoxProps){
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const videoWrapperRef = useRef<HTMLDivElement | null>(null)
     const [volume, _setVolume] = useState(100)
@@ -74,6 +75,7 @@ export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMod
             if (Mpegts.getFeatureList().mseLivePlayback) {
                 unloadVideo()
 
+                if (videoRef.current == null) { return }
                 player.current = Mpegts.createPlayer({
                     type: "flv",
                     isLive: true,
@@ -155,6 +157,13 @@ export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMod
                 <video ref={videoRef} autoPlay className="w-full h-full bg-black absolute top-0 bottom-0 left-0 right-0">
                     Your browser is too old to support HTML5 video.
                 </video>
+                { streamingStatus === 'idle' ?
+                    <div className="w-full h-full bg-black absolute top-0 bottom-0 left-0 right-0 flex items-center justify-center text-lg text-white select-none">
+                        主播不在哦
+                    </div>
+                    :
+                    <></>
+                }
                 { buffering ?
                     <div className="w-full h-full flex item-center justify-center">
                         <svg className="animate-spin inline-block mx-2 -mt-1 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

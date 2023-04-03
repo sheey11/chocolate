@@ -3,11 +3,17 @@ import { Footer } from "@/components/Footer/Footer";
 import { AuthContext } from "@/contexts/AuthContext";
 import { useContext, useEffect, useState } from "react"
 import { useRouter } from "next/router";
-import { localize } from "@/i18n/i18n";
-import { fetchRoomInfo } from "@/api/v1/room";
+import { localize, localizeError } from "@/i18n/i18n";
 import StreamVideoBox from "@/components/StreamVideoBox/StreamVideoBox";
 import ChatBox from "@/components/ChatBox/ChatBox";
 import RoomInfo from "@/components/RoomInfo/RoomInfo";
+
+import { JetBrains_Mono } from "next/font/google";
+
+const jbm = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: '500',
+})
 
 const userNavs = [
   {
@@ -33,28 +39,33 @@ export default function Room() {
   const [playbackUrl, setPlaybackUrl] = useState<string | undefined>(undefined)
   const [websocketUrl, setWebsocketUrl] = useState<string | undefined>(undefined)
 
-  const [invalidRoomId, setInvalidRoomId] = useState(false)
+  const [errCode, setErrCode] = useState<number | null>(null)
+  const [httpErrCode, setHttpErrCode] = useState<number | null>(null)
+
+  const [streamingStatus, setStreamingStatus] = useState<string>("idle")
 
   useEffect(() => {
     if (id === undefined) { return }
 
-    if (isNaN(parseInt(id))) {
-      console.log("id", id)
-      setInvalidRoomId(true)
+    if (!/^[1-9]\d*$/.test(id)) {
+      setHttpErrCode(400)
+      setErrCode(19)
+      return
     }
 
-    setPlaybackUrl(`/api/v1/playback/${id}/flv`)
     setWebsocketUrl(`${window.location.protocol == "http:" ? "ws:" : "wss:"}//${window.location.host}/api/v1/rooms/${id}/chat`)
-  }, [id])
+    if (streamingStatus != 'streaming') { return }
+    setPlaybackUrl(`/api/v1/playback/${id}/flv`)
+  }, [id, streamingStatus])
 
-  if(invalidRoomId) {
+  if(errCode != null) {
     return (
       <>
         <Nav navs={userNavs} user={{name: user?.username!, role: user?.role!}}/>
         <main className="pb-10 mx-auto max-w-7xl lg:pt-8 h-[70vh] lg:h-[77vh] flex flex-col items-center justify-center">
-          <h1 className="text-7xl">400</h1>
-          <span className="text-sm">
-            Bad Room ID
+          <h1 className={ classNames("text-7xl", jbm.className) }>{ httpErrCode }</h1>
+          <span className="text-sm text-gray-600 font-bold">
+            { localizeError(lang, errCode) }
           </span>
         </main>
         <Footer />
@@ -69,7 +80,7 @@ export default function Room() {
         "pb-10 mx-auto",
         theatherMode ? "" : "max-w-7xl lg:pt-8"
       )}>
-        <StreamVideoBox theaterMode={theatherMode} setTheaterMode={setThreaterMode} playbackUrl={playbackUrl}/>
+        <StreamVideoBox theaterMode={theatherMode} setTheaterMode={setThreaterMode} playbackUrl={playbackUrl} streamingStatus={streamingStatus}/>
         <div className={classNames(
           "m-auto w-full",
           "lg:mt-5",
@@ -79,7 +90,11 @@ export default function Room() {
         )}>
 
           <section className="col-span-3 lg:rounded-lg shadow bg-white" aria-label="room information">
-            <RoomInfo id={id} onError={(code) => {setInvalidRoomId(true); console.log(code)}} />
+            <RoomInfo
+              id={id}
+              onError={(errCode, httpCode) => { setErrCode(errCode); setHttpErrCode(httpCode); }}
+              setStatus={setStreamingStatus}
+            />
           </section>
 
           <section className="col-span-1 lg:rounded-lg shadow bg-white" aria-labelledby="chat-section-title">

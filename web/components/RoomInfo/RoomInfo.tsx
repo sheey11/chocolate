@@ -5,9 +5,11 @@ import { useEffect, useState } from "react"
 
 interface RoomInfoProps {
     id?: string
-    onError?: (code: number) => void,
+    onError: (errCode: number, httpCode: number) => void,
+    setStatus: (status: string) => void,
 }
-export default function RoomInfo({ id, onError }: RoomInfoProps) {
+
+export default function RoomInfo({ id, onError, setStatus }: RoomInfoProps) {
     const [roomInfo, setRoomInfo] = useState<RoomInfoResponse | undefined>(undefined);
 
     useEffect(() => {
@@ -16,11 +18,12 @@ export default function RoomInfo({ id, onError }: RoomInfoProps) {
 
         fetchRoomInfo(parseInt(id)).then((response) => {
             setRoomInfo(response)
+            setStatus(response.status)
         }).catch((e) => {
             if(onError != null)
-                onError(e.response?.data.code)
+                onError(e.response?.data.code, e.response?.status)
         })
-    }, [id, onError])
+    }, [id, onError, setStatus])
     return (
         <>
             <div aria-label="room title" className="px-4 py-5 sm:px-6 flex flex-row items-center justify-between">
@@ -33,7 +36,7 @@ export default function RoomInfo({ id, onError }: RoomInfoProps) {
                             <span className="inline-block absolute animate-ping h-2 w-2 rounded-full bg-green-500"/>
                         </span>
                         :
-                        <span className="h-1 w-1 ml-2 bg-gray-400"/>
+                        <span className="h-2 w-2 rounded-full ml-2 bg-gray-400"/>
                     }
                 </div>
                 <div className="flex flex-row items-center space-x-1">

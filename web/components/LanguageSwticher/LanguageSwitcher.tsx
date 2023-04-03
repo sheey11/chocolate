@@ -60,9 +60,10 @@ export const LanguageSwitcher = ({ outline = true, position = "bottom", backgrou
                         <Listbox.Options className={`absolute ${postionClasses} max-h-60 w-full overflow-auto rounded bg-white border border-gray-200 text-base focus:outline-none focus:ring-blue-200 sm:text-sm`}>
                             {locales!.map((localeName, idx) => (
                                 <Listbox.Option
+                                    as="button"
                                     key={idx}
                                     className={({ active }) =>
-                                        `relative cursor-pointer select-none py-2 pl-10 pr-4 ${ active ? 'bg-indigo-100 text-indigo-900' : 'text-gray-900' }`
+                                        `w-full relative cursor-pointer select-none py-2 pl-10 pr-4 ${ active ? 'bg-indigo-100 text-indigo-900' : 'text-gray-900' }`
                                     }
                                     value={localeName}
                                 >
