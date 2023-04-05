@@ -207,7 +207,7 @@ export default function ChatBox({ websocketUrl }: ChatBoxProps) {
                             rows={3}
                             className={ classNames(
                                 "border-none lg:rounded-b-lg mx-[1px] w-[calc(100%-2px)] lg:px-2 lg:w-full h-full text-sm block z-10", 
-                                "focus:outline-none lg:focus:ring lg:focus:ring-blue-200",
+                                "focus:outline-none lg:focus:ring lg:focus:ring-blue-500",
                                 "resize-none",
                             )}
                             placeholder={localize(lang, "send_to_chat")}
@@ -222,7 +222,7 @@ export default function ChatBox({ websocketUrl }: ChatBoxProps) {
                             className={classNames(
                                 "w-8 h-8 p-2 bg-blue-500 text-white rounded-full block",
                                 "absolute bottom-1 right-1",
-                                "focus:outline-none focus:ring focus:ring-blue-200",
+                                "focus:outline-none focus:ring focus:ring-blue-500",
                                 "hover:bg-blue-600 transition duration-200",
                             )}
                             onClick={() => sendChatMessage()}>

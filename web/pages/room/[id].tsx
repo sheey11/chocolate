@@ -61,8 +61,8 @@ export default function Room() {
   if(errCode != null) {
     return (
       <>
-        <Nav navs={userNavs} user={{name: user?.username!, role: user?.role!}}/>
-        <main className="pb-10 mx-auto max-w-7xl lg:pt-8 h-[70vh] lg:h-[77vh] flex flex-col items-center justify-center">
+        <Nav navs={userNavs}/>
+        <main className="mx-auto max-w-7xl lg:pt-8 h-[calc(100vh-13rem)] md:h-[calc(100vh-14.5rem)] flex flex-col items-center justify-center">
           <h1 className={ classNames("text-7xl", jbm.className) }>{ httpErrCode }</h1>
           <span className="text-sm text-gray-600 font-bold">
             { localizeError(lang, errCode) }
@@ -75,7 +75,7 @@ export default function Room() {
 
   return (
     <>
-      <Nav navs={userNavs} user={{name: user?.username!, role: user?.role!}}/>
+      <Nav navs={userNavs}/>
       <main className={ classNames(
         "pb-10 mx-auto",
         theatherMode ? "" : "max-w-7xl lg:pt-8"

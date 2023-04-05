@@ -215,7 +215,7 @@ export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMod
                         </span>
                     </div>
                     <div className="h-full flex items-center space-x-4">
-                        <button className="h-6 w-6 hover:text-gray-200 transition duration-400" onClick={toggleTheaterMode} aria-label="theater mode">
+                        <button className="h-6 w-6 hidden md:block hover:text-gray-200 transition duration-400" onClick={toggleTheaterMode} aria-label="theater mode">
                             { theaterMode ?
                                 <StopIcon />
                                 :

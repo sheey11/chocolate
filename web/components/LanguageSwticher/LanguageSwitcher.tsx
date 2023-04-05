@@ -57,13 +57,13 @@ export const LanguageSwitcher = ({ outline = true, position = "bottom", backgrou
                         leaveFrom="opacity-100 scale-100"
                         leaveTo="opacity-0 scale-90"
                     >
-                        <Listbox.Options className={`absolute ${postionClasses} max-h-60 w-full overflow-auto rounded bg-white border border-gray-200 text-base focus:outline-none focus:ring-blue-200 sm:text-sm`}>
+                        <Listbox.Options className={`absolute ${postionClasses} max-h-60 w-full overflow-auto rounded bg-white border border-gray-200 text-base focus:outline-none focus:ring-blue-500 sm:text-sm`}>
                             {locales!.map((localeName, idx) => (
                                 <Listbox.Option
                                     as="button"
                                     key={idx}
                                     className={({ active }) =>
-                                        `w-full relative cursor-pointer select-none py-2 pl-10 pr-4 ${ active ? 'bg-indigo-100 text-indigo-900' : 'text-gray-900' }`
+                                        `w-full relative cursor-pointer select-none py-2 pl-10 pr-4 ${ active ? 'bg-blue-100 text-blue-900' : 'text-gray-900' }`
                                     }
                                     value={localeName}
                                 >
@@ -76,7 +76,7 @@ export const LanguageSwitcher = ({ outline = true, position = "bottom", backgrou
                                                 { languages[localeName].name }
                                             </div>
                                             {selected ? (
-                                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600">
+                                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
                                                     <CheckIcon className="h-5 w-5" aria-hidden="true" />
                                                 </span>
                                             ) : null}

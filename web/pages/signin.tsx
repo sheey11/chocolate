@@ -56,11 +56,11 @@ export default function Login() {
 
   return (
     <>
-      <div className="flex min-h-[calc(100vh-7.5rem)] flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="flex min-h-[calc(100vh-8.8rem)] sm:min-h-[calc(100vh-7.5rem)] flex-col justify-center pb-8 md:py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <img
             className="mx-auto h-12 w-auto"
-            src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+            src="https://tailwindui.com/img/logos/mark.svg?color=blue&shade=600"
             alt="Your Company"
           />
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">{ localize(lang, 'sign_in_to_your_account') }</h2>
@@ -70,7 +70,7 @@ export default function Login() {
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <div className="bg-white p-8 sm:shadow sm:rounded-lg sm:px-10">
 
             {
               errMsg != '' ? (
@@ -112,7 +112,7 @@ export default function Login() {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="block w-full appearance-none rounded border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none focus:ring focus:ring-blue-300 sm:text-sm transition ease duration-200"
+                    className="block w-full appearance-none rounded border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 sm:text-sm transition ease duration-200"
                   />
                 </div>
               </div>
@@ -130,7 +130,7 @@ export default function Login() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full appearance-none rounded border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:ring focus:ring-blue-300 sm:text-sm transition ease duration-200"
+                    className="block w-full appearance-none rounded border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:ring focus:ring-blue-500 sm:text-sm transition ease duration-200"
                   />
                 </div>
               </div>
@@ -141,7 +141,7 @@ export default function Login() {
                     id="remember-me-field"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring focus:ring-offset-0 focus:ring-blue-300 transition ease duration-200"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring focus:ring-offset-0 focus:ring-blue-300 transition ease duration-200"
                     data-1p-ignore
                   />
                   <label htmlFor="remember-me-field" className="ml-2 block text-sm text-gray-900">
@@ -150,7 +150,7 @@ export default function Login() {
                 </div>
 
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring focus:ring-blue-200">
+                  <a href="#" className="pl-1 rounded font-medium text-blue-600 hover:text-hover-500 focus:outline-none focus:ring focus:ring-blue-500 transition duration-200">
                     {localize(lang, "forgot_password")}
                   </a>
                 </div>

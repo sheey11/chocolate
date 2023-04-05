@@ -30,7 +30,7 @@ export default function Home() {
                 <span className="sr-only">Your Company</span>
                 <img
                   className="h-8 w-auto"
-                  src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+                  src="https://tailwindui.com/img/logos/mark.svg?color=blue&shade=600"
                   alt=""
                 />
               </a>
@@ -67,7 +67,7 @@ export default function Home() {
                   <span className="sr-only">Your Company</span>
                   <img
                     className="h-8 w-auto"
-                    src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+                    src="https://tailwindui.com/img/logos/mark.svg?color=blue&shade=600"
                     alt=""
                   />
                 </a>
@@ -148,7 +148,7 @@ export default function Home() {
                   min={1}
                   value={id}
                   onChange={(e) => setId(e.target.value)}
-                  className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 transition duraion-200"
+                  className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring focus:ring-blue-500 transition duraion-200"
                   placeholder="Room ID"/>
                 <Button className="py-2 px-5 rouned-lg" type="primary" size="large" onClick={() => id == "" ? null : router.push(`/room/${id}`)}>
                   GO

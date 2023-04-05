@@ -31,20 +31,20 @@ export default function RoomIndex() {
 
   return (
     <>
-      <Nav navs={dashboardNavs} user={{name: user?.username!, role: user?.role!}}/>
+      <Nav navs={dashboardNavs} />
       <div className={`pt-5 pb-10 mx-auto max-w-7xl px-2 sm:px-4 lg:px-8 ${inter.className}`}>
         <div className="flex flex-row py-5 space-x-2 items-center">
           <h1 className="text-gray-800 text-3xl font-bold">
             { localize(lang, "rooms_page") }
           </h1>
-          <button className="rounded focus:ring focus:ring-blue-200 transition duration-100 p-1"> {/* todo */}
+          <button className="rounded focus:ring focus:ring-blue-500 transition duration-100 p-1"> {/* todo */}
             <ArrowPathIcon className="h-6 w-6 text-gray-400"/>
           </button>
         </div>
         <div className="flex flex-col space-x-0 space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
           { /* card */ }
           <div className="shadow rounded-lg bg-white w-full p-5 flex flex-row items-center space-x-4">
-            <span className="h-16 w-16 text-white rounded bg-indigo-500 p-2">
+            <span className="h-16 w-16 text-white rounded bg-blue-500 p-2">
               <RectangleStackIcon />
             </span>
             <div className="flex flex-col-reverse space-y-reverse space-y-2">
@@ -71,13 +71,13 @@ export default function RoomIndex() {
                   <MagnifyingGlassIcon />
                 </span>
                 <input
-                  className="block h-full w-full pl-8 appearance-none rounded border border-gray-200 px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none focus:ring focus:ring-blue-200 focus:border-blue-200 sm:text-sm transition ease duration-200"
+                  className="block h-full w-full pl-8 appearance-none rounded border border-gray-200 px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 focus:border-blue-200 sm:text-sm transition ease duration-200"
                   placeholder={localize(lang, 'search')}
                 />
               </div>
               <div className="h-8 w-full">
                 <Listbox value={roomFilterStatus} onChange={setRoomFilterStatus}>
-                  <Listbox.Button className="h-full w-full md:w-48 relative py px-2 shadow-sm rounded border border-gray-200 flex items-center justify-between focus:outline-none focus:ring focus:ring-blue-200 focus:border-blue-200 transition duration-100">
+                  <Listbox.Button className="h-full w-full md:w-48 relative py px-2 shadow-sm rounded border border-gray-200 flex items-center justify-between focus:outline-none focus:ring focus:ring-blue-500 focus:border-blue-200 transition duration-100">
                     <span className="truncate flex items-center space-x-2">
                       <span className={`h-2 w-2 rounded-full ${roomStatus.find((v) => v.name == roomFilterStatus)!.indicator_class}`} />
                       <span className="text-left text-sm text-gray-600"> { localize(lang, `room_filter_status_${roomFilterStatus}`) } </span>

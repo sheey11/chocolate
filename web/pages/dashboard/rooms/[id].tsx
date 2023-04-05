@@ -114,7 +114,7 @@ export default function RoomDetailPage() {
 
   return (
     <>
-      <Nav navs={dashboardNavs} user={{name: user?.username!, role: user?.role!}}/>
+      <Nav navs={dashboardNavs} />
       <main className={`pt-10 pb-10 mx-auto max-w-7xl px-2 sm:px-4 lg:px-8 ${inter.className}`}>
         {/* Page header */}
         <div className="mx-auto max-w-3xl px-4 sm:px-6 md:flex md:items-center md:justify-between md:space-x-5 lg:max-w-7xl lg:px-8">
