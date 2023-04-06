@@ -22,12 +22,6 @@ interface Navigations extends Array<Navigation> {}
 
 const defaultAvatar = "/avatar.jpg"
 
-const userNavigation = [
-    { name: 'Your Profile', href: '#' },
-    { name: 'Settings', href: '#' },
-    { name: 'Sign out', href: '#' },
-]
-
 function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
@@ -41,7 +35,16 @@ export const Nav = ({ navs }: NavProps) => {
     const { pathname } = router
     const lang = router.locale!
 
-    const { authenticated, getUser } = useContext(AuthContext)
+    const { authenticated, getUser, signout } = useContext(AuthContext)
+
+    const userNavigation = [
+        { name: localize(lang, "your_profile"), handler: () => { router.push('#') } },
+        { name: localize(lang, "settings"),     handler: () => { router.push('#') } },
+        { name: localize(lang, "sign_out"),     handler: () => {
+            signout()
+            router.push('/')
+        }},
+    ]
 
     const selected = navs.map((item) => pathname.startsWith(item.href))
 
@@ -86,7 +89,7 @@ export const Nav = ({ navs }: NavProps) => {
                                             <span className="sr-only">View notifications</span>
                                             <BellIcon className="h-6 w-6" aria-hidden="true" />
                                         </button>
-                                        
+
                                         {/* Profile dropdown */}
                                         <Menu as="div" className="relative ml-4 flex-shrink-0">
                                             <div>
@@ -108,15 +111,15 @@ export const Nav = ({ navs }: NavProps) => {
                                                     {userNavigation.map((item) => (
                                                         <Menu.Item key={item.name}>
                                                             {({ active }) => (
-                                                                <a
-                                                                    href={item.href}
+                                                                <button
+                                                                    onClick={item.handler}
                                                                     className={classNames(
                                                                         active ? 'bg-gray-100' : '',
-                                                                        'block py-2 px-4 text-sm text-gray-700'
+                                                                        'w-full text-left block py-2 px-4 text-sm text-gray-700'
                                                                     )}
                                                                 >
                                                                     {item.name}
-                                                                </a>
+                                                                </button>
                                                             )}
                                                         </Menu.Item>
                                                     ))}
@@ -195,9 +198,9 @@ export const Nav = ({ navs }: NavProps) => {
                                                 as="div"
                                                 className="block rounded-md text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                                             >
-                                                <Link className="block py-2 px-3" href={item.href}>
+                                                <button className="w-full text-left block py-2 px-3" onClick={item.handler}>
                                                     {item.name}
-                                                </Link>
+                                                </button>
                                             </Disclosure.Button>
                                         ))}
                                     </div>

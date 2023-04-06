@@ -434,3 +434,9 @@ func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint,
 	}
 	return uint(count), result, nil
 }
+
+func GetUsersNum() uint {
+	var count int64
+	db.Model(&User{}).Count(&count)
+	return uint(count)
+}

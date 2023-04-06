@@ -1,6 +1,6 @@
-export const getStreamingData = (data: number[]) => {
+export const getStreamingData = (time: string[], data: number[]) => {
     return {
-        labels: Array(data.length).fill(0),
+        labels: time,
         datasets: [{
             label: "streaming",
             fill: {
@@ -14,9 +14,9 @@ export const getStreamingData = (data: number[]) => {
     }
 }
 
-export const getViewersData = (data: number[]) => {
+export const getViewersData = (time: string[], data: number[]) => {
     return {
-        labels: Array(data.length).fill(0),
+        labels: time,
         datasets: [{
             label: "viewers",
             fill: {
@@ -30,9 +30,9 @@ export const getViewersData = (data: number[]) => {
     }
 }
 
-export const getUsersData = (data: number[]) => {
+export const getUsersData = (time: string[], data: number[]) => {
     return {
-        labels: Array(data.length).fill(0),
+        labels: time,
         datasets: [{
             label: "users",
             fill: {
@@ -46,9 +46,26 @@ export const getUsersData = (data: number[]) => {
     }
 }
 
-export const getNetworkData = (outbound: number[], inbound: number[]) => {
+export const getChatsData = (time: string[], data: number[]) => {
     return {
-        labels: Array(outbound.length).fill(0),
+        labels: time,
+        datasets: [{
+            label: "chats",
+            fill: {
+                target: 'origin',
+                above: 'rgba(245, 158, 11, 0.1)',
+            },
+            data: data,
+            borderColor: 'rgb(245, 158, 11)',
+            tension: 0.4,
+        }],
+    }
+}
+
+
+export const getNetworkChartData = (time: string[], outbound: number[], inbound: number[]) => {
+    return {
+        labels: time,
         datasets: [
             {
                 label: 'outbound',
@@ -62,7 +79,7 @@ export const getNetworkData = (outbound: number[], inbound: number[]) => {
             },
             {
                 label: 'inbound',
-                data: inbound, // Array(180).fill(0).map((_) => -(Math.random() * 1e9 + 1e8)),
+                data: inbound.map(v => -v), // Array(180).fill(0).map((_) => -(Math.random() * 1e9 + 1e8)),
                 tension: 0,
                 borderColor: 'rgb(20, 184, 166)',
                 fill: {
@@ -74,9 +91,9 @@ export const getNetworkData = (outbound: number[], inbound: number[]) => {
     }
 }
 
-export const getCpuData = (data: number[]) => {
+export const getCpuChartData = (time: string[], data: number[]) => {
     return {
-        labels: Array(data.length).fill(0),
+        labels: time,
         datasets: [
             {
                 label: 'CPU',
@@ -92,9 +109,9 @@ export const getCpuData = (data: number[]) => {
     }
 }
 
-export const getMemData = (data: number[]) => {
+export const getMemChartData = (time: string[], data: number[]) => {
     return {
-        labels: Array(data.length).fill(0),
+        labels: time,
         datasets: [
             {
                 label: 'memory',
@@ -110,9 +127,9 @@ export const getMemData = (data: number[]) => {
     }
 }
 
-export const getDiskData = (read: number[], write: number[]) => {
+export const getDiskChartData = (time: string[], read: number[], write: number[]) => {
     return {
-        labels: Array(read.length).fill(0),
+        labels: time,
         datasets: [
             {
                 label: 'disk_read',
@@ -126,7 +143,7 @@ export const getDiskData = (read: number[], write: number[]) => {
             },
             {
                 label: 'disk_write',
-                data: write, // Array(180).fill(0).map((_) => -(Math.random() * 1e9 + 1e8)),
+                data: write.map(v => -v), // Array(180).fill(0).map((_) => -(Math.random() * 1e9 + 1e8)),
                 tesion: 0,
                 borderColor: 'rgb(20, 184, 166)',
                 fill: {

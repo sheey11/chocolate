@@ -3,6 +3,7 @@ package admin
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
@@ -111,6 +112,7 @@ func handleListRooms(c *gin.Context) {
 		OwnerID        uint                      `json:"owner_id"`
 		OwnerName      string                    `json:"owner_username"`
 		PermissionType models.RoomPermissionType `json:"permission_type"`
+		LastStreaming  time.Time                 `json:"last_streaming"`
 	}
 
 	result := lo.Map(rooms, func(room *models.Room, _ int) roomAdminListInfo {
@@ -123,6 +125,7 @@ func handleListRooms(c *gin.Context) {
 			OwnerID:        room.OwnerID,
 			OwnerName:      room.Owner.Username,
 			PermissionType: room.PermissionType,
+			LastStreaming:  room.LastStreamingAt,
 		}
 	})
 
@@ -167,6 +170,7 @@ func handleRoomInfoRetrival(c *gin.Context) {
 		OwnerName       string                    `json:"owner_username"`
 		PermissionType  models.RoomPermissionType `json:"permission_type"`
 		PermissionItems []models.PermissionItem   `json:"permission_items"`
+		LastStreaming   time.Time                 `json:"last_streaming"`
 	}
 
 	c.JSON(http.StatusOK, common.Response{
@@ -182,6 +186,7 @@ func handleRoomInfoRetrival(c *gin.Context) {
 			OwnerName:       room.Owner.Username,
 			PermissionType:  room.PermissionType,
 			PermissionItems: room.PermissionItems,
+			LastStreaming:   room.LastStreamingAt,
 		},
 	})
 }

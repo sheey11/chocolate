@@ -390,3 +390,7 @@ func ListUsers(search string, roleSearch string, limit uint, page uint) (uint, [
 func GetUserByUsername(username string) (*models.User, cerrors.ChocolateError) {
 	return models.GetUserByName(username, nil)
 }
+
+func GetCurrentUserNum() uint {
+	return models.GetUsersNum()
+}

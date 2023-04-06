@@ -1,4 +1,8 @@
 {
+  "second": "Sec",
+  "minute": "Min",
+  "hour": "H",
+
   "signin": "Sign in",
   "username": "Username",
   "password": "Password",
@@ -27,6 +31,8 @@
   "overview": "Overview",
   "streaming": "Streams",
   "viewers": "Viewers",
+  "users": "Users",
+  "chats": "Chat Messages",
 
   "more": "More",
 
@@ -40,6 +46,10 @@
   "cut_off_stream": "Cut off",
   "delete_room": "Delete",
 
+  "room_id": "Room ID",
+  "room_title": "Title",
+  "room_viewers": "Viwers",
+  "room_streamed_for": "Streamed",
   "room_info": "Room Information",
   "room_owner": "Owner",
   "room_permission_type": "Permission Type",
@@ -59,6 +69,10 @@
   "welcome_to_chat": "Welcome to chat",
 
   "to_chat": " to send chat messages",
+
+  "your_profile": "Your Profile",
+  "settings": "Settings",
+  "sign_out": "Sign out",
 
   "errors": {
     "1":  "Internal Server Error",

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/sheey11/chocolate/chat"
+	"github.com/sheey11/chocolate/common"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
@@ -127,55 +128,71 @@ func handleChatConnect(c *gin.Context) {
 		})
 	}
 
-	var stop = false
+	var stop = make(chan struct{}, 0)
 	conn.SetCloseHandler(func(code int, text string) error {
-		stop = true
+		if code != 1001 {
+			logrus.WithField("code", code).WithField("text", text).Error("connection closed")
+		}
+		common.TryClose(stop)
 		return nil
 	})
 
 	if user != nil {
 		// read from websocket and pump it to hub
 		go func() {
-			for !stop {
-				websocketChat := WebsocketChatMessageRecv{}
-				conn.SetReadDeadline(time.Time{})
-				err := conn.ReadJSON(&websocketChat)
-				if err != nil {
-					stop = true
-				}
-
-				if len(websocketChat.Content) > 32 || len(websocketChat.Content) == 0 {
-					continue
-				}
-
-				switch websocketChat.MessageType {
-				case models.ChatMessageTypeMessage:
-					message := models.ChatMessage{
-						Type:     websocketChat.MessageType,
-						Room:     *room,
-						RoomID:   room.ID,
-						Sender:   *user,
-						SenderID: user.ID,
-						Message:  websocketChat.Content,
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					websocketChat := WebsocketChatMessageRecv{}
+					conn.SetReadDeadline(time.Time{})
+					err := conn.ReadJSON(&websocketChat)
+					if err != nil {
+						// logrus.WithField("subscribe_id", uid).WithError(err).Error("error reading chat message from websocket")
+						common.TryClose(stop)
+						return
 					}
-					chat.SendMessage(&message)
-				case models.ChatMessageTypePong:
-					// TODO
-					// after timeout 5s of sending ping message,
-					// if no pong message send, consider the
-					// connection as closed.
+
+					if len(websocketChat.Content) > 32 || len(websocketChat.Content) == 0 {
+						continue
+					}
+
+					switch websocketChat.MessageType {
+					case models.ChatMessageTypeMessage:
+						message := models.ChatMessage{
+							Type:     websocketChat.MessageType,
+							Room:     *room,
+							RoomID:   room.ID,
+							Sender:   *user,
+							SenderID: user.ID,
+							Message:  websocketChat.Content,
+						}
+						chat.SendMessage(&message)
+					case models.ChatMessageTypePong:
+						// TODO
+						// after timeout 5s of sending ping message,
+						// if no pong message send, consider the
+						// connection as closed.
+					}
 				}
 			}
 		}()
 	} else {
 		// to clear buffer
 		go func() {
-			for !stop {
-				websocketChat := WebsocketChatMessageRecv{}
-				conn.SetReadDeadline(time.Time{})
-				err := conn.ReadJSON(&websocketChat)
-				if err != nil {
-					stop = true
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					websocketChat := WebsocketChatMessageRecv{}
+					conn.SetReadDeadline(time.Time{})
+					err := conn.ReadJSON(&websocketChat)
+					if err != nil {
+						common.TryClose(stop)
+						return
+					}
 				}
 			}
 		}()
@@ -188,8 +205,11 @@ func handleChatConnect(c *gin.Context) {
 		ch := make(chan *models.ChatMessage, 10)
 		chat.Subscribe(room, uid, ch)
 		defer chat.Unsubscribe(room, uid)
-		for !stop {
+
+		for {
 			select {
+			case <-stop:
+				return
 			case message := <-ch:
 				websocketChat := WebsocketChatMessageSend{
 					MessageType: message.Type,
@@ -199,10 +219,15 @@ func handleChatConnect(c *gin.Context) {
 					SenderRole:  message.Sender.RoleName,
 					Timestamp:   time.Now(),
 				}
-				conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
-				err := conn.WriteJSON(websocketChat)
+				err := conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
 				if err != nil {
-					stop = true
+					logrus.WithField("subscribe_id", uid).WithError(err).Error("error setting websocket write deadline")
+				}
+				err = conn.WriteJSON(websocketChat)
+				if err != nil {
+					logrus.WithField("subscribe_id", uid).WithError(err).Error("error writing chat message to websocket")
+					common.TryClose(stop)
+					return
 				}
 			case <-ticker.C:
 				websocketChat := WebsocketChatMessageSend{
@@ -212,7 +237,9 @@ func handleChatConnect(c *gin.Context) {
 				conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
 				err := conn.WriteJSON(websocketChat)
 				if err != nil {
-					stop = true
+					logrus.WithField("subscribe_id", uid).WithError(err).Error("error writing ping message to websocket")
+					common.TryClose(stop)
+					return
 				}
 			}
 		}

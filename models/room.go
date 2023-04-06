@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	cerrors "github.com/sheey11/chocolate/errors"
@@ -61,6 +62,7 @@ type Room struct {
 	Viewers         uint
 	PermissionType  RoomPermissionType `gorm:"default:blacklist"`
 	PermissionItems []PermissionItem   `gorm:"constraint:OnDelete:CASCADE"`
+	LastStreamingAt time.Time
 }
 
 func (r Room) GetPlaybackInfo() map[string]interface{} {
@@ -371,7 +373,15 @@ func DeleteRoomPermissionItem_User(id uint, uid uint) cerrors.ChocolateError {
 }
 
 func SetRoomStatus(id uint, status RoomStatus) cerrors.ChocolateError {
-	c := db.Model(&Room{}).Where("id = ?", id).Update("status", status)
+	var c *gorm.DB
+	if status == RoomStatusStreaming {
+		c = db.Model(&Room{}).Where("id = ?", id).Updates(map[string]interface{}{
+			"status":            status,
+			"last_streaming_at": time.Now(),
+		})
+	} else {
+		c = db.Model(&Room{}).Where("id = ?", id).Update("status", status)
+	}
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseUpdateRoomStatusError,
@@ -557,4 +567,16 @@ func ModifyRoomTitle(roomid uint, title string) cerrors.ChocolateError {
 		}
 	}
 	return nil
+}
+
+func GetRoomCount() uint {
+	var count int64
+	db.Model(&Room{}).Count(&count)
+	return uint(count)
+}
+
+func GetStreamingRoomCount() uint {
+	var count int64
+	db.Model(&Room{}).Where("status = ?", RoomStatusStreaming).Count(&count)
+	return uint(count)
 }

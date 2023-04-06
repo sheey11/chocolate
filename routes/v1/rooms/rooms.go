@@ -262,13 +262,14 @@ func handleRoomInfoRetrievel(c *gin.Context) {
 	}
 
 	response := common.Response{
-		"code":     0,
-		"message":  "ok",
-		"id":       room.ID,
-		"title":    room.Title,
-		"status":   room.Status.ToString(),
-		"playback": room.GetPlaybackInfo(),
-		"viewers":  room.Viewers,
+		"code":           0,
+		"message":        "ok",
+		"id":             room.ID,
+		"title":          room.Title,
+		"status":         room.Status.ToString(),
+		"playback":       room.GetPlaybackInfo(),
+		"viewers":        room.Viewers,
+		"last_streaming": room.LastStreamingAt,
 	}
 
 	if user != nil && room.OwnerID == user.ID {

@@ -202,3 +202,11 @@ func ModifyRoomTitle(roomid uint, title string) cerrors.ChocolateError {
 	}
 	return models.ModifyRoomTitle(roomid, title)
 }
+
+func GetRoomCount() uint {
+	return models.GetRoomCount()
+}
+
+func GetStreamingRoomCount() uint {
+	return models.GetStreamingRoomCount()
+}

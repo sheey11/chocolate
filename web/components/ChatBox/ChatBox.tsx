@@ -86,7 +86,6 @@ export default function ChatBox({ websocketUrl }: ChatBoxProps) {
     const [chats, setChats] = useState<ChatItem[]>([])
     const [chatBanned, setChatBanned] = useState<boolean>(false)
     const chatId = useRef(0)
-    const [chatInput, setChatInput] = useState('')
 
     const { getItem: getToken } = useLocalStorage<string>('access-token')
     const { authenticated } = useContext(AuthContext)
@@ -172,12 +171,12 @@ export default function ChatBox({ websocketUrl }: ChatBoxProps) {
 
     const sendChatMessage = () => {
         chatInputRef.current?.focus()
-        if (chatInput == "") { return }
+        if (!chatInputRef.current || chatInputRef.current.value == "") { return }
         chatWebsocket.current?.send(JSON.stringify({
             type: "chat",
-            content: chatInput,
+            content: chatInputRef.current.value,
         }))
-        setChatInput("")
+        chatInputRef.current.value = ""
     }
 
     return (
@@ -201,12 +200,11 @@ export default function ChatBox({ websocketUrl }: ChatBoxProps) {
                     :
                     (<>
                         <textarea
-                            value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
                             ref={chatInputRef}
                             rows={3}
                             className={ classNames(
                                 "border-none lg:rounded-b-lg mx-[1px] w-[calc(100%-2px)] lg:px-2 lg:w-full h-full text-sm block z-10", 
+                                "transition duraion-200",
                                 "focus:outline-none lg:focus:ring lg:focus:ring-blue-500",
                                 "resize-none",
                             )}
@@ -222,7 +220,7 @@ export default function ChatBox({ websocketUrl }: ChatBoxProps) {
                             className={classNames(
                                 "w-8 h-8 p-2 bg-blue-500 text-white rounded-full block",
                                 "absolute bottom-1 right-1",
-                                "focus:outline-none focus:ring focus:ring-blue-500",
+                                "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
                                 "hover:bg-blue-600 transition duration-200",
                             )}
                             onClick={() => sendChatMessage()}>

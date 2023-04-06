@@ -19,17 +19,17 @@ table tbody > tr > th:first-child {
     @apply text-black;
 }
 
-.code, .streaming-table tbody > tr > th:first-child {
+.code {
     font-family: var(--fira-code-font), monospace;
     @apply text-sm font-medium;
 }
 
-.code::before, .streaming-table tbody > tr > th:first-child::before {
+.code::before {
     content: '`';
     user-select: none;
 }
 
-.code::after, .streaming-table tbody > tr > th:first-child::after {
+.code::after {
     content: '`';
     user-select: none;
 }

@@ -1,9 +1,9 @@
 import { ChocolcateResponse } from "./datatypes";
 import { api } from "@/api/api"
 
-export function GET<ResType extends ChocolcateResponse>(url: string): Promise<ResType> {
+export function GET<ResType extends ChocolcateResponse>(url: string, params: any = undefined): Promise<ResType> {
     return new Promise(async (resolve, reject) => {
-        api.get<ResType>(url).then((value) => {
+        api.get<ResType>(url, { params }).then((value) => {
             resolve(value.data)
         }).catch((e) => {
                 reject(e)

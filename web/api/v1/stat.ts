@@ -1,8 +1,8 @@
 import { GET, POST } from "@/api/v1/api"
-import { SummaryObject, SummaryResponse, VersionResponse } from "./datatypes"
+import { ChatStat, ChatStats, ChatStatsResponse, ClientInformation, ClientResponse, RoomStatsResponse, StreamInformation, StreamResponse, SummaryObject, SummaryResponse, UserNumResponse, VersionResponse } from "./datatypes"
 
 export interface SummaryArray {
-    now_ms: number[]
+    time: string[]
     self: {
         version: string[]
         pid: number[]
@@ -62,7 +62,7 @@ function transposeSummary(summaryResponses: SummaryObject[]): SummaryArray {
     //     ])
     // )
     return {
-        now_ms: summaryResponses.map((sr: SummaryObject) => sr.now_ms),
+        time: summaryResponses.map((sr: SummaryObject) => new Date(sr.now_ms * 1000).toLocaleTimeString("en-UK")),
         self: {
             version: summaryResponses.map((sr: SummaryObject) => sr.self.version),
             pid: summaryResponses.map((sr: SummaryObject) => sr.self.pid),
@@ -107,7 +107,7 @@ function transposeSummary(summaryResponses: SummaryObject[]): SummaryArray {
 }
 
 export interface HostInformation {
-    time: number[]
+    time: string[]
     network_inbound: number[]
     network_outbound: number[]
     cpu_count: number
@@ -119,18 +119,23 @@ export interface HostInformation {
     num_conn: number[]
 }
 
+function diff(arr: number[], sample_internval: number = 1): number[] {
+    return arr.slice(1).map((v, i) => (v - arr[i]) / sample_internval)
+}
+
 function splitSummary(summary: SummaryArray): HostInformation {
+    const sample_internval = 30
     return {
-        time: summary.now_ms,
-        network_inbound: summary.system.net_recv_bytes,
-        network_outbound: summary.system.net_send_bytes,
-        cpu_count: summary.system.cpus[0],
-        cpu_load: summary.system.load_1m,
-        cpu: summary.system.cpu_percent,
-        mem: summary.system.men_ram_percent,
-        disk_read: summary.system.disk_read_KBps,
-        disk_write: summary.system.disk_write_KBps,
-        num_conn: summary.system.conn_srs
+        time: summary.time,
+        network_inbound:  diff(summary.system.net_recvi_bytes, sample_internval),
+        network_outbound: diff(summary.system.net_sendi_bytes, sample_internval),
+        cpu_count:        summary.system.cpus[0],
+        cpu_load:         summary.system.load_1m,
+        cpu:              summary.system.cpu_percent.map((v, i) => v + summary.self.cpu_percent[i]),
+        mem:              summary.self.mem_kbyte,
+        disk_read:        summary.system.disk_read_KBps,
+        disk_write:       summary.system.disk_write_KBps,
+        num_conn:         summary.system.conn_sys
     }
 }
 
@@ -151,4 +156,67 @@ export async function fetchHostInformation(): Promise<HostInformation> {
     })
 }
 
+export async function fetchStreamInformation(): Promise<StreamInformation> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const sr = await GET<StreamResponse>(`/api/v1/stats/streams`)
+            sr.streams = sr.streams.filter(v => v != null)
+            const info: StreamInformation = {
+                num_streams: sr.streams.at(-1)!.streams.length,
+                time: sr.streams.map((s) => new Date(s.sample_time * 1000).toLocaleTimeString('en-UK')),
+                samples: sr.streams,
+            }
+            resolve(info)
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
 
+export async function fetchClientInformation(): Promise<ClientInformation> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const sr = await GET<ClientResponse>(`/api/v1/stats/clients`)
+            sr.clients = sr.clients.filter(v => v != null)
+            const info: ClientInformation = {
+                num_clients: sr.clients.at(-1)!.clients.length,
+                time: sr.clients.map((s) => new Date(s.sample_time * 1000).toLocaleTimeString('en-UK')),
+                samples: sr.clients,
+            }
+            resolve(info)
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
+export async function fetchUserNum(): Promise<number> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await GET<UserNumResponse>(`/api/v1/stats/users`)
+            resolve(response.users_num)
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
+export async function fetchChatStat(): Promise<ChatStats> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await GET<ChatStatsResponse>(`/api/v1/stats/chats`)
+            const chats = response.chats.filter(c => c != null)
+            const stat: ChatStats = {
+                times: chats.map((v) => (new Date(v.time)).toLocaleTimeString('en-UK')),
+                nums:  chats.map((v) => v.num),
+            }
+            resolve(stat)
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
+export async function fetchRoomStats(): Promise<RoomStatsResponse> {
+    return GET<RoomStatsResponse>(`/api/v1/stats/rooms`)
+}

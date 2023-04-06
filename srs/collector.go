@@ -35,6 +35,10 @@ func (arr *FixedLengthArray[T]) Len() int {
 
 func (arr *FixedLengthArray[T]) ToList() []*T {
 	list := make([]*T, arr.Len())
+	if arr.Len() == 0 {
+		return list
+	}
+
 	if arr.start < arr.end {
 		copy(list, arr.underlay[arr.start:arr.end])
 	} else {

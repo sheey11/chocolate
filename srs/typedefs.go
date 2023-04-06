@@ -114,7 +114,7 @@ type VHost struct {
 	} `json:"kbps"`
 	HLS struct {
 		Enabled  bool
-		Fragment uint
+		Fragment float64
 	} `json:"hls"`
 }
 

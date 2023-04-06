@@ -96,7 +96,7 @@ func setAddressAndCheck(addr string) error {
 		featuresUrl:  composeUrl(addr, "/api/v1/features"),
 		requestsUrl:  composeUrl(addr, "/api/v1/requests"),
 		vhostsUrl:    composeUrl(addr, "/api/v1/vhosts"),
-		streamsUrl:   composeUrl(addr, "/api/v1/streams"),
+		streamsUrl:   composeUrl(addr, "/api/v1/streams/"),
 		clientsUrl:   composeUrl(addr, "/api/v1/clients"),
 		clustersUrl:  composeUrl(addr, "/api/v1/clusters"),
 		perfStatUrl:  composeUrl(addr, "/api/v1/perf"),

@@ -30,6 +30,7 @@ func (h *Hub) dispatch() {
 	for {
 		message := <-h.channel
 		go h.saveToDatabase(message)
+		go h.countChatMessage()
 		h.mu.Lock()
 		for _, sub := range h.subscribers {
 			sub <- message
@@ -43,6 +44,10 @@ func (h *Hub) saveToDatabase(message *models.ChatMessage) {
 		logrus.WithError(err).Error("error when writing chat message to database")
 	}
 	message.CreatedAt = time.Now()
+}
+
+func (h *Hub) countChatMessage() {
+	increaseChatNum()
 }
 
 func (h *Hub) subscribe(uid int64, ch chan<- *models.ChatMessage) {

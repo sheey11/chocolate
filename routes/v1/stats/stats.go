@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sheey11/chocolate/chat"
 	"github.com/sheey11/chocolate/common"
 	"github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/middleware"
 	"github.com/sheey11/chocolate/models"
+	"github.com/sheey11/chocolate/service"
 	"github.com/sheey11/chocolate/srs"
 	"github.com/sirupsen/logrus"
 )
@@ -20,6 +22,9 @@ func mountStatsRoutes(r *gin.RouterGroup) {
 	r.GET("/vhosts", handleVHosts)
 	r.GET("/streams", handleStreams)
 	r.GET("/clients", handleClients)
+	r.GET("/users", handleUsers)
+	r.GET("/chats", handleChats)
+	r.GET("/rooms", handleRooms)
 }
 
 func handleVersion(c *gin.Context) {
@@ -60,27 +65,52 @@ func handleMemInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",
-		"summary": srs.GetMemInfoHistory(),
+		"meminfo": srs.GetMemInfoHistory(),
 	})
 }
 func handleVHosts(c *gin.Context) {
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",
-		"summary": srs.GetVHostsHistory(),
+		"vhosts":  srs.GetVHostsHistory(),
 	})
 }
 func handleStreams(c *gin.Context) {
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",
-		"summary": srs.GetStreamsHistory(),
+		"streams": srs.GetStreamsHistory(),
 	})
 }
 func handleClients(c *gin.Context) {
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",
-		"summary": srs.GetClientsHistory(),
+		"clients": srs.GetClientsHistory(),
+	})
+}
+
+func handleUsers(c *gin.Context) {
+	c.JSON(http.StatusOK, common.Response{
+		"code":      0,
+		"message":   "ok",
+		"users_num": service.GetCurrentUserNum(),
+	})
+}
+
+func handleChats(c *gin.Context) {
+	c.JSON(http.StatusOK, common.Response{
+		"code":    0,
+		"message": "ok",
+		"chats":   chat.GetChatNumStats(),
+	})
+}
+
+func handleRooms(c *gin.Context) {
+	c.JSON(http.StatusOK, common.Response{
+		"code":      0,
+		"message":   "ok",
+		"total":     service.GetRoomCount(),
+		"streaming": service.GetStreamingRoomCount(),
 	})
 }

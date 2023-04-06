@@ -29,3 +29,14 @@ func Keys[T comparable, V any](dict map[T]V) []T {
 	}
 	return keys
 }
+
+func TryClose[T any](ch chan T) {
+	select {
+	case _, ok := <-ch:
+		if ok {
+			close(ch)
+		}
+	default:
+		close(ch)
+	}
+}

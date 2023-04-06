@@ -27,8 +27,7 @@ function classNames(...classes: string[]) {
 }
 
 export default function Room() {
-  const auth = useContext(AuthContext)
-  const user = auth.getUser()
+  const { authenticated, getUser } = useContext(AuthContext)
   const router = useRouter()
   const lang = router.locale!
 

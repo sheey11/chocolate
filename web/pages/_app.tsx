@@ -6,6 +6,7 @@ import { Inter, Fira_Code } from 'next/font/google'
 
 const inter = Inter({
   subsets: ['latin-ext'],
+  variable: '--inter-font',
 })
 
 const firaMono = Fira_Code({
@@ -17,7 +18,7 @@ export default function App({ Component, pageProps }: AppProps) {
   const { authenticated, getUser, signin, signout } = useAuth()
 
   return (
-    <div className={`${inter.className} ${firaMono.variable}`}>
+     <div className={`${inter.className} ${firaMono.variable} ${inter.variable}`}>
       <AuthContext.Provider value={{ authenticated, getUser, signin, signout }}>
         <Component {...pageProps} />
       </AuthContext.Provider>

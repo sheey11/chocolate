@@ -1,4 +1,8 @@
 {
+  "second": "秒",
+  "minute": "分钟",
+  "hour": "小时",
+
   "signin": "登陆",
   "signout": "注销",
   "username": "用户名",
@@ -28,8 +32,10 @@
   "disk_write": "磁盘写入",
 
   "overview": "总览",
-  "streaming": "直播",
+  "streaming": "直播中",
   "viewers": "观众",
+  "users": "用户",
+  "chats": "聊天",
 
   "more": "更多",
 
@@ -43,6 +49,10 @@
   "cut_off_stream": "切断",
   "delete_room": "删除",
 
+  "room_id": "房间 ID",
+  "room_title": "房间标题",
+  "room_viewers": "观众",
+  "room_streamed_for": "已直播",
   "room_info": "房间信息",
   "room_owner": "所有者",
   "room_permission_type": "权限类型",
@@ -62,6 +72,10 @@
   "welcome_to_chat": "欢迎来到聊天",
 
   "to_chat": "以发送聊天信息",
+
+  "your_profile": "个人信息",
+  "settings": "设置",
+  "sign_out": "退出登陆",
 
   "errors": {
     "1":  "服务器处理请求时出现错误",

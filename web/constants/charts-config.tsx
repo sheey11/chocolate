@@ -1,4 +1,5 @@
 import { localize } from "@/i18n/i18n"
+import { TooltipItem } from "chart.js"
 import "humanizer.node"
 
 export const corsair = {
@@ -48,7 +49,7 @@ function bytes2bits(v: number) {
   return v * 8
 }
 
-function humanizeSpeed(v: any) {
+export function humanizeSpeed(v: any) {
   v = Math.abs(v)
   let bs = (v).bytes()
 
@@ -62,6 +63,39 @@ function humanizeSpeed(v: any) {
     return `${bytes2bits(bs.terabytes).toFixed(1)} Tbps`
   }
   return `${v} Bps`
+}
+
+function humanizeSpeedKB(v: any) {
+  v = Math.abs(v)
+  let bs = (v).kilobytes()
+
+  if(bs.bits < 1024) {
+    return `${bs.bits.toFixed(0)} bps`
+  } else if (bs.megabytes < 128) {
+    return `${bytes2bits(bs.megabytes).toFixed(1)} Mbps`
+  } else if (bs.gigabytes < 128) {
+    return `${bytes2bits(bs.gigabytes).toFixed(1)} Gbps`
+  } else if (bs.terabytes < 128) {
+    return `${bytes2bits(bs.terabytes).toFixed(1)} Tbps`
+  }
+  return `${v} Bps`
+}
+
+
+function humanizeSize(v: any) {
+  v = Math.abs(v)
+  let size = (v).kilobytes()
+
+  if(size.kilobytes < 768) {
+    return `${size.bits.toFixed(0)} KB`
+  } else if (size.megabytes < 768) {
+    return `${size.megabytes.toFixed(1)} MB`
+  } else if (size.gigabytes < 768) {
+    return `${size.gigabytes.toFixed(1)} GB`
+  } else if (size.terabytes < 768) {
+    return `${size.terabytes.toFixed(1)} TB`
+  }
+  return `${v} KB`
 }
 
 function percentize(v: number) {
@@ -198,10 +232,28 @@ export function getPerfChartOptions(lang: string, delay?: number) {
   }
 }
 
+export function getMemChartOptions(lang: string, delay?: number) {
+  return {
+    ...aspectRatio,
+    ...noPoints,
+    ...animations(200, delay),
+    ...tooltips(lang, humanizeSize),
+    scales: {
+      x: { ticks: { display: false, }, border: { display: false, }, grid: { display: false, }, },
+      y: {
+        border: { display: false, },
+        ticks: {
+          callback: humanizeSize,
+        },
+      }
+    },
+  }
+}
+
 export function getDiskChartOptions(lang: string, delay?: number) {
   return {
     ...getNetworkChartOptions(lang),
     ...animations(75, delay),
-    ...tooltips(lang, humanizeSpeed),
+    ...tooltips(lang, humanizeSpeedKB),
   }
 }
