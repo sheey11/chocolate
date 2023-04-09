@@ -30,6 +30,7 @@
 
   "overview": "Overview",
   "streaming": "Streams",
+  "idle": "Idle",
   "viewers": "Viewers",
   "users": "Users",
   "chats": "Chat Messages",
@@ -40,7 +41,7 @@
   "search": "Search",
 
   "room_filter_status_all": "All",
-  "room_filter_status_active": "Streaming",
+  "room_filter_status_streaming": "Streaming",
   "room_filter_status_idle": "Idle",
 
   "cut_off_stream": "Cut off",
@@ -52,6 +53,7 @@
   "room_streamed_for": "Streamed",
   "room_info": "Room Information",
   "room_owner": "Owner",
+  "room_status": "Status",
   "room_permission_type": "Permission Type",
   "room_permission_type_whitelist": "Whitelist",
   "room_permission_type_blacklist": "Blacklist",
@@ -59,6 +61,7 @@
   "room_permission_type_blacklist_explain": "Anyone can watch the stream, except the specified user and users with specified label.",
   "room_stream_preview": "Preview",
   "room_timeline": "Timeline",
+  "edit": "Edit",
   
   "play": "Play",
   "pause": "Pause",
@@ -73,6 +76,8 @@
   "your_profile": "Your Profile",
   "settings": "Settings",
   "sign_out": "Sign out",
+
+  "no_data": "No Data",
 
   "errors": {
     "1":  "Internal Server Error",

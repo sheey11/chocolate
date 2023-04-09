@@ -18,7 +18,7 @@ export default function App({ Component, pageProps }: AppProps) {
   const { authenticated, getUser, signin, signout } = useAuth()
 
   return (
-     <div className={`${inter.className} ${firaMono.variable} ${inter.variable}`}>
+     <div className={`min-h-[100vh] ${inter.className} ${firaMono.variable} ${inter.variable}`}>
       <AuthContext.Provider value={{ authenticated, getUser, signin, signout }}>
         <Component {...pageProps} />
       </AuthContext.Provider>

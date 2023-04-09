@@ -1,5 +1,5 @@
 import { GET, POST } from "@/api/v1/api"
-import { ListRoomAdminResponse } from "../datatypes"
+import { AdminRoomDetailResponse, ListRoomAdminResponse } from "../datatypes"
 
 export interface FetchRoomOptions {
     search?: string,
@@ -10,7 +10,7 @@ export interface FetchRoomOptions {
 
 export function fetchRooms({ search, status, limit = 20, page = 1}: FetchRoomOptions): Promise<ListRoomAdminResponse> {
     const params = { search, status, limit, page }
-    const params_filtered = Object.entries(params).reduce((a: any, [k, v]) => (v ? (a[k] = v, a) : a), {})
+    const params_filtered = Object.entries(params).reduce((a: any, [k, v]) => (v || v === 0 ? (a[k] = v, a) : a), {})
     return new Promise(async (resolve, reject) => {
         try {
             const response = await GET<ListRoomAdminResponse>("/api/v1/admin/room/", params_filtered)
@@ -19,4 +19,8 @@ export function fetchRooms({ search, status, limit = 20, page = 1}: FetchRoomOpt
             reject(e)
         }
     })
+}
+
+export function fetchRoomDetail(id: string): Promise<AdminRoomDetailResponse> {
+    return GET<AdminRoomDetailResponse>(`/api/v1/admin/room/${id}`)
 }

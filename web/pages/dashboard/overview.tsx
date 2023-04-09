@@ -172,6 +172,21 @@ export default function AdminPage () {
     )
   }
 
+  if(errCode && httpErrCode) {
+    return (
+      <>
+        <Nav navs={dashboardNavs} />
+        <main className="mx-auto max-w-7xl lg:pt-8 h-[calc(100vh-13rem)] md:h-[calc(100vh-14.5rem)] flex flex-col items-center justify-center">
+          <h1 className={ classNames("text-7xl", jbm.className) }>{ httpErrCode }</h1>
+          <span className="text-sm text-gray-600 font-bold">
+            { localizeError(lang, errCode) }
+          </span>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
   return (
     <>
       <Nav navs={dashboardNavs} />
@@ -358,7 +373,7 @@ export default function AdminPage () {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 { rooms.map((room) => (
-                  <tr key={room.id} className="text-black">
+                  <tr key={room.id} className="text-black text-sm">
                     <th className="code">{ room.id }</th>
                     <th>{ room.title }</th>
                     <th>{ room.viewers }</th>

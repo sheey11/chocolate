@@ -1,7 +1,7 @@
 import { Nav } from "@/components/Nav/Nav"
 import { AuthContext } from "@/contexts/AuthContext"
 import { useRouter } from "next/router"
-import { useContext } from "react"
+import { useContext, useEffect } from "react"
 import { dashboardNavs } from "@/constants/navs"
 import { Inter } from "next/font/google"
 import Button from "@/components/Button/Button"
@@ -12,6 +12,8 @@ import Link from "next/link"
 import { Footer } from "@/components/Footer/Footer"
 import { localize } from "@/i18n/i18n"
 import Dialog from "@/components/Dialog/Dialog"
+import { AdminRoomDetailResponse } from "@/api/v1/datatypes"
+import { fetchRoomDetail } from "@/api/v1/admin/room"
 
 const inter = Inter({
   subsets: ['latin-ext'],
@@ -96,22 +98,23 @@ const comments = [
   },
 ]
 
-const room_detail = {
-  id: 123,
-  title: "冲水冲水",
-  viewers: 114514,
-  streaming: true,
-}
-
 export default function RoomDetailPage() {
   const auth = useContext(AuthContext)
   const user = auth.getUser()
   const router = useRouter()
-  const { id } = router.query
+  const id = router.query.id as string | undefined
   const lang = router.locale!
 
   const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false)
 
+  const [roomDetail, setRoomDetail] = useState<AdminRoomDetailResponse | null>(null)
+
+  useEffect(() => {
+    if (!id) return
+    fetchRoomDetail(id)
+      .then(setRoomDetail)
+      .catch(e => console.error(e))
+  }, [id])
   return (
     <>
       <Nav navs={dashboardNavs} />
@@ -121,7 +124,7 @@ export default function RoomDetailPage() {
           <div className="flex items-center space-x-5">
             <div>
               <div className="flex items-center">
-                <h1 className="text-2xl font-bold text-gray-900"> { room_detail.title }</h1>
+                <h1 className="text-2xl font-bold text-gray-900"> { roomDetail?.rooms.title }</h1>
                 <div className="ml-2">
                   <span className="absolute h-2 w-2 rounded-full bg-green-500 block" />
                   <span className="h-2 w-2 rounded-full bg-green-500 block animate-ping" />
@@ -129,7 +132,7 @@ export default function RoomDetailPage() {
               </div>
               <p className="text-sm font-medium text-gray-500">
                 Streaming started on{' '}
-                <time dateTime="2020-08-25">August 25, 2020</time>
+                <time dateTime={roomDetail?.rooms.last_streaming}>{ roomDetail ? new Date(roomDetail.rooms.last_streaming).toLocaleString("zh-CN") : "unknown" }</time>
               </p>
             </div>
           </div>
@@ -145,7 +148,7 @@ export default function RoomDetailPage() {
                   </span>
                   <div className="w-full">
                     <h2 className="font-semibold text-md"> Deletion Confirm </h2>
-                    <p> The room <code>114514</code> deletion cannot be undone! </p>
+                    <p> The room <code>{ roomDetail?.rooms.id }</code> deletion cannot be undone! </p>
                   </div>
                 </div>
               </Dialog.Content>
@@ -172,17 +175,19 @@ export default function RoomDetailPage() {
                   <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
                     <div className="sm:col-span-1">
                       <dt className="text-sm font-medium text-gray-500">ID</dt>
-                      <dd className="mt-1 text-gray-900 code">{ id }</dd>
+                      <dd className="mt-1 text-gray-900 code">{ roomDetail?.rooms.id }</dd>
                     </div>
                     <div className="sm:col-span-1">
                       <dt className="text-sm font-medium text-gray-500">UID</dt>
-                      <dd className="mt-1 text-md text-gray-900 overflow-x-scroll scrollbar-hidden code">1a6d56aefbea4b7381ef8a51cbfd8f15</dd>
+                      <dd className="mt-1 text-md text-gray-900 overflow-x-scroll scrollbar-hidden code select-none">
+                        { roomDetail?.rooms.uid }
+                      </dd>
                     </div>
                     <div className="sm:col-span-1">
                       <dt className="text-sm font-medium text-gray-500">{ localize(lang, "room_owner") }</dt>
                       <dd className="mt-1 text-sm text-gray-900 hover:text-gray-600 transition duration-100">
-                        <Link target="_blank" href="/dashboard/users/1">
-                          sheey
+                        <Link target="_blank" href={`/dashboard/users/${roomDetail?.rooms.owner_id}`}>
+                          { roomDetail?.rooms.owner_username }
                           <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4"/>
                         </Link>
                       </dd>
@@ -190,7 +195,7 @@ export default function RoomDetailPage() {
                     <div className="sm:col-span-1">
                       <dt className="text-sm font-medium text-gray-500">{ localize(lang, "room_permission_type") }</dt>
                       <dd className="mt-1 text-sm flex items-center text-gray-900">
-                        <span>{ localize(lang, "room_permission_type_whitelist") }</span>
+                        <span>{ localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }</span>
                         <div className="relative">
                           <QuestionMarkCircleIcon className="ml-1 h-4 w-4 text-gray-400 hover-show"/>
                           <div className="absolute top-5 -left-5 hidden p-4 w-72 whitespace-pre-line border rounded shadow bg-white hover-show-subject">

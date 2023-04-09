@@ -23,7 +23,7 @@ const userNavs = [
 ]
 
 function classNames(...classes: string[]) {
-    return classes.filter(Boolean).join(' ')
+  return classes.filter(Boolean).join(' ')
 }
 
 export default function Room() {
@@ -73,35 +73,37 @@ export default function Room() {
   }
 
   return (
-    <>
-      <Nav navs={userNavs}/>
-      <main className={ classNames(
-        "pb-10 mx-auto",
-        theatherMode ? "" : "max-w-7xl lg:pt-8"
-      )}>
-        <StreamVideoBox theaterMode={theatherMode} setTheaterMode={setThreaterMode} playbackUrl={playbackUrl} streamingStatus={streamingStatus}/>
-        <div className={classNames(
-          "m-auto w-full",
-          "lg:mt-5",
-          "flex flex-col-reverse space-y-reverse space-y-4",
-          "lg:space-y-0 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-4",
-          theatherMode ?  "max-w-7xl pt-8" : ""
+    <div className="min-h-[100vh] flex flex-col justify-between">
+      <div>
+        <Nav navs={userNavs}/>
+        <main className={ classNames(
+          "pb-10 mx-auto",
+          theatherMode ? "" : "max-w-7xl lg:pt-8"
         )}>
+          <StreamVideoBox theaterMode={theatherMode} setTheaterMode={setThreaterMode} playbackUrl={playbackUrl} streamingStatus={streamingStatus}/>
+          <div className={classNames(
+            "m-auto w-full",
+            "lg:mt-5",
+            "flex flex-col-reverse space-y-reverse space-y-4",
+            "lg:space-y-0 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-4",
+            theatherMode ?  "max-w-7xl pt-8" : ""
+          )}>
 
-          <section className="col-span-3 lg:rounded-lg shadow bg-white" aria-label="room information">
-            <RoomInfo
-              id={id}
-              onError={(errCode, httpCode) => { setErrCode(errCode); setHttpErrCode(httpCode); }}
-              setStatus={setStreamingStatus}
-            />
-          </section>
+            <section className="col-span-3 lg:rounded-lg shadow bg-white" aria-label="room information">
+              <RoomInfo
+                id={id}
+                onError={(errCode, httpCode) => { setErrCode(errCode); setHttpErrCode(httpCode); }}
+                setStatus={setStreamingStatus}
+              />
+            </section>
 
-          <section className="col-span-1 lg:rounded-lg shadow bg-white" aria-labelledby="chat-section-title">
-            <ChatBox websocketUrl={websocketUrl}/>
-          </section>
-        </div>
-      </main>
+            <section className="col-span-1 lg:rounded-lg shadow bg-white" aria-labelledby="chat-section-title">
+              <ChatBox websocketUrl={websocketUrl}/>
+            </section>
+          </div>
+        </main>
+      </div>
       <Footer />
-    </>
+    </div>
   )
 }

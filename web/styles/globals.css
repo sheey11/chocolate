@@ -12,7 +12,7 @@ table tbody th {
 }
 
 table tbody > tr {
-    @apply hover:bg-gray-100;
+    @apply hover:bg-gray-50;
 }
 
 table tbody > tr > th:first-child {

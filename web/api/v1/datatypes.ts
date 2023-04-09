@@ -252,3 +252,18 @@ export interface ListRoomAdminResponse extends ChocolcateResponse {
     rooms: RoomAdminInfo[]
     total: number
 }
+
+export interface AdminRoomDetailResponse extends ChocolcateResponse {
+    rooms: {
+        id: number;
+        uid: string;
+        viewers: number;
+        title: string;
+        status: string;
+        owner_id: number;
+        owner_username: string;
+        permission_type: string;
+        permission_items: any[];
+        last_streaming: string;
+    }
+}

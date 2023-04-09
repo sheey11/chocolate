@@ -33,6 +33,7 @@
 
   "overview": "总览",
   "streaming": "直播中",
+  "idle": "闲置",
   "viewers": "观众",
   "users": "用户",
   "chats": "聊天",
@@ -43,7 +44,7 @@
   "search": "搜索",
 
   "room_filter_status_all": "所有房间",
-  "room_filter_status_active": "直播中",
+  "room_filter_status_streaming": "直播中",
   "room_filter_status_idle": "闲置",
 
   "cut_off_stream": "切断",
@@ -55,6 +56,7 @@
   "room_streamed_for": "已直播",
   "room_info": "房间信息",
   "room_owner": "所有者",
+  "room_status": "房间状态",
   "room_permission_type": "权限类型",
   "room_permission_type_whitelist": "白名单",
   "room_permission_type_blacklist": "黑名单",
@@ -62,6 +64,7 @@
   "room_permission_type_blacklist_explain": "所有人都可以观看直播，除了指定的用户和带有指定标签的用户",
   "room_stream_preview": "预览",
   "room_timeline": "时间线",
+  "edit": "编辑",
 
   "play": "播放",
   "pause": "暂停",
@@ -76,6 +79,8 @@
   "your_profile": "个人信息",
   "settings": "设置",
   "sign_out": "退出登陆",
+
+  "no_data": "没有数据",
 
   "errors": {
     "1":  "服务器处理请求时出现错误",
@@ -112,7 +117,6 @@
     "32": "房间标题太长",
     "33": "标签已存在",
     "34": "用户不存在该标签",
-    "35": "不允许查看该房间",
-    "only_a_palceholder": "占位符，让你不用每次都要在上一行加逗号"
+    "35": "不允许查看该房间"
   }
 }
