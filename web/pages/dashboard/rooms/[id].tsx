@@ -1,20 +1,21 @@
 import { Nav } from "@/components/Nav/Nav"
 import { AuthContext } from "@/contexts/AuthContext"
 import { useRouter } from "next/router"
-import { useContext, useEffect } from "react"
+import { Fragment, useContext, useEffect } from "react"
 import { dashboardNavs } from "@/constants/navs"
 import { Inter } from "next/font/google"
 import Button from "@/components/Button/Button"
 import { useState } from 'react'
-import { CheckIcon, HandThumbUpIcon, UserIcon, ArrowTopRightOnSquareIcon, PaperClipIcon, QuestionMarkCircleIcon, } from '@heroicons/react/24/solid'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, HandThumbUpIcon, UserIcon, ArrowTopRightOnSquareIcon, PaperClipIcon, QuestionMarkCircleIcon, PlayIcon, PlayPauseIcon, NoSymbolIcon, } from '@heroicons/react/24/solid'
+import { ArrowPathRoundedSquareIcon, ArrowSmallUpIcon, ExclamationTriangleIcon, SignalIcon, SignalSlashIcon } from '@heroicons/react/24/outline'
 import Link from "next/link"
 import { Footer } from "@/components/Footer/Footer"
 import { localize } from "@/i18n/i18n"
 import Dialog from "@/components/Dialog/Dialog"
-import { AdminRoomDetailResponse } from "@/api/v1/datatypes"
-import { fetchRoomDetail } from "@/api/v1/admin/room"
-import { Transition } from "@headlessui/react"
+import { AdminRoomDetailResponse, RoomTimelineResponse } from "@/api/v1/datatypes"
+import { fetchRoomDetail, fetchRoomTimeline } from "@/api/v1/admin/room"
+import { Listbox, Transition } from "@headlessui/react"
+import "humanizer.node"
 
 const inter = Inter({
   subsets: ['latin-ext'],
@@ -24,57 +25,35 @@ function classNames(...classes: any) {
   return classes.filter(Boolean).join(' ')
 }
 
+function humanizeSize(v: any) {
+  v = Math.abs(v)
+  let size = (v).bytes()
+
+  if(size.kilobytes < 768) {
+    return `${size.kilobytes.toFixed(0)} KB`
+  } else if (size.megabytes < 768) {
+    return `${size.megabytes.toFixed(1)} MB`
+  } else if (size.gigabytes < 768) {
+    return `${size.gigabytes.toFixed(1)} GB`
+  } else if (size.terabytes < 768) {
+    return `${size.terabytes.toFixed(1)} TB`
+  }
+  return `${v} KB`
+}
+
+
 const attachments = [
   { name: 'resume_front_end_developer.pdf', href: '#' },
   { name: 'coverletter_front_end_developer.pdf', href: '#' },
 ]
-const eventTypes = {
-  applied: { icon: UserIcon, bgColorClass: 'bg-gray-400' },
-  advanced: { icon: HandThumbUpIcon, bgColorClass: 'bg-blue-500' },
-  completed: { icon: CheckIcon, bgColorClass: 'bg-green-500' },
-}
-const timeline = [
-  {
-    id: 1,
-    type: eventTypes.applied,
-    content: 'Applied to',
-    target: 'Front End Developer',
-    date: 'Sep 20',
-    datetime: '2020-09-20',
-  },
-  {
-    id: 2,
-    type: eventTypes.advanced,
-    content: 'Advanced to phone screening by',
-    target: 'Bethany Blake',
-    date: 'Sep 22',
-    datetime: '2020-09-22',
-  },
-  {
-    id: 3,
-    type: eventTypes.completed,
-    content: 'Completed phone screening with',
-    target: 'Martha Gardner',
-    date: 'Sep 28',
-    datetime: '2020-09-28',
-  },
-  {
-    id: 4,
-    type: eventTypes.advanced,
-    content: 'Advanced to interview by',
-    target: 'Bethany Blake',
-    date: 'Sep 30',
-    datetime: '2020-09-30',
-  },
-  {
-    id: 5,
-    type: eventTypes.completed,
-    content: 'Completed interview with',
-    target: 'Katherine Snyder',
-    date: 'Oct 4',
-    datetime: '2020-10-04',
-  },
+const eventTypes = [
+  { name: 'publish',   icon: SignalIcon, bgColorClass: 'bg-green-400' },
+  { name: 'unpublish', icon: SignalSlashIcon, bgColorClass: 'bg-blue-500' },
+  { name: 'play',      icon: PlayIcon, bgColorClass: 'bg-gray-500' },
+  { name: 'stop',      icon: PlayPauseIcon, bgColorClass: 'bg-gray-500' },
+  { name: 'cutoff',    icon: NoSymbolIcon, bgColorClass: 'bg-red-500' },
 ]
+
 const comments = [
   {
     id: 1,
@@ -109,14 +88,29 @@ export default function RoomDetailPage() {
   const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false)
 
   const [roomDetail, setRoomDetail] = useState<AdminRoomDetailResponse | null>(null)
+  const [roomTimeline, setRoomTimeline] = useState<RoomTimelineResponse | null>(null)
   const [permissionTypeHelpShow, setPermissionTypeHelpShow] = useState<boolean>(false)
 
-  useEffect(() => {
-    if (!id) return
+  const reloadDetail = (id: string | undefined) => {
+    if(!id) return
     fetchRoomDetail(id)
       .then(setRoomDetail)
       .catch(e => console.error(e))
+  }
+
+  const loadRoomTimeline = (id: string | undefined) => {
+    if(!id) return
+    fetchRoomTimeline(id)
+      .then(setRoomTimeline)
+      .catch(e => console.error(e))
+  }
+
+  useEffect(() => {
+    if (!id) return
+    reloadDetail(id)
+    loadRoomTimeline(id)
   }, [id])
+
   return (
     <>
       <Nav navs={dashboardNavs} />
@@ -178,13 +172,18 @@ export default function RoomDetailPage() {
         <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-6 sm:px-6 lg:max-w-7xl lg:grid-flow-col-dense lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2 lg:col-start-1">
             {/* Description list*/}
-            <section aria-labelledby="applicant-information-title">
+            <section aria-labelledby="room-information-title">
               <div className="bg-white shadow sm:rounded-lg">
-                <div className="px-4 py-5 sm:px-6">
-                  <h2 id="applicant-information-title" className="text-lg font-medium leading-6 text-gray-900">
+                <div className="px-4 py-5 sm:px-6 flex items-center justify-start">
+                  <h2 id="room-information-title" className="text-lg font-medium leading-6 text-gray-900">
                     { localize(lang, "room_info") }
                   </h2>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and application.</p>
+                  <button
+                    className="h-6 w-6 p-1 mx-2 rounded-sm focus:outline-none focus:ring focus:ring-blue-500 transition duration-200"
+                    onClick={() => reloadDetail(id)}
+                  >
+                    <ArrowPathRoundedSquareIcon />
+                  </button>
                 </div>
                 <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
                   <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
@@ -219,15 +218,16 @@ export default function RoomDetailPage() {
                         >
                           <QuestionMarkCircleIcon className="h-4 w-4 text-gray-400"/>
                           <Transition
+                            as={Fragment}
                             show={permissionTypeHelpShow}
-                            enter="transition ease-out duration-50"
+                            enter="transition ease-out duration-50 origin-top-left"
                             enterFrom="opacity-0 scale-95"
                             enterTo="opacity-100 scale-100"
-                            leave="transition ease-in duration-50"
+                            leave="transition ease-in duration-50 origin-top-left"
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                           >
-                            <dl className="absolute -left-5 p-4 w-72 whitespace-pre-line border rounded shadow bg-white text-left">
+                            <dl className="absolute p-4 w-72 whitespace-pre-line border rounded shadow bg-white text-left z-20">
                               <dt className="font-medium block text-black">{ localize(lang, "room_permission_type_whitelist") }</dt>
                               <dd>{ localize(lang, "room_permission_type_whitelist_explain") }</dd>
                               <dt className="font-medium block text-black mt-2">{ localize(lang, "room_permission_type_blacklist") }</dt>
@@ -237,20 +237,105 @@ export default function RoomDetailPage() {
                         </button>
                       </dt>
                       <dd className="mt-1 text-sm text-gray-900">
-                        <span>{ localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }</span>
+                        { localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }
+                        { /*
+                          <Listbox value={roomDetail?.rooms.permission_type}>
+                            <Listbox.Button className="relative rounded">
+                                { localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }
+                              <PencilSquareIcon className="inline-block h-4 w-4 ml-2 mb-1" />
+                            </Listbox.Button>
+                            <Transition
+                              as={Fragment}
+                              enter="transition ease-out duration-50 origin-top"
+                              enterFrom="opacity-0 scale-95"
+                              enterTo="opacity-100 scale-100"
+                              leave="transition ease-in duration-50 origin-top"
+                              leaveFrom="opacity-100 scale-100"
+                              leaveTo="opacity-0 scale-95"
+                            >
+                              <Listbox.Options className="absolute bg-white z-20 border border-gray-100 rounded shadow-lg divide-y">
+                                <Listbox.Option as="button" value="blacklist" className="flex items-center space-x-2 py-3 px-4">
+                                  <UserMinusIcon className="h-5 w-5"/>
+                                  <span> { localize(lang, `room_permission_type_blacklist`) } </span>
+                                </Listbox.Option>
+                                <Listbox.Option as="button" value="whitelist" className="flex items-center space-x-2 py-3 px-4">
+                                  <UserPlusIcon className="h-5 w-5"/>
+                                  <span> { localize(lang, `room_permission_type_whitelist`) } </span>
+                                </Listbox.Option>
+                              </Listbox.Options>
+                            </Transition>
+                          </Listbox>
+                        */ }
                       </dd>
                     </div>
+                    { roomDetail?.rooms.srs_stream ?
+                      <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 w-full sm:col-span-2 relative pt-2">
+                        <div className="absolute -inset-4 bg-blue-50 sm:rounded-lg z-5" aria-hidden/>
+                        <div className="absolute -top-10 right-2 flex items-center p-2 bg-white rounded-lg border border-gray-100" aria-hidden>
+                          <span className="text-sm px-1">
+                            { localize(lang, "data_provided_by") }
+                          </span>
+                          <span className="block font-bold text-lg text-white bg-blue-700 px-2 rounded transform skew-y-3">
+                            SRS
+                          </span>
+                        </div>
+                        <div className="sm:col-span-1 z-10">
+                          <dt className="text-sm font-medium text-gray-500">
+                            { localize(lang, "viewers") }
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            { roomDetail.rooms.srs_stream.clients - 1 }
+                          </dd>
+                        </div>
+                        <div className="sm:col-span-1 z-10">
+                          <dt className="text-sm font-medium text-gray-500">
+                            { localize(lang, "send_bytes") } / { localize(lang, "recv_bytes") }
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            { humanizeSize(roomDetail.rooms.srs_stream.send_bytes) } / { humanizeSize(roomDetail.rooms.srs_stream.recv_bytes) }
+                          </dd>
+                        </div>
+                        <div className="sm:col-span-1 z-10">
+                          <dt className="text-sm font-medium text-gray-500">
+                            { localize(lang, "video_encoding") }
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            <span className="code">
+                              { roomDetail.rooms.srs_stream.video.codec }
+                            </span>
+                            <span className="mx-1 px-1 text-xs bg-blue-500 text-white rounded-sm">
+                              { roomDetail.rooms.srs_stream.video.profile }
+                            </span>
+                            <span className="mx-1 px-1 text-xs bg-blue-500 text-white rounded-sm">
+                              { roomDetail.rooms.srs_stream.video.width }x{ roomDetail.rooms.srs_stream.video.height }
+                            </span>
+                          </dd>
+                        </div>
+                        <div className="sm:col-span-1 z-10">
+                          <dt className="text-sm font-medium text-gray-500">
+                            { localize(lang, "audio_encoding") }
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            <span className="code">
+                              { roomDetail.rooms.srs_stream.audio.codec }
+                            </span>
+                            <span className="mx-1 px-1 text-xs bg-blue-500 text-white rounded-sm">
+                              { roomDetail.rooms.srs_stream.audio.sample_rate } Hz
+                            </span>
+                          </dd>
+                        </div>
+                      </div>
+                      :
+                      <></>
+                    }
                     <div className="sm:col-span-2">
-                      <dt className="text-sm font-medium text-gray-500">About</dt>
+                      <dt className="text-sm font-medium text-gray-500">{ localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }</dt>
                       <dd className="mt-1 text-sm text-gray-900">
-                        Fugiat ipsum ipsum deserunt culpa aute sint do nostrud anim incididunt cillum culpa consequat.
-                        Excepteur qui ipsum aliquip consequat sint. Sit id mollit nulla mollit nostrud in ea officia
-                        proident. Irure nostrud pariatur mollit ad adipisicing reprehenderit deserunt qui eu.
-                      </dd>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <dt className="text-sm font-medium text-gray-500">Whitelist</dt>
-                      <dd className="mt-1 text-sm text-gray-900">
+                        <ul role="list" className="divide-y divide-gray-200 rounded-md border border-gray-200">
+                          <li className="flex items-center justify-between py-2 pl-2 pr-4 text-sm">
+                            <UserIcon className="h-5 w-5 flex-shrink-0 text-gray-400" aria-hidden="true" />
+                          </li>
+                        </ul>
                         <ul role="list" className="divide-y divide-gray-200 rounded-md border border-gray-200">
                           {attachments.map((attachment) => (
                             <li
@@ -390,10 +475,12 @@ export default function RoomDetailPage() {
                 {/* Activity Feed */}
                 <div className="mt-6 flow-root">
                   <ul role="list" className="-mb-8">
-                    {timeline.map((item, itemIdx) => (
-                      <li key={item.id}>
+                    { roomTimeline?.logs.map((item, itemIdx) => {
+                      const event = eventTypes[item.type]
+                      return (
+                      <li key={item.time}>
                         <div className="relative pb-8">
-                          {itemIdx !== timeline.length - 1 ? (
+                          {itemIdx !== roomTimeline.logs.length - 1 ? (
                             <span
                               className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
                               aria-hidden="true"
@@ -403,39 +490,28 @@ export default function RoomDetailPage() {
                             <div>
                               <span
                                 className={classNames(
-                                  item.type.bgColorClass,
+                                  event.bgColorClass,
                                   'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white'
                                 )}
                               >
-                                <item.type.icon className="h-5 w-5 text-white" aria-hidden="true" />
+                                <event.icon className="h-5 w-5 text-white" aria-hidden="true" />
                               </span>
                             </div>
                             <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
                               <div>
-                                <p className="text-sm text-gray-500">
-                                  {item.content}{' '}
-                                  <a href="#" className="font-medium text-gray-900">
-                                    {item.target}
-                                  </a>
+                                <p className="text-sm text-black">
+                                  { localize(lang, event.name) }{' '}
                                 </p>
                               </div>
                               <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                                <time dateTime={item.datetime}>{item.date}</time>
+                                <time dateTime={item.time}>{new Date(item.time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time>
                               </div>
                             </div>
                           </div>
                         </div>
                       </li>
-                    ))}
+                    )})}
                   </ul>
-                </div>
-                <div className="justify-stretch mt-6 flex flex-col">
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    Advance to offer
-                  </button>
                 </div>
               </div>
             </section>

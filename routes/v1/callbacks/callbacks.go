@@ -6,7 +6,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sheey11/chocolate/chat"
 	"github.com/sheey11/chocolate/middleware"
+	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
 	"github.com/sirupsen/logrus"
 )
@@ -88,7 +90,12 @@ func handlePublish(c *gin.Context) {
 		return
 	}
 
-	ok := service.CheckRoomStreamPermission(uint(roomId), data.Params)
+	room, _ := service.GetRoomByID(uint(roomId))
+	if room == nil {
+		respondeErr(c)
+		return
+	}
+	ok := service.CheckRoomStreamPermission(room, data.Params)
 	if !ok {
 		respondeErr(c)
 		return
@@ -96,6 +103,11 @@ func handlePublish(c *gin.Context) {
 
 	err = service.RecordRoomClientID(uint(roomId), data.ClientID)
 	if err == nil {
+		chat.SendMessage(&models.ChatMessage{
+			Room:   *room,
+			RoomID: uint(roomId),
+			Type:   models.ChatMessageTypeStartStreaming,
+		})
 		respondeOk(c)
 		service.RecordPublishEvent(uint(roomId), MarshalJSON(data))
 		return

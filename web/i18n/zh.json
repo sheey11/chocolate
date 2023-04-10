@@ -47,6 +47,11 @@
   "room_filter_status_streaming": "直播中",
   "room_filter_status_idle": "闲置",
 
+  "send_bytes": "已发送",
+  "recv_bytes": "已接收",
+  "video_encoding": "视频编码",
+  "audio_encoding": "音频编码",
+
   "cut_off_stream": "切断",
   "delete_room": "删除",
 
@@ -69,6 +74,14 @@
 
   "stream_started_at": "直播开始于",
   "last_streamed_at": "上次直播在",
+
+  "data_provided_by": "数据来自",
+
+  "publish": "推流",
+  "unpublish": "停止推流",
+  "Play": "客户端开始播放",
+  "Stop": "客户端停止播放",
+  "cutoff": "被切断",
 
   "play": "播放",
   "pause": "暂停",

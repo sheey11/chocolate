@@ -9,6 +9,7 @@ type ChatMessageType string
 
 const (
 	ChatMessageTypeUnknown              ChatMessageType = ""
+	ChatMessageTypeStartStreaming       ChatMessageType = "start_streaming"
 	ChatMessageTypeAdministrationCutOff ChatMessageType = "cut_off"
 	ChatMessageTypeAdministration       ChatMessageType = "admin"
 	ChatMessageTypePing                 ChatMessageType = "ping"
@@ -27,8 +28,8 @@ type ChatMessage struct {
 	Room     Room
 	RoomID   uint   `gorm:"not null;"`
 	Message  string `gorm:"varchar(32)"`
-	Sender   User
-	SenderID uint `gorm:"not null;"`
+	Sender   *User
+	SenderID *uint `gorm:"default:null"`
 }
 
 func CreateChat(msg *ChatMessage) cerrors.ChocolateError {

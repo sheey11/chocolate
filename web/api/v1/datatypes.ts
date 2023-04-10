@@ -265,5 +265,47 @@ export interface AdminRoomDetailResponse extends ChocolcateResponse {
         permission_type: string;
         permission_items: any[];
         last_streaming: string;
+        srs_stream: null | {
+            id: string;
+            name: string;
+            vhost: string;
+            app: string;
+            live_ms: number;
+            clients: number;
+            frames: number;
+            send_bytes: number;
+            recv_bytes: number;
+            kbps: {
+                recv_30s: number;
+                send_30s: number;
+            };
+            publish: {
+                active: boolean;
+                cid: string;
+            };
+            video: {
+                codec: string;
+                profile: string;
+                level: string;
+                width: number;
+                height: number;
+            }
+            audio: {
+                codec: string;
+                sample_rate: number;
+                channel: number;
+                profile: string;
+            }
+        }
+
     }
+}
+
+export interface RoomTimelineResponse extends ChocolcateResponse {
+    logs: {
+        type: number
+        subject: string
+        time: string
+        detail: string
+    }[]
 }

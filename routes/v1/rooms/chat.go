@@ -164,8 +164,8 @@ func handleChatConnect(c *gin.Context) {
 							Type:     websocketChat.MessageType,
 							Room:     *room,
 							RoomID:   room.ID,
-							Sender:   *user,
-							SenderID: user.ID,
+							Sender:   user,
+							SenderID: &user.ID,
 							Message:  websocketChat.Content,
 						}
 						chat.SendMessage(&message)

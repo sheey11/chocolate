@@ -1,5 +1,5 @@
 import { GET, POST } from "@/api/v1/api"
-import { AdminRoomDetailResponse, ListRoomAdminResponse } from "../datatypes"
+import { AdminRoomDetailResponse, ListRoomAdminResponse, RoomTimelineResponse } from "../datatypes"
 
 export interface FetchRoomOptions {
     search?: string,
@@ -23,4 +23,8 @@ export function fetchRooms({ search, status, limit = 10, page = 1}: FetchRoomOpt
 
 export function fetchRoomDetail(id: string): Promise<AdminRoomDetailResponse> {
     return GET<AdminRoomDetailResponse>(`/api/v1/admin/room/${id}`)
+}
+
+export function fetchRoomTimeline(id: string): Promise<RoomTimelineResponse> {
+    return GET<RoomTimelineResponse>(`/api/v1/admin/room/${id}/timeline`)
 }

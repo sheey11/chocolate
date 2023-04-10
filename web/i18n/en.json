@@ -47,6 +47,11 @@
   "cut_off_stream": "Cut off",
   "delete_room": "Delete",
 
+  "send_bytes": "Send",
+  "recv_bytes": "Received Bytes",
+  "video_encoding": "Video Encoding",
+  "audio_encoding": "Audio Encoding",
+
   "room_id": "Room ID",
   "room_title": "Title",
   "room_viewers": "Viewers",
@@ -63,9 +68,17 @@
   "room_timeline": "Timeline",
   "edit": "Edit",
   "total": "Total",
-  
+
   "stream_started_at": "Stream started at",
   "last_streamed_at": "Last Streamed at",
+
+  "data_provided_by": "Data provided by",
+
+  "publish": "Pushed Stream",
+  "unpublish": "Stop Pushing Stream",
+  "Play": "Start Playing",
+  "Stop": "Stop Playing",
+  "cutoff": "Cut Off",
 
   "play": "Play",
   "pause": "Pause",

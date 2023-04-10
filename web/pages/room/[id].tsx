@@ -43,19 +43,32 @@ export default function Room() {
 
   const [streamingStatus, setStreamingStatus] = useState<string>("idle")
 
-  useEffect(() => {
-    if (id === undefined) { return }
+  const onCutoff = () => {
+    setStreamingStatus("idle")
+  }
 
+  const isIdValid = (id: string | undefined) => {
+    if (id === undefined) {
+      return false 
+    }
     if (!/^[1-9]\d*$/.test(id)) {
       setHttpErrCode(400)
       setErrCode(19)
-      return
+      return false
     }
+    return true
+  }
 
-    setWebsocketUrl(`${window.location.protocol == "http:" ? "ws:" : "wss:"}//${window.location.host}/api/v1/rooms/${id}/chat`)
+  useEffect(() => {
+    if(!isIdValid(id)) return
     if (streamingStatus != 'streaming') { return }
     setPlaybackUrl(`/api/v1/playback/${id}/flv`)
   }, [id, streamingStatus])
+
+  useEffect(() => {
+    if(!isIdValid(id)) return
+    setWebsocketUrl(`${window.location.protocol == "http:" ? "ws:" : "wss:"}//${window.location.host}/api/v1/rooms/${id}/chat`)
+  }, [id])
 
   if(errCode != null) {
     return (
@@ -98,7 +111,7 @@ export default function Room() {
             </section>
 
             <section className="col-span-1 lg:rounded-lg shadow bg-white" aria-labelledby="chat-section-title">
-              <ChatBox websocketUrl={websocketUrl}/>
+              <ChatBox websocketUrl={websocketUrl} onCutoff={onCutoff} onStartStreaming={() => setStreamingStatus("streaming")}/>
             </section>
           </div>
         </main>

@@ -138,7 +138,7 @@ func RetriveLogsForRoom(roomid uint) ([]*Log, cerrors.ChocolateError) {
 		Where("subject = ?", strconv.FormatUint(uint64(roomid), 10)).
 		Where("type in ?", []LogType{LogTypePublish, LogTypeUnpublish, LogTypeCutOff}). // check here
 		Order("created_at DESC").
-		Limit(20).
+		Limit(12).
 		Find(&result)
 	if c.Error != nil {
 		return nil, errors.DatabaseError{

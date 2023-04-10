@@ -14,16 +14,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func CheckRoomStreamPermission(roomId uint, params string) bool {
-	room, _ := GetRoomByID(roomId)
-	if room == nil {
-		return false
-	}
+func CheckRoomStreamPermission(room *models.Room, params string) bool {
 	if room.Status != models.RoomStatusStreaming {
 		return false
 	}
 	key := room.GetStreamKey()
-	return fmt.Sprintf("%d%s", roomId, params) == key
+	return fmt.Sprintf("%d%s", room.ID, params) == key
 }
 
 func GetRoomByUID(uid string) (*models.Room, cerrors.ChocolateError) {
@@ -219,7 +215,7 @@ func CutOffStream(room *models.Room, operator uint) cerrors.ChocolateError {
 		Room:     *room,
 		RoomID:   room.ID,
 		Type:     models.ChatMessageTypeAdministrationCutOff,
-		SenderID: operator,
+		SenderID: &operator,
 	})
 
 	RecordCutOffEvent(room.ID, operator)

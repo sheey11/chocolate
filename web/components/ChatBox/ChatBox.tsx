@@ -78,8 +78,10 @@ function ChatViwer({ chats }: ChatViewerProps) {
 
 interface ChatBoxProps {
     websocketUrl: string | undefined
+    onCutoff: () => void,
+    onStartStreaming: () => void,
 }
-export default function ChatBox({ websocketUrl }: ChatBoxProps) {
+export default function ChatBox({ websocketUrl, onCutoff, onStartStreaming }: ChatBoxProps) {
     const router = useRouter()
     const lang = router.locale!
 
@@ -118,6 +120,12 @@ export default function ChatBox({ websocketUrl }: ChatBoxProps) {
             socket.send(JSON.stringify({
                 type: "pong",
             }))
+            return
+        } else if(message.type === 'cut_off') {
+            onCutoff()
+            return
+        } else if(message.type === 'start_streaming') {
+            setTimeout(onStartStreaming, 1000)
             return
         } else if (message.type !== 'chat') {
             return
