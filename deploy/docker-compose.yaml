@@ -24,8 +24,8 @@ services:
     command: "./objs/srs -c ./srs.conf"
     ports:
       - "1935:1935"
-      # - "8080:8080" # for debug
-      # - "1985:1985" # for debug
+      - "8080:8080" # for debug
+      - "1985:1985" # for debug
 
   chocolate:
     build: ..

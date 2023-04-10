@@ -67,7 +67,7 @@ func handleListRooms(c *gin.Context) {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too large"))
 			return
-		} else if limit < 20 {
+		} else if limit < 10 {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too small"))
 			return
@@ -171,8 +171,16 @@ func handleRoomInfoRetrival(c *gin.Context) {
 		PermissionType  models.RoomPermissionType `json:"permission_type"`
 		PermissionItems []models.PermissionItem   `json:"permission_items"`
 		LastStreaming   time.Time                 `json:"last_streaming"`
+		Stream          *service.SRSStreamInfo    `json:"srs_stream"`
 	}
 
+	var stream *service.SRSStreamInfo
+	if streamID := service.GetRoomStreamID(room); streamID != nil {
+		stream, err = service.GetRoomStreamSRSInfo(room)
+		if err != nil {
+			logrus.WithError(err).Error("error when retriving srs stream detail when handing admin room info lookup")
+		}
+	}
 	c.JSON(http.StatusOK, common.Response{
 		"code":    0,
 		"message": "ok",
@@ -187,6 +195,7 @@ func handleRoomInfoRetrival(c *gin.Context) {
 			PermissionType:  room.PermissionType,
 			PermissionItems: room.PermissionItems,
 			LastStreaming:   room.LastStreamingAt,
+			Stream:          stream,
 		},
 	})
 }

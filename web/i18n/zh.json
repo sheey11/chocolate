@@ -53,7 +53,7 @@
   "room_id": "房间 ID",
   "room_title": "房间标题",
   "room_viewers": "观众",
-  "room_streamed_for": "已直播",
+  "room_streamed_for": "距上次开播",
   "room_info": "房间信息",
   "room_owner": "所有者",
   "room_status": "房间状态",
@@ -65,6 +65,10 @@
   "room_stream_preview": "预览",
   "room_timeline": "时间线",
   "edit": "编辑",
+  "total": "总计",
+
+  "stream_started_at": "直播开始于",
+  "last_streamed_at": "上次直播在",
 
   "play": "播放",
   "pause": "暂停",

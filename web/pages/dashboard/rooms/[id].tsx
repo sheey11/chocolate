@@ -14,6 +14,7 @@ import { localize } from "@/i18n/i18n"
 import Dialog from "@/components/Dialog/Dialog"
 import { AdminRoomDetailResponse } from "@/api/v1/datatypes"
 import { fetchRoomDetail } from "@/api/v1/admin/room"
+import { Transition } from "@headlessui/react"
 
 const inter = Inter({
   subsets: ['latin-ext'],
@@ -108,6 +109,7 @@ export default function RoomDetailPage() {
   const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false)
 
   const [roomDetail, setRoomDetail] = useState<AdminRoomDetailResponse | null>(null)
+  const [permissionTypeHelpShow, setPermissionTypeHelpShow] = useState<boolean>(false)
 
   useEffect(() => {
     if (!id) return
@@ -126,13 +128,26 @@ export default function RoomDetailPage() {
               <div className="flex items-center">
                 <h1 className="text-2xl font-bold text-gray-900"> { roomDetail?.rooms.title }</h1>
                 <div className="ml-2">
-                  <span className="absolute h-2 w-2 rounded-full bg-green-500 block" />
-                  <span className="h-2 w-2 rounded-full bg-green-500 block animate-ping" />
+                  { roomDetail?.rooms.status === "streaming" ? 
+                    <span className="h-2 w-2 rounded-full bg-green-500 block">
+                      <span className="absolute h-2 w-2 rounded-full bg-green-500 block animate-ping" />
+                    </span>
+                    :
+                    <span className="h-2 w-2 rounded-full bg-gray-500 block" />
+                  }
                 </div>
               </div>
               <p className="text-sm font-medium text-gray-500">
-                Streaming started on{' '}
-                <time dateTime={roomDetail?.rooms.last_streaming}>{ roomDetail ? new Date(roomDetail.rooms.last_streaming).toLocaleString("zh-CN") : "unknown" }</time>
+                { roomDetail?.rooms.status === "streaming" ? localize(lang, "stream_started_at") : localize(lang, "last_streamed_at") }{' '}
+                <time dateTime={roomDetail?.rooms.last_streaming}>
+                  { roomDetail ?
+                    function() {
+                      const date = new Date(roomDetail.rooms.last_streaming)
+                      return date.toLocaleTimeString("en-US") + " " + date.toLocaleDateString("zh-CN")
+                    }()
+                    :
+                    "unknown" }
+                </time>
               </p>
             </div>
           </div>
@@ -193,18 +208,36 @@ export default function RoomDetailPage() {
                       </dd>
                     </div>
                     <div className="sm:col-span-1">
-                      <dt className="text-sm font-medium text-gray-500">{ localize(lang, "room_permission_type") }</dt>
-                      <dd className="mt-1 text-sm flex items-center text-gray-900">
+                      <dt className="text-sm font-medium flex items-center space-x-1 text-gray-500">
+                        <span> { localize(lang, "room_permission_type") } </span>
+
+                        <button
+                          className="relative cursor-default"
+                          onMouseEnter={() => setPermissionTypeHelpShow(true)}
+                          onMouseLeave={() => setPermissionTypeHelpShow(false)}
+                          onClick={() => setPermissionTypeHelpShow(true)}
+                        >
+                          <QuestionMarkCircleIcon className="h-4 w-4 text-gray-400"/>
+                          <Transition
+                            show={permissionTypeHelpShow}
+                            enter="transition ease-out duration-50"
+                            enterFrom="opacity-0 scale-95"
+                            enterTo="opacity-100 scale-100"
+                            leave="transition ease-in duration-50"
+                            leaveFrom="opacity-100 scale-100"
+                            leaveTo="opacity-0 scale-95"
+                          >
+                            <dl className="absolute -left-5 p-4 w-72 whitespace-pre-line border rounded shadow bg-white text-left">
+                              <dt className="font-medium block text-black">{ localize(lang, "room_permission_type_whitelist") }</dt>
+                              <dd>{ localize(lang, "room_permission_type_whitelist_explain") }</dd>
+                              <dt className="font-medium block text-black mt-2">{ localize(lang, "room_permission_type_blacklist") }</dt>
+                              <dd>{ localize(lang, "room_permission_type_blacklist_explain") }</dd>
+                            </dl>
+                          </Transition>
+                        </button>
+                      </dt>
+                      <dd className="mt-1 text-sm text-gray-900">
                         <span>{ localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }</span>
-                        <div className="relative">
-                          <QuestionMarkCircleIcon className="ml-1 h-4 w-4 text-gray-400 hover-show"/>
-                          <div className="absolute top-5 -left-5 hidden p-4 w-72 whitespace-pre-line border rounded shadow bg-white hover-show-subject">
-                            <span className="font-medium block text-black">{ localize(lang, "room_permission_type_whitelist") }</span>
-                            <span>{ localize(lang, "room_permission_type_whitelist_explain") }</span>
-                            <span className="font-medium block text-black mt-2">{ localize(lang, "room_permission_type_blacklist") }</span>
-                            <span>{ localize(lang, "room_permission_type_blacklist_explain") }</span>
-                          </div>
-                        </div>
                       </dd>
                     </div>
                     <div className="sm:col-span-2">

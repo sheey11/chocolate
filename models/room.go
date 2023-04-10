@@ -63,6 +63,8 @@ type Room struct {
 	PermissionType  RoomPermissionType `gorm:"default:blacklist"`
 	PermissionItems []PermissionItem   `gorm:"constraint:OnDelete:CASCADE"`
 	LastStreamingAt time.Time
+	SrsClientID     *string `gorm:"default:null"`
+	SrsStreamID     *string `gorm:"default:null"`
 }
 
 func (r Room) GetPlaybackInfo() map[string]interface{} {
@@ -400,12 +402,13 @@ func SetRoomStatus(id uint, status RoomStatus) cerrors.ChocolateError {
 
 func CreateRoomForUser(user *User, title string) (*Room, cerrors.ChocolateError) {
 	room := Room{
-		Title:   title,
-		Status:  RoomStatusIdle,
-		UID:     GenerateRoomUID(),
-		PushKey: generateRoomPushKey(),
-		Owner:   *user,
-		OwnerID: user.ID,
+		Title:           title,
+		Status:          RoomStatusIdle,
+		UID:             GenerateRoomUID(),
+		PushKey:         generateRoomPushKey(),
+		Owner:           *user,
+		OwnerID:         user.ID,
+		LastStreamingAt: time.Now(),
 	}
 
 	c := db.Create(&room)
@@ -579,4 +582,84 @@ func GetStreamingRoomCount() uint {
 	var count int64
 	db.Model(&Room{}).Where("status = ?", RoomStatusStreaming).Count(&count)
 	return uint(count)
+}
+
+func RecordRoomClientID(roomId uint, client string) cerrors.ChocolateError {
+	c := db.Model(&Room{}).Where("id = ?", roomId).Update("SrsClientID", client)
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseUpdateRoomSrsClientIDError,
+			Message:    "error when updating room.SrsClientID field",
+			StackTrace: cerrors.GetStackTrace(),
+			Sql:        c.Statement.SQL.String(),
+			InnerError: c.Error,
+			Context: map[string]interface{}{
+				"id":        roomId,
+				"client_id": client,
+			},
+		}
+	} else if c.RowsAffected == 0 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestRoomNotFound,
+			Message: "requested room not found",
+			Context: map[string]interface{}{
+				"ID": roomId,
+			},
+		}
+	}
+	return nil
+}
+
+func RecordRoomStreamID(roomId uint, stream string) cerrors.ChocolateError {
+	c := db.Model(&Room{}).Where("id = ?", roomId).Update("SrsStreamID", stream)
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseUpdateRoomSrsStreamIDError,
+			Message:    "error when updating room.SrsStreamID field",
+			StackTrace: cerrors.GetStackTrace(),
+			Sql:        c.Statement.SQL.String(),
+			InnerError: c.Error,
+			Context: map[string]interface{}{
+				"id":        roomId,
+				"stream_id": stream,
+			},
+		}
+	} else if c.RowsAffected == 0 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestRoomNotFound,
+			Message: "requested room not found",
+			Context: map[string]interface{}{
+				"ID": roomId,
+			},
+		}
+	}
+	return nil
+}
+
+func ClearRoomStreamAndClientID(roomId uint) cerrors.ChocolateError {
+	c := db.Model(&Room{}).Where("id = ?", roomId).Updates(map[string]interface{}{
+		"SrsStreamID": nil,
+		"SrsClientID": nil,
+	})
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseClearRoomSrsRelatedIDError,
+			Message:    "error when setting room.SrsStreamID and ClientID field to null",
+			StackTrace: cerrors.GetStackTrace(),
+			Sql:        c.Statement.SQL.String(),
+			InnerError: c.Error,
+			Context: map[string]interface{}{
+				"id": roomId,
+			},
+		}
+	} else if c.RowsAffected == 0 {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestRoomNotFound,
+			Message: "requested room not found",
+			Context: map[string]interface{}{
+				"ID": roomId,
+			},
+		}
+	}
+	return nil
 }

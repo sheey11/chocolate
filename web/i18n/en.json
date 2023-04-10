@@ -1,7 +1,7 @@
 {
-  "second": "Sec",
-  "minute": "Min",
-  "hour": "H",
+  "second": "s",
+  "minute": "m",
+  "hour": "h",
 
   "signin": "Sign in",
   "username": "Username",
@@ -49,8 +49,8 @@
 
   "room_id": "Room ID",
   "room_title": "Title",
-  "room_viewers": "Viwers",
-  "room_streamed_for": "Streamed",
+  "room_viewers": "Viewers",
+  "room_streamed_for": "Last streamed in",
   "room_info": "Room Information",
   "room_owner": "Owner",
   "room_status": "Status",
@@ -62,7 +62,11 @@
   "room_stream_preview": "Preview",
   "room_timeline": "Timeline",
   "edit": "Edit",
+  "total": "Total",
   
+  "stream_started_at": "Stream started at",
+  "last_streamed_at": "Last Streamed at",
+
   "play": "Play",
   "pause": "Pause",
   "reload": "Reload",

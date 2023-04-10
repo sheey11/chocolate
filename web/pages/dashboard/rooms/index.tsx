@@ -1,9 +1,19 @@
 import { Nav } from "@/components/Nav/Nav";
 import { AuthContext } from "@/contexts/AuthContext";
 import { useRouter } from "next/router";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { dashboardNavs } from "@/constants/navs"
-import { RectangleStackIcon, PlayCircleIcon, ArrowPathIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { RectangleStackIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
+import { ArrowPathIcon,
+  MagnifyingGlassIcon,
+  ArrowTopRightOnSquareIcon,
+  Bars3CenterLeftIcon,
+  KeyIcon,
+  UserIcon,
+  UserGroupIcon,
+  PlayCircleIcon as PlayCircleIconOutline, 
+  PlayPauseIcon
+} from "@heroicons/react/24/outline"
 import { localize, localizeError } from "@/i18n/i18n";
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
@@ -15,6 +25,8 @@ import { classNames } from "@/utils/classnames";
 import { JetBrains_Mono } from "next/font/google";
 import { fetchRooms } from "@/api/v1/admin/room";
 import Pagination from "@/components/Pagination/Pagination";
+import Link from "next/link";
+import debounce from "@/utils/debounce";
 
 const roomStatus = [
   { name: "all", indicator_class: "bg-blue-500" },
@@ -44,6 +56,8 @@ export default function RoomIndex() {
   const [page,             setPage            ] = useState<number>(1)
   const [maxPage,          setMaxPage         ] = useState<number>(1)
 
+  const searchRef = useRef<HTMLInputElement | null>(null)
+
   const humanizeTimeDiff = (millisec: number) => {
     const sec = Math.floor(millisec / 1000)
     if(sec < 60) {
@@ -54,6 +68,9 @@ export default function RoomIndex() {
       return `${Math.floor(sec / 3600)} ${localize(lang, "hour")} ${Math.floor(sec / 60) % 60} ${localize(lang, "minute")} ${sec % 60} ${localize(lang, "second")}`
     }
   }
+  const handleSearchInputChange = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value)
+  }, 600)
 
   const dealWithFetchError = (e: any) => {
     console.error(e)
@@ -72,10 +89,10 @@ export default function RoomIndex() {
   useEffect(() => {
     const status = roomFilterStatus === "all" ? undefined :
       (roomFilterStatus === "streaming" ? 1 : 0)
-    fetchRooms({ search, status, limit: 20, page})
+    fetchRooms({ search, status, limit: 10, page})
       .then(rooms => {
         setRooms(rooms)
-        setMaxPage(Math.ceil(rooms.total / 20))
+        setMaxPage(Math.ceil(rooms.total / 10))
       })
       .catch(dealWithFetchError)
   }, [roomFilterStatus, search, page])
@@ -157,12 +174,14 @@ export default function RoomIndex() {
                     <MagnifyingGlassIcon />
                   </span>
                   <input
+                    ref={searchRef}
+                    onChange={handleSearchInputChange}
                     className="block h-full w-full pl-8 appearance-none rounded border border-gray-200 px-3 py-2 placeholder-gray-400 shadow-sm focus:outline-none focus:ring focus:ring-blue-500 focus:border-blue-200 sm:text-sm transition ease duration-200"
                     placeholder={localize(lang, 'search')}
                   />
                 </div>
                 <div className="h-8 w-full">
-                  <Listbox value={roomFilterStatus} onChange={setRoomFilterStatus}>
+                  <Listbox value={roomFilterStatus} onChange={(v) => { setRoomFilterStatus(v); setPage(1) }}>
                     <Listbox.Button className="h-full w-full md:w-48 relative py pr-2 pl-4 shadow-sm rounded border border-gray-200 flex items-center justify-between focus:outline-none focus:ring focus:ring-blue-500 focus:border-blue-200 transition duration-100">
                       <span className="truncate flex items-center space-x-2">
                         <span className={`h-2 w-2 rounded-full ${roomStatus.find((v) => v.name == roomFilterStatus)!.indicator_class}`} />
@@ -203,12 +222,42 @@ export default function RoomIndex() {
               <table className="w-full">
                 <thead className="text-gray-500 text-xs border-b bg-gray-50">
                   <tr className="uppercase whitespace-nowrap text-left">
-                    <th className="py-4">{ localize(lang, 'room_title') }</th>
-                    <th className="py-4">{ localize(lang, 'room_id') }</th>
-                    <th className="py-4">{ localize(lang, 'room_viewers') }</th>
-                    <th className="py-4">{ localize(lang, 'room_owner') }</th>
-                    <th className="py-4">{ localize(lang, 'room_streamed_for') }</th>
-                    <th className="py-4">{ localize(lang, 'room_status') }</th>
+                    <th className="py-4">
+                      <span className="flex items-center space-x-1">
+                        <Bars3CenterLeftIcon className="h-4 w-4"/>
+                        <span> { localize(lang, 'room_title') } </span>
+                      </span>
+                    </th>
+                    <th className="py-4">
+                      <span className="flex items-center space-x-1">
+                        <KeyIcon className="h-4 w-4" />
+                        <span> { localize(lang, 'room_id') } </span>
+                      </span>
+                    </th>
+                    <th className="py-4">
+                      <span className="flex items-center space-x-1">
+                        <UserGroupIcon className="h-4 w-4" />
+                        <span> { localize(lang, 'room_viewers') } </span>
+                      </span>
+                    </th>
+                    <th className="py-4">
+                      <span className="flex items-center space-x-1">
+                        <UserIcon className="h-4 w-4" />
+                        <span> { localize(lang, 'room_owner') } </span>
+                      </span>
+                    </th>
+                    <th className="py-4">
+                      <span className="flex items-center space-x-1">
+                        <PlayCircleIconOutline className="h-4 w-4" />
+                        <span> { localize(lang, 'room_streamed_for') } </span>
+                      </span>
+                    </th>
+                    <th className="py-4">
+                      <span className="flex items-center space-x-1">
+                        <PlayPauseIcon className="h-4 w-4" />
+                        <span> { localize(lang, 'room_status') } </span>
+                      </span>
+                    </th>
                     <th> </th>
                   </tr>
                 </thead>
@@ -218,9 +267,25 @@ export default function RoomIndex() {
                       <th>{ room.title }</th>
                       <th className="code">{ room.id }</th>
                       <th>{ room.viewers }</th>
-                      <th>{ room.owner_username }</th>
+                      <th>
+                        <Link href={`/dashboard/users/${room.owner_id}`} className="hover:text-gray-500 transition duration-200">
+                          { room.owner_username }
+                          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4"/>
+                        </Link>
+                      </th>
                       <th>{ humanizeTimeDiff(Math.abs(new Date().getTime() - new Date(room.last_streaming).getTime())) }</th>
-                      <th>{ localize(lang, room.status) }</th>
+                      <th>
+                        <span className="flex flex-row items-center space-x-2">
+                          { room.status === "streaming" ?
+                            <span className="relative h-2 w-2 rounded-full bg-green-500 inline-block">
+                              <span className="absolute h-2 w-2 rounded-full bg-green-500 block animate-ping" />
+                            </span>
+                            :
+                            <span className="relative h-2 w-2 mr-0.5 rounded-full bg-gray-500 inline-block" />
+                          }
+                          <span> { localize(lang, `room_filter_status_${room.status}`) } </span>
+                        </span>
+                      </th>
                       <th>
                         <Button type="link" href={`/dashboard/rooms/${room.id}`}>
                           { localize(lang, "edit") }
@@ -238,7 +303,10 @@ export default function RoomIndex() {
                 :
                 <></>
               }
-              <div className="flex flex-row-reverse mt-4 pr-4">
+              <div className="flex flex-row items-center justify-between mt-2 px-2">
+                <span className="text-sm text-gray-500">
+                  { localize(lang, "total") } { rooms?.total }
+                </span>
                 <Pagination page={page} total={maxPage} handlePageSelection={setPage}/>
               </div>
             </div>

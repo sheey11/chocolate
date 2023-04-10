@@ -113,7 +113,7 @@ func handleAccountList(c *gin.Context) {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too large"))
 			return
-		} else if limit < 20 {
+		} else if limit < 10 {
 			c.Abort()
 			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "limit too small"))
 			return

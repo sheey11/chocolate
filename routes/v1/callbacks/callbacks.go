@@ -91,9 +91,18 @@ func handlePublish(c *gin.Context) {
 	ok := service.CheckRoomStreamPermission(uint(roomId), data.Params)
 	if !ok {
 		respondeErr(c)
-	} else {
+		return
+	}
+
+	err = service.RecordRoomClientID(uint(roomId), data.ClientID)
+	if err == nil {
 		respondeOk(c)
 		service.RecordPublishEvent(uint(roomId), MarshalJSON(data))
+		return
+	} else {
+		respondeErr(c)
+		logrus.WithError(err).Error("error when handling srs publish callback")
+		return
 	}
 }
 
@@ -107,6 +116,7 @@ func handleUnpublish(c *gin.Context) {
 		App      string `json:"app"`
 		Stream   string `json:"stream"`
 	}{}
+
 	err := c.Bind(&data)
 	if err != nil {
 		logrus.WithError(err).Errorf("error when parse body at on_unpublish callback")
@@ -118,6 +128,12 @@ func handleUnpublish(c *gin.Context) {
 	if err != nil || roomId < 0 {
 		respondeErr(c)
 		return
+	}
+
+	err = service.ClearRoomStreamAndClientID(uint(roomId))
+	if err != nil {
+		respondeErr(c)
+		logrus.WithError(err).Error("error clearing room stream id")
 	}
 
 	respondeOk(c)

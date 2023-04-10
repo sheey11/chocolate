@@ -111,7 +111,7 @@ type LogicError struct {
 }
 
 func (e LogicError) Error() string {
-	return fmt.Sprintf("Logic error: id: %v, message: %v, inner: %v, stack trace:\n%v", e.ID, e.Message, e.InnerError, e.StackTrace)
+	return fmt.Sprintf("Logic error: \nid: %v\nmessage: %v\ninner: %v\nstack trace:\n%vcontext: %v", e.ID, e.Message, e.InnerError, e.StackTrace, e.Context)
 }
 
 func (e *LogicError) SetID(raw_id uint64) {

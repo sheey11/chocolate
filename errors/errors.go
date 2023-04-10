@@ -37,12 +37,17 @@ const (
 	RequestLabelExists
 	RequestUserNotHaveLabel
 	RequestRoomBanned
+	RequestRoomNotPublishingStream
 )
 
 const (
 	_ LogicErrorCode = iota | (0x01 << 56)
 	LogicNilReference
 	LogicDatabaseAffiliatedFieldsMissing
+	LogicSRSConnectionError
+	LogicReadingHttpResponseBodyError
+	LogicUnmarshalingHttpResponseBodyError
+	LogicSRSRepondNonZero
 )
 
 const (
@@ -80,9 +85,12 @@ const (
 	DatabaseUpdateRoomStatusError
 	DatabaseUpdareRoomPushKeyError
 	DatabaseUpdateRoomTitleError
+	DatabaseUpdateRoomSrsClientIDError
+	DatabaseUpdateRoomSrsStreamIDError
 	DatabaseIncreaseRoomViewersError
 	DatabaseDecreaseRoomViewersError
 
 	DatabaseClearRoomPermissionItemError
 	DatabaseClearRoomViewersError
+	DatabaseClearRoomSrsRelatedIDError
 )
