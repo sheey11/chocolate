@@ -72,3 +72,7 @@ table tbody > tr > th:first-child {
     @apply ring;
     @apply ring-blue-100/50;
 }
+
+.font-numeric {
+    font-family: var(--lato-font);
+}

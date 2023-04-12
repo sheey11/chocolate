@@ -15,7 +15,7 @@
 
   "home_page": "Home",
   "rooms_page": "Rooms",
-  "users_page": "users",
+  "users_page": "Accounts",
 
   "traffic": "Host Network Activity",
   "connections": "Connections",
@@ -88,6 +88,10 @@
   "cutoff_cannot_be_undone": "cannot only be set streaming by the broadcastor after cut-off.",
   "delete_cannot_be_undone": "deletion cannot be undone.",
 
+  "cancel": "Cancel",
+  "cutoff_confirm_btn": "Cutoff",
+  "delete_confirm_btn": "Delete",
+
   "play": "Play",
   "pause": "Pause",
   "reload": "Reload",
@@ -103,9 +107,23 @@
   "sign_out": "Sign out",
 
   "new_user_btn": "New User",
+  "user_filter_role_all": "All",
+  "user_filter_role_administrator": "Administrator",
+  "user_filter_role_user": "User",
   "no_data": "No Data",
 
   "account_have_no_label": "No labels",
+  
+  "user_id": "ID",
+  "user_labels": "Labels",
+  "user_rooms": "Rooms",
+  "user_max_rooms": "Max Room",
+  "user_role": "Role",
+
+  "role": "Role",
+  "create": "Create",
+  "add_label_input_placeholder": "Add labels...",
+  "add_label_btn": "Append",
 
   "free_software_note": "Note: This is a free software, source code is published under GPLv3.",
   "errors": {

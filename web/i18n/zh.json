@@ -119,6 +119,15 @@
   "account_have_no_label": "无标签",
 
   "user_id": "用户ID",
+  "user_labels": "标签",
+  "user_rooms": "房间数",
+  "user_max_rooms": "最大房间数",
+  "user_role": "用户角色",
+
+  "role": "角色",
+  "create": "创建",
+  "add_label_input_placeholder": "添加标签...",
+  "add_label_btn": "添加",
 
   "free_software_note": "注意: 本软件是免费软件，并在 GPLv3 许可证下开放源代码",
   "errors": {

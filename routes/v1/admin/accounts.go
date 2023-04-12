@@ -53,7 +53,7 @@ func handleServerInitFirstAdminCreation(c *gin.Context) {
 		Password string `json:"password"`
 	}{}
 	err := c.Bind(&data)
-	if err != nil {
+	if err != nil || data.Username == "" || data.Password == "" {
 		c.Abort()
 		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
@@ -333,6 +333,7 @@ func handleAccountLabelAppend(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
 			return
 		} else {
+			logrus.WithError(cerr).Error("error when handling user label append")
 			c.Abort()
 			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
 			return

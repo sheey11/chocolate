@@ -74,12 +74,20 @@ const Dialog: React.FC<DialogProps> & DialogSubComponents = ({ children, backdro
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95">
                             <HDialog.Panel className="w-full max-w-md bg-white transform overflow-hidden rounded-lg shadow-xl transition-all">
-                                <div className="p-6 w-full">
-                                    { content }
-                                </div>
-                                <div className="p-4 w-full bg-gray-100">
-                                    { actions }
-                                </div>
+                                { !content && !actions ? children : <></> }
+                                { content ?
+                                    <div className="p-6 w-full">
+                                        { content }
+                                    </div>
+                                    :
+                                    <></>
+                                }
+                                { actions ? 
+                                    <div className="p-4 w-full bg-gray-100">
+                                        { actions }
+                                    </div>
+                                    : <></>
+                                }
                             </HDialog.Panel>
                         </Transition.Child>
                     </div>

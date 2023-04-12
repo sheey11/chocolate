@@ -281,7 +281,7 @@ func AddLabelToUser(username, label string) cerrors.ChocolateError {
 		labelObj = Label{
 			Name: label,
 		}
-		c := db.Create(&label)
+		c := db.Create(&labelObj)
 		if c.Error != nil {
 			return cerrors.DatabaseError{
 				ID:         cerrors.DatabaseCreateLabelError,
