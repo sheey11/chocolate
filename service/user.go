@@ -391,6 +391,10 @@ func GetUserByUsername(username string) (*models.User, cerrors.ChocolateError) {
 	return models.GetUserByName(username, nil)
 }
 
+func GetUserByID(uid uint) *models.User {
+	return models.GetUserByID(uid)
+}
+
 func GetCurrentUserNum() uint {
 	return models.GetUsersNum()
 }

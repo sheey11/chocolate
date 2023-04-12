@@ -255,46 +255,51 @@ export interface ListRoomAdminResponse extends ChocolcateResponse {
 
 export interface AdminRoomDetailResponse extends ChocolcateResponse {
     rooms: {
-        id: number;
-        uid: string;
-        viewers: number;
-        title: string;
-        status: string;
-        owner_id: number;
-        owner_username: string;
-        permission_type: string;
-        permission_items: any[];
-        last_streaming: string;
+        id: number
+        uid: string
+        viewers: number
+        title: string
+        status: string
+        owner_id: number
+        owner_username: string
+        permission_type: string
+        permission_items: {
+            label: string | null
+            user_id: number | null
+            username: string | null
+            type: 'user' | 'label'
+        }[]
+        last_streaming: string
         srs_stream: null | {
-            id: string;
-            name: string;
-            vhost: string;
-            app: string;
-            live_ms: number;
-            clients: number;
-            frames: number;
-            send_bytes: number;
-            recv_bytes: number;
+            id: string
+            name: string
+            vhost: string
+            app: string
+            live_ms: number
+            clients: number
+            frames: number
+            send_bytes: number
+            recv_bytes: number
             kbps: {
-                recv_30s: number;
-                send_30s: number;
-            };
+                recv_30s: number
+                send_30s: number
+            }
             publish: {
-                active: boolean;
-                cid: string;
-            };
+                active: boolean
+                cid: string
+            }
             video: {
-                codec: string;
-                profile: string;
-                level: string;
-                width: number;
-                height: number;
+                codec: string
+                profile: string
+                level: string
+                width: number
+                height: number
             }
             audio: {
-                codec: string;
-                sample_rate: number;
-                channel: number;
-                profile: string;
+                codec: string
+                sample_rate: number
+                channel: number
+                profile: string
             }
         }
 
@@ -308,4 +313,52 @@ export interface RoomTimelineResponse extends ChocolcateResponse {
         time: string
         detail: string
     }[]
+}
+
+export interface Role {
+    name: string
+    abilities: {
+        manage_account: boolean
+        stream: boolean
+        manage_room: boolean
+        create_room: boolean
+        retrieve_metrics: boolean
+    }
+}
+
+export interface ListRoleResponse extends ChocolcateResponse {
+    roles: Role[]
+}
+
+export interface AdminAccountInfo {
+    id: number
+    role: string
+    labels: string[]
+    username: string
+    max_rooms: number
+    owned_rooms: number
+}
+
+export interface AdminListAccountsResponse extends ChocolcateResponse {
+    total: number
+    users: AdminAccountInfo[]
+}
+
+export interface AdminAccountDetail {
+    role: string
+    username: string
+    labels: string[]
+    max_rooms: number
+    rooms: {
+        id: number
+        permission_type: string
+        status: string
+        title: string
+        uid: string
+        viewers: number
+    }[]
+}
+
+export interface AdminAccountDetailResponse extends ChocolcateResponse {
+    user_info: AdminAccountDetail
 }

@@ -70,7 +70,7 @@ export default function Room() {
     setWebsocketUrl(`${window.location.protocol == "http:" ? "ws:" : "wss:"}//${window.location.host}/api/v1/rooms/${id}/chat`)
   }, [id])
 
-  if(errCode != null) {
+  if(errCode != null || httpErrCode != null) {
     return (
       <>
         <Nav navs={userNavs}/>

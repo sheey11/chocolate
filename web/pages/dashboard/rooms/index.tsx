@@ -1,7 +1,7 @@
 import { Nav } from "@/components/Nav/Nav";
 import { AuthContext } from "@/contexts/AuthContext";
 import { useRouter } from "next/router";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { dashboardNavs } from "@/constants/navs"
 import { RectangleStackIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
 import { ArrowPathIcon,
@@ -12,7 +12,8 @@ import { ArrowPathIcon,
   UserIcon,
   UserGroupIcon,
   PlayCircleIcon as PlayCircleIconOutline, 
-  PlayPauseIcon
+  PlayPauseIcon,
+  ArrowPathRoundedSquareIcon 
 } from "@heroicons/react/24/outline"
 import { localize, localizeError } from "@/i18n/i18n";
 import { Listbox, Transition } from "@headlessui/react";
@@ -78,13 +79,17 @@ export default function RoomIndex() {
     setHttpErrCode(e.response?.status)
   }
 
-  useEffect(() => {
+  const refreshStats = useCallback(() => {
     fetchRoomStats()
       .then(setRoomStats)
       .catch((e) => {
         dealWithFetchError(e)
       })
   }, [])
+
+  useEffect(() => {
+    refreshStats()
+  }, [refreshStats])
 
   useEffect(() => {
     const status = roomFilterStatus === "all" ? undefined :
@@ -136,8 +141,11 @@ export default function RoomIndex() {
             <h1 className="text-gray-800 text-3xl font-bold">
               { localize(lang, "rooms_page") }
             </h1>
-            <button className="rounded focus:ring focus:ring-blue-500 transition duration-100 p-1"> {/* todo */}
-              <ArrowPathIcon className="h-6 w-6 text-gray-400"/>
+            <button
+              className="ml-1 p-1 rounded-full focus:outline-none focus:ring focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
+              onClick={() => refreshStats()}
+            >
+              <ArrowPathRoundedSquareIcon className="h-4 w-4 text-gray-400"/>
             </button>
           </div>
           <div className="flex flex-col space-x-0 space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
@@ -295,20 +303,20 @@ export default function RoomIndex() {
                   )}
                 </tbody>
               </table>
-              { rooms?.rooms.length === 0 ?
-                <div className="py-16 px-8 w-full h-full flex flex-col items-center justify-around space-y-2">
-                  <span className="text-8xl">😅</span>
-                  <span className="text-center w-full text-sm text-gray-600">{ localize(lang, "no_data") }</span>
-                </div>
-                :
-                <></>
-              }
-              <div className="flex flex-row items-center justify-between mt-2 px-2">
-                <span className="text-sm text-gray-500">
-                  { localize(lang, "total") } { rooms?.total }
-                </span>
-                <Pagination page={page} total={maxPage} handlePageSelection={setPage}/>
+            </div>
+            { rooms?.rooms.length === 0 ?
+              <div className="py-16 px-8 w-full h-full flex flex-col items-center justify-around space-y-2">
+                <span className="text-8xl">😅</span>
+                <span className="text-center w-full text-sm text-gray-600">{ localize(lang, "no_data") }</span>
               </div>
+              :
+              <></>
+            }
+            <div className="flex flex-row items-center justify-between mt-2 px-2">
+              <span className="text-sm text-gray-500">
+                { localize(lang, "total") } { rooms?.total }
+              </span>
+              <Pagination page={page} total={maxPage} handlePageSelection={setPage}/>
             </div>
           </div>
         </main>

@@ -24,6 +24,7 @@ export default function RoomInfo({ id, onError, setStatus }: RoomInfoProps) {
                 onError(e.response?.data.code, e.response?.status)
         })
     }, [id, onError, setStatus])
+
     return (
         <>
             <div aria-label="room title" className="px-4 py-5 sm:px-6 flex flex-row items-center justify-between">

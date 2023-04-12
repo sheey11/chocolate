@@ -203,16 +203,16 @@ func ChangeRoomPermissionType(room *Room, permission RoomPermissionType, clearPe
 
 func AddRoomPermissionItem_Label(id uint, label string) cerrors.ChocolateError {
 	var count int64
-	tx := db.
+	c := db.
 		Model(&PermissionItem{}).
 		Where("room_id = ? AND subject_label_name = ?", id, label).
 		Count(&count)
-	if tx.Error != nil {
+	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCountPermissionItemError,
 			Message:    "error on counting existing room permissions",
-			Sql:        tx.Statement.SQL.String(),
-			InnerError: tx.Error,
+			Sql:        c.Statement.SQL.String(),
+			InnerError: c.Error,
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{
 				"room_id": id,
@@ -225,17 +225,40 @@ func AddRoomPermissionItem_Label(id uint, label string) cerrors.ChocolateError {
 			Message: "permission item already exists",
 		}
 	}
+
+	count = 0
+	c = db.
+		Model(&Label{}).
+		Where("name = ?", label).
+		Count(&count)
+	if count == 0 {
+		c := db.Create(&Label{Name: label})
+		if c.Error != nil {
+			return cerrors.DatabaseError{
+				ID:         cerrors.DatabaseCreateLabelError,
+				Message:    "error creating label when creates room permission",
+				Sql:        c.Statement.SQL.String(),
+				InnerError: c.Error,
+				StackTrace: cerrors.GetStackTrace(),
+				Context: map[string]interface{}{
+					"room_id": id,
+					"label":   label,
+				},
+			}
+		}
+	}
+
 	item := PermissionItem{
 		RoomID:           id,
 		SubjectType:      PermissionSubjectTypeLabel,
 		SubjectLabelName: &label,
 	}
-	if tx := db.Save(&item); tx.Error != nil {
+	if c := db.Save(&item); c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreatePermissionItemError,
 			Message:    "error on creating room permissions",
-			Sql:        tx.Statement.SQL.String(),
-			InnerError: tx.Error,
+			Sql:        c.Statement.SQL.String(),
+			InnerError: c.Error,
 			StackTrace: cerrors.GetStackTrace(),
 			Context: map[string]interface{}{
 				"room_id": id,

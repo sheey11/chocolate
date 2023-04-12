@@ -19,31 +19,32 @@ function classNames(...classes: string[]) {
 }
 
 function humanizeSpeed(v: any) {
-  v = Math.abs(v)
-  let bs = (v).kilobytes()
+    v = Math.abs(v)
+    let bs = (v).kilobytes()
 
-  if(bs.bytes < 768) {
-    return `${bs.bytes.toFixed(0)} B/s`
-  } else if (bs.kilobytes < 768) {
-    return `${bs.kilobytes.toFixed(1)} KB/s`
-  } else if (bs.megabytes < 768) {
-    return `${bs.megabytes.toFixed(1)} MB/s`
-  } else if (bs.gigabytes < 678) {
-    return `${bs.gigabytes.toFixed(1)} GB/s`
-  } else if (bs.terabytes < 789) {
-    return `${bs.terabytes.toFixed(1)} TB/s`
-  }
-  return "0 B/s"
+    if(bs.bytes < 768) {
+        return `${bs.bytes.toFixed(0)} B/s`
+    } else if (bs.kilobytes < 768) {
+        return `${bs.kilobytes.toFixed(1)} KB/s`
+    } else if (bs.megabytes < 768) {
+        return `${bs.megabytes.toFixed(1)} MB/s`
+    } else if (bs.gigabytes < 678) {
+        return `${bs.gigabytes.toFixed(1)} GB/s`
+    } else if (bs.terabytes < 789) {
+        return `${bs.terabytes.toFixed(1)} TB/s`
+    }
+    return "0 B/s"
 }
 
 interface StreamBoxProps {
-    theaterMode: boolean
+    theaterMode?: boolean
     playbackUrl: string | undefined
-    setTheaterMode: (arg0: boolean) => void
+    setTheaterMode?: (arg0: boolean) => void
     streamingStatus: string
+    minify?: boolean
 }
 
-export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMode, streamingStatus }: StreamBoxProps){
+export default function StreamVideoBox({ theaterMode = false, playbackUrl, setTheaterMode, streamingStatus, minify }: StreamBoxProps){
     const videoRef = useRef<HTMLVideoElement | null>(null)
     const videoWrapperRef = useRef<HTMLDivElement | null>(null)
     const [volume, _setVolume] = useState(100)
@@ -60,12 +61,12 @@ export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMod
     const lang = router.locale!
 
     const unloadVideo = () => {
-        if(player.current != null)  {
+        try {
             player.current?.pause()
             player.current?.unload()
             player.current?.detachMediaElement()
             player.current?.destroy()
-        }
+        } catch {}
     }
 
     useEffect(() => unloadVideo, [])
@@ -84,15 +85,20 @@ export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMod
 
                 player.current?.attachMediaElement(videoRef.current!)
                 player.current?.load()
+                if (minify && player.current != null) {
+                  player.current.volume = 0
+                  setVolume(0)
+                }
                 player.current?.play()
-
+                
+                if (minify) return
                 setStatisticsTimer(t => {
                     if(t != null) clearInterval(t)
                     return setInterval(recordCurrentTime, 3000)
                 })
             }
         })
-    }, [playbackUrl])
+    }, [playbackUrl, minify])
 
     const recordCurrentTime = () => {
         if (player.current == null) return
@@ -102,6 +108,7 @@ export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMod
     useEffect(() => {
         if (typeof window === 'undefined' || playbackUrl === undefined) { return }
         reloadVideo()
+        return unloadVideo
     }, [playbackUrl, reloadVideo])
 
     const handleSwitchPause = () => {
@@ -125,7 +132,9 @@ export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMod
     }
 
     const toggleTheaterMode = () => {
-        setTheaterMode(!theaterMode)
+        if (setTheaterMode) {
+            setTheaterMode(!theaterMode)
+        }
         if (fullscreen) {
             toggleFullscreen()
         }
@@ -178,59 +187,71 @@ export default function StreamVideoBox({ theaterMode, playbackUrl, setTheaterMod
                 }
             </div>
             <div className="bg-gradient-to-t from-black/50 from-50% to-white/0 h-12 absolute z-10 bottom-0 w-full opacity-0 transition duration-200 controls flex items-end">
-                <div className="h-8 px-2 w-full flex flex-row items-center justify-between text-white">
-                    <div className="flex flex-row space-x-2 items-center">
-                        <button onClick={handleSwitchPause} className="h-6 w-6 hover:text-gray-200 transition duration-400" aria-label="switch play pause">
-                            { paused ? 
-                                <PlayIcon />
+                { minify ?
+                    <div className="h-8 px-2 w-full flex flex-row-reverse items-center text-white">
+                        <button aria-label="mute" onClick={() => toggleMute()} className="h-6 w-6 hover:text-gray-200 transition duration-400 block p-0.5">
+                            { volume != 0 ? 
+                                <SpeakerWaveIcon />
                                 :
-                                <PauseIcon />
-                            }
-                        </button>
-                        <button onClick={() => { reloadVideo(); setPaused(false) }} className="h-6 w-6 hover:text-gray-200 transition duration-400">
-                            <ArrowPathRoundedSquareIcon />
-                        </button>
-                        <span className="volume-wrapper flex items-center space-x-2">
-                            <label htmlFor="volume">
-                                <button aria-label="mute" onClick={() => toggleMute()} className="h-6 w-6 hover:text-gray-200 transition duration-400 block p-0.5">
-                                    { volume != 0 ? 
-                                        <SpeakerWaveIcon />
-                                        :
-                                        <SpeakerXMarkIcon />
-                                    }
-                                </button>
-                            </label>
-                            <input
-                                value={volume}
-                                onChange={(e) => { setVolume(e.target.valueAsNumber) }}
-                                id="volume"
-                                name="volume"
-                                min="0"
-                                max="100"
-                                type="range"
-                                className="inline-block w-16 lg:w-20"/>
-                        </span>
-                        <span className="text-xs pl-2">
-                            { humanizeSpeed(bufferingSpeed) }
-                        </span>
-                    </div>
-                    <div className="h-full flex items-center space-x-4">
-                        <button className="h-6 w-6 hidden md:block hover:text-gray-200 transition duration-400" onClick={toggleTheaterMode} aria-label="theater mode">
-                            { theaterMode ?
-                                <StopIcon />
-                                :
-                                <CodeBracketSquareIcon />
-                            }
-                        </button>
-                        <button className="h-6 w-6 hover:text-gray-200 transition duration-400" onClick={toggleFullscreen} aria-label={ localize(lang, 'fullscreen') }>
-                            { fullscreen ?
-                                <ArrowsPointingInIcon />
-                                :
-                                <ArrowsPointingOutIcon />
+                                <SpeakerXMarkIcon />
                             }
                         </button>
                     </div>
-                </div>
+                    :
+                    <div className="h-8 px-2 w-full flex flex-row items-center justify-between text-white">
+                        <div className="flex flex-row space-x-2 items-center">
+                            <button onClick={handleSwitchPause} className="h-6 w-6 hover:text-gray-200 transition duration-400" aria-label="switch play pause">
+                                { paused ? 
+                                    <PlayIcon />
+                                    :
+                                    <PauseIcon />
+                                }
+                            </button>
+                            <button onClick={() => { reloadVideo(); setPaused(false) }} className="h-6 w-6 hover:text-gray-200 transition duration-400">
+                                <ArrowPathRoundedSquareIcon />
+                            </button>
+                            <span className="volume-wrapper flex items-center space-x-2">
+                                <label htmlFor="volume">
+                                    <button aria-label="mute" onClick={() => toggleMute()} className="h-6 w-6 hover:text-gray-200 transition duration-400 block p-0.5">
+                                        { volume != 0 ? 
+                                            <SpeakerWaveIcon />
+                                            :
+                                            <SpeakerXMarkIcon />
+                                        }
+                                    </button>
+                                </label>
+                                <input
+                                    value={volume}
+                                    onChange={(e) => { setVolume(e.target.valueAsNumber) }}
+                                    id="volume"
+                                    name="volume"
+                                    min="0"
+                                    max="100"
+                                    type="range"
+                                    className="inline-block w-16 lg:w-20"/>
+                            </span>
+                            <span className="text-xs pl-2">
+                                { humanizeSpeed(bufferingSpeed) }
+                            </span>
+                        </div>
+                        <div className="h-full flex items-center space-x-4">
+                            <button className="h-6 w-6 hidden md:block hover:text-gray-200 transition duration-400" onClick={toggleTheaterMode} aria-label="theater mode">
+                                { theaterMode ?
+                                    <StopIcon />
+                                    :
+                                    <CodeBracketSquareIcon />
+                                }
+                            </button>
+                            <button className="h-6 w-6 hover:text-gray-200 transition duration-400" onClick={toggleFullscreen} aria-label={ localize(lang, 'fullscreen') }>
+                                { fullscreen ?
+                                    <ArrowsPointingInIcon />
+                                    :
+                                    <ArrowsPointingOutIcon />
+                                }
+                            </button>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     )

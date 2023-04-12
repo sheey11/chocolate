@@ -15,6 +15,7 @@
 
   "home_page": "Home",
   "rooms_page": "Rooms",
+  "users_page": "users",
 
   "traffic": "Host Network Activity",
   "connections": "Connections",
@@ -80,6 +81,13 @@
   "Stop": "Stop Playing",
   "cutoff": "Cut Off",
 
+  "cutoff_confirm": "Cutoff Confirm",
+  "delete_confirm": "Deletion Confirm",
+
+  "the_room": "The room",
+  "cutoff_cannot_be_undone": "cannot only be set streaming by the broadcastor after cut-off.",
+  "delete_cannot_be_undone": "deletion cannot be undone.",
+
   "play": "Play",
   "pause": "Pause",
   "reload": "Reload",
@@ -94,8 +102,12 @@
   "settings": "Settings",
   "sign_out": "Sign out",
 
+  "new_user_btn": "New User",
   "no_data": "No Data",
 
+  "account_have_no_label": "No labels",
+
+  "free_software_note": "Note: This is a free software, source code is published under GPLv3.",
   "errors": {
     "1":  "Internal Server Error",
     "2":  "Invalid request data",

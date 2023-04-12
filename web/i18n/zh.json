@@ -18,6 +18,7 @@
 
   "home_page": "主页",
   "rooms_page": "房间",
+  "users_page": "用户",
 
   "traffic": "主机网络活动",
   "connections": "连接数",
@@ -83,6 +84,17 @@
   "Stop": "客户端停止播放",
   "cutoff": "被切断",
 
+  "cutoff_confirm": "切断确认",
+  "delete_confirm": "删除确认",
+
+  "the_room": "房间",
+  "cutoff_cannot_be_undone": "切断后只能由主播再次推送。",
+  "delete_cannot_be_undone": "删除后不可恢复。",
+
+  "cancel": "取消",
+  "cutoff_confirm_btn": "切断",
+  "delete_confirm_btn": "删除",
+
   "play": "播放",
   "pause": "暂停",
   "reload": "重新加载",
@@ -99,6 +111,16 @@
 
   "no_data": "没有数据",
 
+  "new_user_btn": "添加用户",
+  "user_filter_role_all": "全部",
+  "user_filter_role_administrator": "管理员",
+  "user_filter_role_user": "普通用户",
+
+  "account_have_no_label": "无标签",
+
+  "user_id": "用户ID",
+
+  "free_software_note": "注意: 本软件是免费软件，并在 GPLv3 许可证下开放源代码",
   "errors": {
     "1":  "服务器处理请求时出现错误",
     "2":  "无效请求数据",

@@ -160,6 +160,13 @@ func handleRoomInfoRetrival(c *gin.Context) {
 		}
 	}
 
+	type permissionItemAdminInfo struct {
+		Type     models.PermissionSubjectType `json:"type"`
+		Label    *string                      `json:"label"`
+		UserID   *uint                        `json:"user_id"`
+		UserName *string                      `json:"username"`
+	}
+
 	type roomAdminListInfo struct {
 		ID              uint                      `json:"id"`
 		UID             string                    `json:"uid"`
@@ -169,7 +176,7 @@ func handleRoomInfoRetrival(c *gin.Context) {
 		OwnerID         uint                      `json:"owner_id"`
 		OwnerName       string                    `json:"owner_username"`
 		PermissionType  models.RoomPermissionType `json:"permission_type"`
-		PermissionItems []models.PermissionItem   `json:"permission_items"`
+		PermissionItems []permissionItemAdminInfo `json:"permission_items"`
 		LastStreaming   time.Time                 `json:"last_streaming"`
 		Stream          *service.SRSStreamInfo    `json:"srs_stream"`
 	}
@@ -185,17 +192,40 @@ func handleRoomInfoRetrival(c *gin.Context) {
 		"code":    0,
 		"message": "ok",
 		"rooms": roomAdminListInfo{
-			ID:              room.ID,
-			UID:             room.UID,
-			Viewers:         room.Viewers,
-			Title:           room.Title,
-			Status:          room.Status.ToString(),
-			OwnerID:         room.OwnerID,
-			OwnerName:       room.Owner.Username,
-			PermissionType:  room.PermissionType,
-			PermissionItems: room.PermissionItems,
-			LastStreaming:   room.LastStreamingAt,
-			Stream:          stream,
+			ID:             room.ID,
+			UID:            room.UID,
+			Viewers:        room.Viewers,
+			Title:          room.Title,
+			Status:         room.Status.ToString(),
+			OwnerID:        room.OwnerID,
+			OwnerName:      room.Owner.Username,
+			PermissionType: room.PermissionType,
+			PermissionItems: lo.Map(room.PermissionItems, func(item models.PermissionItem, _ int) permissionItemAdminInfo {
+				var username *string = nil
+				if item.SubjectType == models.PermissionSubjectTypeUser {
+					if item.SubjectUser != nil {
+						username = &item.SubjectUser.Username
+					} else {
+						user := service.GetUserByID(*item.SubjectUserID)
+						if user == nil {
+							logrus.
+								WithField("user_id", item.SubjectUserID).
+								WithField("stack_trace", cerrors.GetStackTrace()).
+								Error("logic: the user is null")
+						} else {
+							username = &user.Username
+						}
+					}
+				}
+				return permissionItemAdminInfo{
+					UserName: username,
+					UserID:   item.SubjectUserID,
+					Label:    item.SubjectLabelName,
+					Type:     item.SubjectType,
+				}
+			}),
+			LastStreaming: room.LastStreamingAt,
+			Stream:        stream,
 		},
 	})
 }
@@ -270,7 +300,9 @@ func handleRoomDeletion(c *gin.Context) {
 		return
 	}
 
-	cerr := service.DeleteRoom(uint(id))
+	user := service.GetUserFromContext(c)
+
+	cerr := service.DeleteRoom(uint(id), user.ID)
 	if cerr != nil {
 		if rerr, ok := cerr.(cerrors.RequestError); ok {
 			c.Abort()

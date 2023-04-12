@@ -222,7 +222,15 @@ func CutOffStream(room *models.Room, operator uint) cerrors.ChocolateError {
 	return models.SetRoomStatus(room.ID, models.RoomStatusIdle)
 }
 
-func DeleteRoom(roomid uint) cerrors.ChocolateError {
+func DeleteRoom(roomid uint, operator uint) cerrors.ChocolateError {
+	room, err := GetRoomByID(roomid)
+	if err != nil {
+		return err
+	}
+
+	if operator != 0 && room.Status == models.RoomStatusStreaming {
+		CutOffStream(room, operator)
+	}
 	return models.DeleteRoom(roomid)
 }
 
@@ -248,17 +256,16 @@ func IsUserAllowedForRoom(room *models.Room, user *models.User) bool {
 		return false
 	}
 
-	if user == nil && room.PermissionType == models.RoomPermissionWhitelist {
+	if user != nil {
+		if room.OwnerID == user.ID {
+			return true
+		} else if user.Role.AbilityManageRoom {
+			return true
+		}
+	} else if room.PermissionType == models.RoomPermissionWhitelist {
 		return false
 	}
 
-	if room.OwnerID == user.ID {
-		return true
-	}
-
-	if user.Role.AbilityManageRoom {
-		return true
-	}
 	return models.IsUserAllowedForRoom(room, user)
 }
 

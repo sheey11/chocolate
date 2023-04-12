@@ -1,21 +1,22 @@
 import { Nav } from "@/components/Nav/Nav"
 import { AuthContext } from "@/contexts/AuthContext"
 import { useRouter } from "next/router"
-import { Fragment, useContext, useEffect } from "react"
+import { Fragment, useCallback, useContext, useEffect } from "react"
 import { dashboardNavs } from "@/constants/navs"
-import { Inter } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import Button from "@/components/Button/Button"
 import { useState } from 'react'
-import { CheckIcon, HandThumbUpIcon, UserIcon, ArrowTopRightOnSquareIcon, PaperClipIcon, QuestionMarkCircleIcon, PlayIcon, PlayPauseIcon, NoSymbolIcon, } from '@heroicons/react/24/solid'
-import { ArrowPathRoundedSquareIcon, ArrowSmallUpIcon, ExclamationTriangleIcon, SignalIcon, SignalSlashIcon } from '@heroicons/react/24/outline'
+import { UserIcon, ArrowTopRightOnSquareIcon, QuestionMarkCircleIcon, PlayIcon, PlayPauseIcon, NoSymbolIcon, TagIcon, } from '@heroicons/react/24/solid'
+import { ArrowPathRoundedSquareIcon, SignalIcon, SignalSlashIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Link from "next/link"
 import { Footer } from "@/components/Footer/Footer"
-import { localize } from "@/i18n/i18n"
+import { localize, localizeError } from "@/i18n/i18n"
 import Dialog from "@/components/Dialog/Dialog"
 import { AdminRoomDetailResponse, RoomTimelineResponse } from "@/api/v1/datatypes"
-import { fetchRoomDetail, fetchRoomTimeline } from "@/api/v1/admin/room"
-import { Listbox, Transition } from "@headlessui/react"
+import { cutoffRoomStream, deleteRoom, fetchRoomDetail, fetchRoomTimeline } from "@/api/v1/admin/room"
+import { Transition } from "@headlessui/react"
 import "humanizer.node"
+import StreamVideoBox from "@/components/StreamVideoBox/StreamVideoBox"
 
 const inter = Inter({
   subsets: ['latin-ext'],
@@ -41,11 +42,6 @@ function humanizeSize(v: any) {
   return `${v} KB`
 }
 
-
-const attachments = [
-  { name: 'resume_front_end_developer.pdf', href: '#' },
-  { name: 'coverletter_front_end_developer.pdf', href: '#' },
-]
 const eventTypes = [
   { name: 'publish',   icon: SignalIcon, bgColorClass: 'bg-green-400' },
   { name: 'unpublish', icon: SignalSlashIcon, bgColorClass: 'bg-blue-500' },
@@ -54,62 +50,106 @@ const eventTypes = [
   { name: 'cutoff',    icon: NoSymbolIcon, bgColorClass: 'bg-red-500' },
 ]
 
-const comments = [
-  {
-    id: 1,
-    name: 'Leslie Alexander',
-    date: '4d ago',
-    imageId: '1494790108377-be9c29b29330',
-    body: 'Ducimus quas delectus ad maxime totam doloribus reiciendis ex. Tempore dolorem maiores. Similique voluptatibus tempore non ut.',
-  },
-  {
-    id: 2,
-    name: 'Michael Foster',
-    date: '4d ago',
-    imageId: '1519244703995-f4e0f30006d5',
-    body: 'Et ut autem. Voluptatem eum dolores sint necessitatibus quos. Quis eum qui dolorem accusantium voluptas voluptatem ipsum. Quo facere iusto quia accusamus veniam id explicabo et aut.',
-  },
-  {
-    id: 3,
-    name: 'Dries Vincent',
-    date: '4d ago',
-    imageId: '1506794778202-cad84cf45f1d',
-    body: 'Expedita consequatur sit ea voluptas quo ipsam recusandae. Ab sint et voluptatem repudiandae voluptatem et eveniet. Nihil quas consequatur autem. Perferendis rerum et.',
-  },
-]
+const jbm = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: '500',
+})
 
 export default function RoomDetailPage() {
-  const auth = useContext(AuthContext)
-  const user = auth.getUser()
   const router = useRouter()
   const id = router.query.id as string | undefined
   const lang = router.locale!
 
   const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false)
+  const [CutoffConfirmDialogOpen, setCutoffConfirmDialogOpen] = useState(false)
 
   const [roomDetail, setRoomDetail] = useState<AdminRoomDetailResponse | null>(null)
   const [roomTimeline, setRoomTimeline] = useState<RoomTimelineResponse | null>(null)
   const [permissionTypeHelpShow, setPermissionTypeHelpShow] = useState<boolean>(false)
 
-  const reloadDetail = (id: string | undefined) => {
+  const [playbackUrl, setPlaybackUrl] = useState<string | undefined>(undefined)
+
+  const { authenticated,    getUser             } = useContext(AuthContext)
+  const [ errCode,          setErrCode          ] = useState<number | null>()
+  const [ httpErrCode,      setHttpErrCode      ] = useState<number | null>()
+
+  const dealWithFetchError = (e: any) => {
+    console.error(e)
+    setErrCode(e.response?.data!.code)
+    setHttpErrCode(e.response?.status)
+  }
+
+  const reloadDetail = useCallback((id: string | undefined) => {
     if(!id) return
     fetchRoomDetail(id)
       .then(setRoomDetail)
-      .catch(e => console.error(e))
-  }
+      .catch(dealWithFetchError)
+  }, [])
 
-  const loadRoomTimeline = (id: string | undefined) => {
+  const loadRoomTimeline = useCallback((id: string | undefined) => {
     if(!id) return
     fetchRoomTimeline(id)
       .then(setRoomTimeline)
-      .catch(e => console.error(e))
-  }
+      .catch(dealWithFetchError)
+  }, [])
 
   useEffect(() => {
     if (!id) return
     reloadDetail(id)
     loadRoomTimeline(id)
-  }, [id])
+  }, [id, loadRoomTimeline, reloadDetail])
+
+  useEffect(() => {
+    if(roomDetail == null || roomDetail.rooms.status != "streaming") return
+    setPlaybackUrl(`/api/v1/playback/${id}/flv`)
+  }, [id, roomDetail])
+
+  const handleCutoff = useCallback(() => {
+    if(!id) return
+    cutoffRoomStream(id)
+      .then(() => {
+        reloadDetail(id)
+        setCutoffConfirmDialogOpen(false)
+      })
+      .catch(dealWithFetchError)
+  }, [id, reloadDetail])
+  
+  const handleDelete = useCallback(() => {
+    if(!id) return
+    deleteRoom(id)
+      .then(() => router.push("/dashboard/rooms"))
+      .catch(dealWithFetchError)
+  }, [id, router])
+
+  if(!authenticated || getUser()?.role != "administrator") {
+    return (
+      <>
+        <Nav navs={dashboardNavs} />
+        <main className="mx-auto max-w-7xl lg:pt-8 h-[calc(100vh-13rem)] md:h-[calc(100vh-14.5rem)] flex flex-col items-center justify-center">
+          <h1 className={ classNames("text-7xl", jbm.className) }>{ 403 }</h1>
+          <span className="text-sm text-gray-600 font-bold">
+            { localizeError(lang, 13) }
+          </span>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
+  if(errCode && httpErrCode) {
+    return (
+      <>
+        <Nav navs={dashboardNavs} />
+        <main className="mx-auto max-w-7xl lg:pt-8 h-[calc(100vh-13rem)] md:h-[calc(100vh-14.5rem)] flex flex-col items-center justify-center">
+          <h1 className={ classNames("text-7xl", jbm.className) }>{ httpErrCode }</h1>
+          <span className="text-sm text-gray-600 font-bold">
+            { localizeError(lang, errCode) }
+          </span>
+        </main>
+        <Footer />
+      </>
+    )
+  }
 
   return (
     <>
@@ -119,17 +159,15 @@ export default function RoomDetailPage() {
         <div className="mx-auto max-w-3xl px-4 sm:px-6 md:flex md:items-center md:justify-between md:space-x-5 lg:max-w-7xl lg:px-8">
           <div className="flex items-center space-x-5">
             <div>
-              <div className="flex items-center">
-                <h1 className="text-2xl font-bold text-gray-900"> { roomDetail?.rooms.title }</h1>
-                <div className="ml-2">
-                  { roomDetail?.rooms.status === "streaming" ? 
-                    <span className="h-2 w-2 rounded-full bg-green-500 block">
-                      <span className="absolute h-2 w-2 rounded-full bg-green-500 block animate-ping" />
-                    </span>
-                    :
-                    <span className="h-2 w-2 rounded-full bg-gray-500 block" />
-                  }
-                </div>
+              <h1 className="text-2xl font-bold text-gray-900 inline"> { roomDetail?.rooms.title }</h1>
+              <div className="inline ml-2">
+                { roomDetail?.rooms.status === "streaming" ? 
+                  <span className="relative bottom-1 h-2 w-2 rounded-full bg-green-500 inline-block">
+                    <span className="absolute h-2 w-2 rounded-full bg-green-500 block animate-ping" />
+                  </span>
+                  :
+                  <span className="relative bottom-1 h-2 w-2 rounded-full bg-gray-500 inline-block" />
+                }
               </div>
               <p className="text-sm font-medium text-gray-500">
                 { roomDetail?.rooms.status === "streaming" ? localize(lang, "stream_started_at") : localize(lang, "last_streamed_at") }{' '}
@@ -145,25 +183,56 @@ export default function RoomDetailPage() {
               </p>
             </div>
           </div>
-          <div className="justify-stretch mt-6 flex flex-col-reverse space-y-4 space-y-reverse sm:flex-row-reverse sm:justify-end sm:space-y-0 sm:space-x-3 sm:space-x-reverse md:mt-0 md:flex-row md:space-x-3">
-            <Button type="secondary" className="text-red-500" ring="red">{ localize(lang, "cut_off_stream") }</Button>
-            <Button onClick={() => setDeleteConfirmDialogOpen(true)} type="destructive">{ localize(lang, "delete_room") }</Button>
-
-            <Dialog open={deleteConfirmDialogOpen} onClose={() => setDeleteConfirmDialogOpen(false)}>
+          <div className="flex-shrink-0 justify-stretch mt-6 flex flex-col-reverse space-y-4 space-y-reverse sm:flex-row-reverse sm:justify-end sm:space-y-0 sm:space-x-3 sm:space-x-reverse md:mt-0 md:flex-row md:space-x-3">
+            <Button type="secondary" className="text-red-500" ring="red" onClick={() =>  setCutoffConfirmDialogOpen(true)}>{ localize(lang, "cut_off_stream") }</Button>
+            <Dialog open={CutoffConfirmDialogOpen} onClose={() => setCutoffConfirmDialogOpen(false)}>
               <Dialog.Content>
                 <div className="flex flex-row space-x-4 items-start">
                   <span className="p-2 rounded-full bg-red-200">
-                    <ExclamationTriangleIcon className="h-6 w-6 text-red-500"/>
+                    <NoSymbolIcon className="h-6 w-6 text-red-500"/>
                   </span>
                   <div className="w-full">
-                    <h2 className="font-semibold text-md"> Deletion Confirm </h2>
-                    <p> The room <code>{ roomDetail?.rooms.id }</code> deletion cannot be undone! </p>
+                    <h2 className="font-semibold text-md">{ localize(lang, "cutoff_confirm") }</h2>
+                    <p>
+                      { localize(lang, "the_room") } {' '}
+                      <code className="code">{ roomDetail?.rooms.id }</code>
+                      {' '}{ localize(lang, "cutoff_cannot_be_undone") }
+                    </p>
                   </div>
                 </div>
               </Dialog.Content>
               <Dialog.Actions>
-                <Button type="secondary"> Cancel </Button>
-                <Button type="destructive"> Delete </Button>
+                <Button type="secondary" onClick={() => setCutoffConfirmDialogOpen(false)}>{ localize(lang, "cancel") }</Button>
+                <Button
+                  type="secondary"
+                  className="text-red-500 focus:ring-red-200"
+                  onClick={handleCutoff}
+                >
+                  { localize(lang, "cutoff_confirm_btn") }
+                </Button>
+              </Dialog.Actions>
+            </Dialog>
+
+            <Button onClick={() => setDeleteConfirmDialogOpen(true)} type="destructive">{ localize(lang, "delete_room") }</Button>
+            <Dialog open={deleteConfirmDialogOpen} onClose={() => setDeleteConfirmDialogOpen(false)}>
+              <Dialog.Content>
+                <div className="flex flex-row space-x-4 items-start">
+                  <span className="p-2 rounded-full bg-red-200">
+                    <TrashIcon className="h-6 w-6 text-red-500"/>
+                  </span>
+                  <div className="w-full">
+                    <h2 className="font-semibold text-md">{ localize(lang, "delete_confirm") }</h2>
+                    <p>
+                      { localize(lang, "the_room") } {' '}
+                      <code className="code">{ roomDetail?.rooms.id }</code>
+                      {' '}{ localize(lang, "delete_cannot_be_undone") }
+                    </p>
+                  </div>
+                </div>
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button type="secondary" onClick={() => setDeleteConfirmDialogOpen(false)}>{ localize(lang, "cancel") }</Button>
+                <Button type="destructive" onClick={handleDelete}>{ localize(lang, "delete_confirm_btn") }</Button>
               </Dialog.Actions>
             </Dialog>
           </div>
@@ -173,7 +242,7 @@ export default function RoomDetailPage() {
           <div className="space-y-6 lg:col-span-2 lg:col-start-1">
             {/* Description list*/}
             <section aria-labelledby="room-information-title">
-              <div className="bg-white shadow sm:rounded-lg">
+              <div className="md:pb-2 bg-white shadow sm:rounded-lg">
                 <div className="px-4 py-5 sm:px-6 flex items-center justify-start">
                   <h2 id="room-information-title" className="text-lg font-medium leading-6 text-gray-900">
                     { localize(lang, "room_info") }
@@ -238,34 +307,33 @@ export default function RoomDetailPage() {
                       </dt>
                       <dd className="mt-1 text-sm text-gray-900">
                         { localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }
-                        { /*
-                          <Listbox value={roomDetail?.rooms.permission_type}>
-                            <Listbox.Button className="relative rounded">
-                                { localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }
-                              <PencilSquareIcon className="inline-block h-4 w-4 ml-2 mb-1" />
-                            </Listbox.Button>
-                            <Transition
-                              as={Fragment}
-                              enter="transition ease-out duration-50 origin-top"
-                              enterFrom="opacity-0 scale-95"
-                              enterTo="opacity-100 scale-100"
-                              leave="transition ease-in duration-50 origin-top"
-                              leaveFrom="opacity-100 scale-100"
-                              leaveTo="opacity-0 scale-95"
-                            >
-                              <Listbox.Options className="absolute bg-white z-20 border border-gray-100 rounded shadow-lg divide-y">
-                                <Listbox.Option as="button" value="blacklist" className="flex items-center space-x-2 py-3 px-4">
-                                  <UserMinusIcon className="h-5 w-5"/>
-                                  <span> { localize(lang, `room_permission_type_blacklist`) } </span>
-                                </Listbox.Option>
-                                <Listbox.Option as="button" value="whitelist" className="flex items-center space-x-2 py-3 px-4">
-                                  <UserPlusIcon className="h-5 w-5"/>
-                                  <span> { localize(lang, `room_permission_type_whitelist`) } </span>
-                                </Listbox.Option>
-                              </Listbox.Options>
-                            </Transition>
-                          </Listbox>
-                        */ }
+                        { /* <Listbox value={roomDetail?.rooms.permission_type}>
+                             <Listbox.Button className="relative rounded">
+                             { localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }
+                             <PencilSquareIcon className="inline-block h-4 w-4 ml-2 mb-1" />
+                             </Listbox.Button>
+                             <Transition
+                             as={Fragment}
+                             enter="transition ease-out duration-50 origin-top"
+                             enterFrom="opacity-0 scale-95"
+                             enterTo="opacity-100 scale-100"
+                             leave="transition ease-in duration-50 origin-top"
+                             leaveFrom="opacity-100 scale-100"
+                             leaveTo="opacity-0 scale-95"
+                             >
+                             <Listbox.Options className="absolute bg-white z-20 border border-gray-100 rounded shadow-lg divide-y">
+                             <Listbox.Option as="button" value="blacklist" className="flex items-center space-x-2 py-3 px-4">
+                             <UserMinusIcon className="h-5 w-5"/>
+                             <span> { localize(lang, `room_permission_type_blacklist`) } </span>
+                             </Listbox.Option>
+                             <Listbox.Option as="button" value="whitelist" className="flex items-center space-x-2 py-3 px-4">
+                             <UserPlusIcon className="h-5 w-5"/>
+                             <span> { localize(lang, `room_permission_type_whitelist`) } </span>
+                             </Listbox.Option>
+                             </Listbox.Options>
+                             </Transition>
+                             </Listbox>
+                          */ }
                       </dd>
                     </div>
                     { roomDetail?.rooms.srs_stream ?
@@ -328,83 +396,51 @@ export default function RoomDetailPage() {
                       :
                       <></>
                     }
-                    <div className="sm:col-span-2">
-                      <dt className="text-sm font-medium text-gray-500">{ localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }</dt>
-                      <dd className="mt-1 text-sm text-gray-900">
-                        <ul role="list" className="divide-y divide-gray-200 rounded-md border border-gray-200">
-                          <li className="flex items-center justify-between py-2 pl-2 pr-4 text-sm">
-                            <UserIcon className="h-5 w-5 flex-shrink-0 text-gray-400" aria-hidden="true" />
-                          </li>
-                        </ul>
-                        <ul role="list" className="divide-y divide-gray-200 rounded-md border border-gray-200">
-                          {attachments.map((attachment) => (
-                            <li
-                              key={attachment.name}
-                              className="flex items-center justify-between py-3 pl-3 pr-4 text-sm"
-                            >
-                              <div className="flex w-0 flex-1 items-center">
-                                <PaperClipIcon className="h-5 w-5 flex-shrink-0 text-gray-400" aria-hidden="true" />
-                                <span className="ml-2 w-0 flex-1 truncate">{attachment.name}</span>
-                              </div>
-                              <div className="ml-4 flex-shrink-0">
-                                <a href={attachment.href} className="font-medium text-blue-600 hover:text-blue-500">
-                                  Download
-                                </a>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </dd>
-                    </div>
                   </dl>
                 </div>
               </div>
             </section>
 
-            {/* Comments*/}
-            <section aria-labelledby="notes-title">
+            {/* Permission Items */}
+            <section aria-labelledby="permisstion-items-title">
               <div className="bg-white shadow sm:overflow-hidden sm:rounded-lg">
                 <div className="divide-y divide-gray-200">
                   <div className="px-4 py-5 sm:px-6">
-                    <h2 id="notes-title" className="text-lg font-medium text-gray-900">
-                      Notes
+                    <h2 id="permission-items-title" className="text-lg font-medium text-gray-900">
+                      { localize(lang, `room_permission_type_${roomDetail?.rooms.permission_type}`) }
                     </h2>
                   </div>
+                  { roomDetail?.rooms.permission_items.length === 0 ?
+                    <div className="p-8 flex flex-col space-around items-center space-y-2">
+                      <span className="text-8xl">😅</span>
+                      <span className="text-center w-full text-sm text-gray-600">{ localize(lang, "no_data") }</span>
+                    </div>
+                  :
                   <div className="px-4 py-6 sm:px-6">
-                    <ul role="list" className="space-y-8">
-                      {comments.map((comment) => (
-                        <li key={comment.id}>
-                          <div className="flex space-x-3">
-                            <div className="flex-shrink-0">
-                              <img
-                                className="h-10 w-10 rounded-full"
-                                src={`https://images.unsplash.com/photo-${comment.imageId}?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80`}
-                                alt=""
-                              />
-                            </div>
-                            <div>
-                              <div className="text-sm">
-                                <a href="#" className="font-medium text-gray-900">
-                                  {comment.name}
-                                </a>
+                    <ul role="list" className="flex flex-wrap space-x-2">
+                      {roomDetail?.rooms.permission_items.map((item) => (
+                        <li key={`${item.type}-${item.user_id}-${item.label}`}>
+                          <div className="flex space-x-2 items-center py-2 px-3 rounded-lg border-2 border-gray-300 border-dashed">
+                            { item.type === 'user' ?
+                              <div className="h-5 w-5 p-1 rounded-full bg-blue-500 text-white flex-shrink-0">
+                                <UserIcon />
                               </div>
-                              <div className="mt-1 text-sm text-gray-700">
-                                <p>{comment.body}</p>
+                              :
+                              <div className="h-5 w-5 p-1 rounded-full bg-yellow-500 text-white flex-shrink-0">
+                                <TagIcon />
                               </div>
-                              <div className="mt-2 space-x-2 text-sm">
-                                <span className="font-medium text-gray-500">{comment.date}</span>{' '}
-                                <span className="font-medium text-gray-500">&middot;</span>{' '}
-                                <button type="button" className="font-medium text-gray-900">
-                                  Reply
-                                </button>
-                              </div>
+                            }
+                            <div className="text-sm">
+                              { item.type === 'user' ? item.username : item.label }
                             </div>
                           </div>
                         </li>
                       ))}
                     </ul>
                   </div>
+                  }
                 </div>
+                {/*
                 <div className="bg-gray-50 px-4 py-6 sm:px-6">
                   <div className="flex space-x-3">
                     <div className="flex-shrink-0">
@@ -446,6 +482,7 @@ export default function RoomDetailPage() {
                     </div>
                   </div>
                 </div>
+              */ }
               </div>
             </section>
           </div>
@@ -457,13 +494,13 @@ export default function RoomDetailPage() {
                   <h2 id="stream-preview-title" className="text-lg font-medium text-gray-900">
                     { localize(lang, 'room_stream_preview') }
                   </h2>
-                  <Button type="link" href="/live/114514" size="small">
+                  <Button type="link" href={`/room/${id}`} size="small">
                     <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-900"/>
                   </Button>
                 </div>
-                <div className="h-48 w-full mt-5 bg-blue-100">
+                <div className="w-full mt-5 bg-blue-100">
+                  <StreamVideoBox streamingStatus={roomDetail ? roomDetail.rooms.status : "idle"} playbackUrl={playbackUrl} minify={true}/>
                 </div>
-                {/* TODO */}
               </div>
             </section>
             <section aria-labelledby="timeline-title">
@@ -478,39 +515,39 @@ export default function RoomDetailPage() {
                     { roomTimeline?.logs.map((item, itemIdx) => {
                       const event = eventTypes[item.type]
                       return (
-                      <li key={item.time}>
-                        <div className="relative pb-8">
-                          {itemIdx !== roomTimeline.logs.length - 1 ? (
-                            <span
-                              className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
-                              aria-hidden="true"
-                            />
-                          ) : null}
-                          <div className="relative flex space-x-3">
-                            <div>
+                        <li key={item.time}>
+                          <div className="relative pb-8">
+                            {itemIdx !== roomTimeline.logs.length - 1 ? (
                               <span
-                                className={classNames(
-                                  event.bgColorClass,
-                                  'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white'
-                                )}
-                              >
-                                <event.icon className="h-5 w-5 text-white" aria-hidden="true" />
-                              </span>
-                            </div>
-                            <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                                aria-hidden="true"
+                              />
+                            ) : null}
+                            <div className="relative flex space-x-3">
                               <div>
-                                <p className="text-sm text-black">
-                                  { localize(lang, event.name) }{' '}
-                                </p>
+                                <span
+                                  className={classNames(
+                                    event.bgColorClass,
+                                    'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white'
+                                  )}
+                                >
+                                  <event.icon className="h-5 w-5 text-white" aria-hidden="true" />
+                                </span>
                               </div>
-                              <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                                <time dateTime={item.time}>{new Date(item.time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time>
+                              <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                <div>
+                                  <p className="text-sm text-black">
+                                    { localize(lang, event.name) }{' '}
+                                  </p>
+                                </div>
+                                <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                                  <time dateTime={item.time}>{new Date(item.time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </li>
-                    )})}
+                        </li>
+                      )})}
                   </ul>
                 </div>
               </div>

@@ -81,7 +81,7 @@ func handleRoomDeletion(c *gin.Context) {
 		return
 	}
 
-	cerr := service.DeleteRoom(uint(id))
+	cerr := service.DeleteRoom(uint(id), 0)
 	if cerr != nil {
 		if rerr, ok := cerr.(errors.RequestError); ok {
 			c.Abort()

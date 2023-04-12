@@ -1,4 +1,6 @@
+import { localize } from "@/i18n/i18n"
 import { Inter } from "next/font/google"
+import { useRouter } from "next/router"
 import { LanguageSwitcher } from "../LanguageSwticher/LanguageSwitcher"
 
 const inter = Inter({
@@ -51,13 +53,13 @@ interface FooterProps {
 }
 
 export function Footer({ padding = true, background = true }: FooterProps) {
+    const lang = useRouter().locale!
     return (
         <div className="w-full bg-white text-slate-500">
             <div className={`p-5 md:p-10 mx-auto ${padding ? "max-w-7xl sm:px-4 lg:px-8" : "px-8" } w-full h-full bg-white flex flex-col-reverse items-center space-y-2 space-y-reverse md:flex-row md:justify-between md:space-y-0`}>
-                <div className={`text-xs select-none ${inter.className}`}>
-                    <span>{"© "}</span>
-                    <span> { new Date().getFullYear() } </span>
-                    <span>sheey. All rights reserved.</span>
+                <div className={`text-xs select-none mt-2 md:mt-0 ${inter.className}`}>
+                    <span className="text-center block font-bold md:text-left">{"© "} { new Date().getFullYear() } sheey. All rights reserved.</span>
+                    <span className="text-center block md:text-left">{ localize(lang, "free_software_note") }</span>
                 </div>
                 <div className="flex flex-col-reverse items-center space-y-2 space-y-reverse sm:flex-row sm:space-x-4 sm:space-y-0">
                     <LanguageSwitcher outline={false} position="top" background={background} />

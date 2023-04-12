@@ -14,7 +14,8 @@ export function localize(lang: string, key: string): string {
     return "UNKNOWN_I18N_KEY"
 }
 
-export function localizeError(lang: string, code: number): string {
+export function localizeError(lang: string, code: number | null | undefined): string {
+    if(!code) code = 1
     let codeStr = code.toString()
     switch(lang) {
         case 'zh':

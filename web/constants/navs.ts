@@ -7,4 +7,8 @@ export const dashboardNavs = [
     i18n_key: "rooms_page",
     href: "/dashboard/rooms",
   },
+  {
+    i18n_key: "users_page",
+    href: "/dashboard/users",
+  },
 ]
