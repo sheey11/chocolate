@@ -124,6 +124,9 @@
   "create": "Create",
   "add_label_input_placeholder": "Add labels...",
   "add_label_btn": "Append",
+  "create_user_success": "Created",
+
+  "password_format_hint": "Password should be 8-64 chars long, and only contains numbers, letters and symbols.",
 
   "free_software_note": "Note: This is a free software, source code is published under GPLv3.",
   "errors": {

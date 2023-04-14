@@ -362,3 +362,14 @@ export interface AdminAccountDetail {
 export interface AdminAccountDetailResponse extends ChocolcateResponse {
     user_info: AdminAccountDetail
 }
+
+export interface UserCreationInfo {
+    username: string,
+    password: string,
+    role: string,
+    labels: string[],
+}
+
+export interface CreateUserResponse extends ChocolcateResponse {
+    // empty
+}

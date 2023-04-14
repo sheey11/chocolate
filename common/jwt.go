@@ -3,6 +3,7 @@ package common
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/x509"
 	"io/ioutil"
 	"os"
@@ -191,4 +192,20 @@ func DecryptJwt(jwtStr string) (JwtPayload, error) {
 	}
 
 	return payload, nil
+}
+
+func SignBytes(payload []byte) []byte {
+	if privKey == nil {
+		pubKey, privKey = readJwtKey()
+	}
+
+	checksum := sha256.Sum256(payload)
+	return ed25519.Sign(*privKey, checksum[:])
+}
+
+func VerifyBytes(payload []byte, sig []byte) bool {
+	if privKey == nil {
+		pubKey, privKey = readJwtKey()
+	}
+	return ed25519.Verify(*pubKey, payload, sig)
 }

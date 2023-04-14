@@ -38,6 +38,7 @@ const (
 	RequestUserNotHaveLabel
 	RequestRoomBanned
 	RequestRoomNotPublishingStream
+	RequestTimeRangeTooLong
 )
 
 const (
@@ -60,6 +61,7 @@ const (
 	DatabaseCreateChatMessageError
 	DatabaseCreateLabelError
 	DatabaseCreateUserLabelError
+	DatabaseCreateEventError
 
 	DatabaseCountAdminAccountError
 	DatabaseCountPermissionItemError
@@ -74,6 +76,7 @@ const (
 
 	DatabaseListRoomsError
 	DatabaseListAccountsError
+	DatabaseListEventsError
 
 	DatabaseDeleteUserError
 	DatabaseDeleteRoomError

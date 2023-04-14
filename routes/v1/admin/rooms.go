@@ -21,6 +21,7 @@ func mountRoomRoutes(r *gin.RouterGroup) {
 	g := r.Group("room")
 	g.GET("/", handleListRooms)
 	g.GET("/:id", handleRoomInfoRetrival)
+	g.GET("/:id/history", handleRoomHistoryRetrival)
 	g.PATCH("/:id/:action", handleRoomActions)
 	g.DELETE("/:id", handleRoomDeletion)
 	g.GET("/:id/timeline", handleRoomTimelineRetrival)
@@ -227,6 +228,54 @@ func handleRoomInfoRetrival(c *gin.Context) {
 			LastStreaming: room.LastStreamingAt,
 			Stream:        stream,
 		},
+	})
+}
+
+func handleRoomHistoryRetrival(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id < 0 {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestInvalidParameter, "invalid id"))
+		return
+	}
+
+	start := c.Query("start")
+	end := c.Query("end")
+	startTs, err := strconv.Atoi(start)
+	if err != nil {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestInvalidRoomID, "invalid start time"))
+		return
+	}
+	endTs, err := strconv.Atoi(end)
+	if err != nil {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestInvalidRoomID, "invalid end time"))
+		return
+	}
+
+	startTime := time.Unix(int64(startTs), 0)
+	endTime := time.Unix(int64(endTs), 0)
+
+	stats, cerr := service.GetRoomAudience(uint(id), startTime, endTime)
+	if cerr != nil {
+		if rerr, ok := cerr.(cerrors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			logrus.WithError(cerr).Error("error when handling room history")
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, common.Response{
+		"code":    0,
+		"message": "ok",
+		"history": stats,
 	})
 }
 

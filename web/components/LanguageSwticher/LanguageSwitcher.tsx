@@ -69,7 +69,7 @@ export const LanguageSwitcher = ({ outline = true, position = "bottom", backgrou
                                 >
                                     {({ selected }) => (
                                         <>
-                                            <div className={`block truncate ml-2 ${ selected ? 'font-medium' : 'font-normal' }`}>
+                                            <div className={`text-left block truncate ml-2 ${ selected ? 'font-medium' : 'font-normal' }`}>
                                                 <span className={notoEmoji.className + " mr-2"}>
                                                     { languages[localeName!].icon }
                                                 </span>

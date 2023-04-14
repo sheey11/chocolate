@@ -17,8 +17,9 @@ func mountAuthRoutes(r *gin.RouterGroup) {
 
 func handlePasswordAuthenticate(c *gin.Context) {
 	data := struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		RememberMe bool   `json:"remember_me,omitempty"`
 	}{}
 	err := c.Bind(&data)
 	if err != nil {
@@ -54,5 +55,7 @@ func handlePasswordAuthenticate(c *gin.Context) {
 		"username": user.Username,
 		"role":     strings.ToLower(user.Role.Name),
 	}
+
+	c.SetCookie("session", session.GetSessionCookieValue(), 14*24*60*60, "/api", "", false, true)
 	c.JSON(http.StatusOK, response)
 }

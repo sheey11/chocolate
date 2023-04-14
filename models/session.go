@@ -1,8 +1,11 @@
 package models
 
 import (
+	"encoding/base64"
+	"fmt"
 	"time"
 
+	"github.com/sheey11/chocolate/common"
 	"github.com/sheey11/chocolate/errors"
 	"gorm.io/gorm"
 )
@@ -16,13 +19,23 @@ type Session struct {
 	ValidUntil time.Time `gorm:"not null;"`
 }
 
+func (s *Session) Sign() string {
+	rawString := fmt.Sprintf("s=%d,uid=%d,valid=%d", s.ID, s.UserID, s.ValidUntil.UnixMicro())
+	return base64.StdEncoding.EncodeToString(common.SignBytes([]byte(rawString)))
+}
+
+func (s *Session) GetSessionCookieValue() string {
+	return fmt.Sprintf("%d,%s", s.ID, s.Sign())
+}
+
 func GenerateSessionForUser(u *User, ip string, ua string) (*Session, errors.ChocolateError) {
+	validUntil := time.Now().Add(time.Hour * 24 * 14)
 	s := Session{
 		User:       *u,
 		UserID:     u.ID,
 		IP:         ip,
 		UA:         ua,
-		ValidUntil: time.Now().Add(time.Hour * 24 * 14),
+		ValidUntil: validUntil,
 	}
 	tx := db.Save(&s)
 	if tx.Error != nil {

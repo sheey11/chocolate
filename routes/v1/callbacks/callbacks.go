@@ -3,10 +3,12 @@ package callbacks
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sheey11/chocolate/chat"
+	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/middleware"
 	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
@@ -182,9 +184,22 @@ func handlePlay(c *gin.Context) {
 	if cerr != nil {
 		logrus.WithError(cerr).Error("failed to decrease room viewer")
 	}
-	service.RecordPlayEvent(uint(roomId), MarshalJSON(data))
 
 	respondeOk(c)
+	if data.Params != "" {
+		queries, err := url.ParseQuery(data.Params[1:])
+		if err != nil {
+			logrus.WithError(err).Error("failed to parse flv playback params, stacktrace:\n%s", cerrors.GetStackTrace())
+			return
+		}
+
+		uid, err := strconv.Atoi(queries.Get("u"))
+		if err != nil || uid <= 0 {
+			return
+		}
+
+		go service.RecordPlayEvent(uint(uid), uint(roomId), data.ClientID)
+	}
 }
 func handleStop(c *gin.Context) {
 	data := struct {
@@ -195,6 +210,7 @@ func handleStop(c *gin.Context) {
 		VHost    string `json:"vhost"`
 		App      string `json:"app"`
 		Stream   string `json:"stream"`
+		Params   string `json:"param,optional"`
 	}{}
 	err := c.Bind(&data)
 	if err != nil {
@@ -215,7 +231,21 @@ func handleStop(c *gin.Context) {
 	if cerr != nil {
 		logrus.WithError(cerr).Error("failed to increase room viewer")
 	}
-	service.RecordStopEvent(uint(roomId), MarshalJSON(data))
+	// TODO
 
 	respondeOk(c)
+	if data.Params != "" {
+		queries, err := url.ParseQuery(data.Params[1:])
+		if err != nil {
+			logrus.WithError(err).Error("failed to parse flv playback params, stacktrace:\n%s", cerrors.GetStackTrace())
+			return
+		}
+
+		uid, err := strconv.Atoi(queries.Get("u"))
+		if err != nil || uid <= 0 {
+			return
+		}
+
+		go service.RecordStopPlayEvent(uint(uid), uint(roomId), data.ClientID)
+	}
 }

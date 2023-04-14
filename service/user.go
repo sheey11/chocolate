@@ -398,3 +398,36 @@ func GetUserByID(uid uint) *models.User {
 func GetCurrentUserNum() uint {
 	return models.GetUsersNum()
 }
+
+func VerifySessionCookie(payload string) (*models.Session, bool) {
+	values := strings.Split(payload, ",")
+	if len(values) != 2 {
+		return nil, false
+	}
+
+	id, err := strconv.Atoi(values[0])
+	if err != nil || id <= 0 {
+		return nil, false
+	}
+
+	session := models.GetSessionByID(uint(id))
+	if session.Sign() == values[1] {
+		return session, true
+	} else {
+		return nil, false
+	}
+}
+
+func GetUserFromCookie(c *gin.Context) *models.User {
+	payload, err := c.Cookie("session")
+	if err != nil {
+		return nil
+	}
+
+	session, ok := VerifySessionCookie(payload)
+	if ok {
+		return models.GetUserByID(session.UserID)
+	} else {
+		return nil
+	}
+}

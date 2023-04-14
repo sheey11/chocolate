@@ -128,6 +128,9 @@
   "create": "创建",
   "add_label_input_placeholder": "添加标签...",
   "add_label_btn": "添加",
+  "create_user_success": "已创建",
+
+  "password_format_hint": "密码长度为 8-64，且只能包含数字、字母和符号",
 
   "free_software_note": "注意: 本软件是免费软件，并在 GPLv3 许可证下开放源代码",
   "errors": {

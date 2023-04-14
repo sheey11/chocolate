@@ -17,23 +17,9 @@ func RecordPublishEvent(roomId uint, detail string) {
 }
 
 func RecordUnpublishEvent(roomid uint, detail string) {
-	err := models.RecordEvent(models.LogTypeUnpublish, roomid)
+	err := models.RecordLog(models.LogTypeUnpublish, roomid)
 	if err != nil {
 		logrus.WithError(err).Errorf("error when create unpublish event record, roomid %v", roomid)
-	}
-}
-
-func RecordPlayEvent(userid uint, detail string) {
-	err := models.RecordEvent(models.LogTypePlay, userid)
-	if err != nil {
-		logrus.WithError(err).Errorf("error when create play event record, userid %v", userid)
-	}
-}
-
-func RecordStopEvent(userid uint, detail string) {
-	err := models.RecordEventWithDetail(models.LogTypeStop, userid, detail)
-	if err != nil {
-		logrus.WithError(err).Errorf("error when create stop event record, userid %v", userid)
 	}
 }
 
@@ -59,8 +45,6 @@ func CountLogs(allowedTypes []models.LogType, before *time.Time, after *time.Tim
 		allowedTypes = []models.LogType{
 			models.LogTypePublish,
 			models.LogTypeUnpublish,
-			models.LogTypePlay,
-			models.LogTypeStop,
 		}
 	}
 	return models.CountLogs(allowedTypes, before, after)
@@ -78,8 +62,6 @@ func RetriveLogs(allowedTypes []models.LogType, limit int, before *time.Time, af
 		allowedTypes = []models.LogType{
 			models.LogTypePublish,
 			models.LogTypeUnpublish,
-			models.LogTypePlay,
-			models.LogTypeStop,
 		}
 	}
 	if limit == 0 {

@@ -384,7 +384,7 @@ func ModifyUserMaxRoom(username string, maxRooms uint) cerrors.ChocolateError {
 
 // including labesl
 func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint, page uint) (uint, []*User, cerrors.ChocolateError) {
-	statement := db.Model(&User{}).Preload("Labels").Limit(int(limit)).Offset(int((page - 1) * limit))
+	statement := db.Model(&User{}).Limit(int(limit)).Offset(int((page - 1) * limit))
 	if filterRole != nil {
 		statement = statement.Where("role_name = ?", filterRole.Name)
 	}
@@ -394,7 +394,7 @@ func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint,
 	if filterId != nil {
 		statement = db.Raw(
 			"? UNION ?",
-			db.Model(&User{}).Preload("Labels").Where("id = ?", *filterId),
+			db.Model(&User{}).Where("id = ?", *filterId),
 			statement,
 		)
 	}
@@ -417,7 +417,7 @@ func ListUsers(filterRole *Role, filterId *uint, filterName *string, limit uint,
 	}
 
 	var result []*User
-	c = statement.Find(&result)
+	c = statement.Preload("Labels").Find(&result)
 	if c.Error != nil {
 		return 0, nil, cerrors.DatabaseError{
 			ID:         cerrors.DatabaseListAccountsError,

@@ -25,7 +25,7 @@ import { classNames } from "@/utils/classnames";
 import { JetBrains_Mono } from "next/font/google";
 import Pagination from "@/components/Pagination/Pagination";
 import debounce from "@/utils/debounce";
-import { fetchAccounts, fetchRoles } from "@/api/v1/admin/account";
+import { createNewUsers, fetchAccounts, fetchRoles } from "@/api/v1/admin/account";
 import Dialog from "@/components/Dialog/Dialog";
 
 const presetRoles = [
@@ -57,10 +57,12 @@ export default function RoomIndex() {
 
   const newUserFormUsernameRef   = useRef<HTMLInputElement>(null)
   const newUserFormPasswordRef   = useRef<HTMLInputElement>(null)
-  const newUserFormRoleInputRef  = useRef<HTMLInputElement>(null)
   const newUserFormLabelInputRef = useRef<HTMLInputElement>(null)
   const [newUserFormRole,     setNewUserFormRole    ] = useState<string>("user")
   const [newUserFormLabels,   setNewUserFormLabels  ] = useState<string[]>([])
+
+  const [newUserFormLoading,   setNewUserFormLoading  ] = useState<boolean>(false)
+  const [newUserFormErrorCode, setNewUserFormErrorCode] = useState<number| null>(null)
 
   const searchRef = useRef<HTMLInputElement | null>(null)
 
@@ -112,6 +114,26 @@ export default function RoomIndex() {
 
   const handleNewUserFormSubmit = (e: FormEvent) => {
     e.preventDefault()
+    const payload = {
+      username: newUserFormUsernameRef.current!.value,
+      password: newUserFormPasswordRef.current!.value,
+      role: newUserFormRole,
+      labels: newUserFormLabels
+    }
+    setNewUserFormLoading(true)
+
+    createNewUsers([payload]) 
+      .then((data) => {
+        setNewUserFormErrorCode(data.code)
+        newUserFormLabelInputRef.current!.value = ''
+        newUserFormPasswordRef.current!.value = ''
+      })
+      .catch(e => {
+        setNewUserFormErrorCode(e.response?.data!.code)
+      })
+      .finally(() => {
+        setNewUserFormLoading(false)
+      })
   };
 
   if(!authenticated || getUser()?.role != "administrator") {
@@ -228,6 +250,7 @@ export default function RoomIndex() {
                     <section className="space-y-1">
                       <label htmlFor="username-input" className="block text-sm font-medium text-gray-700"> { localize(lang, "username") } </label>
                       <input
+                        required
                         ref={newUserFormUsernameRef}
                         type="text"
                         autoComplete="username"
@@ -240,10 +263,15 @@ export default function RoomIndex() {
                         { localize(lang, "password") }
                       </label>
                       <input
+                        required
                         ref={newUserFormPasswordRef}
                         autoComplete="new-password"
                         id="password-input"
                         type="password"
+                        minLength={8}
+                        maxLength={64}
+                        pattern={`[0-9a-zA-Z_-~!@#$%^&*()_+=\`\\[\\]{}\|;:'",.<>\/\\?]{8,64}`}
+                        title={localize(lang, "password_format_hint")}
                         className="block w-full appearance-none rounded border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:ring focus:ring-blue-500 sm:text-sm transition ease duration-200"
                       />
                     </section>
@@ -262,18 +290,27 @@ export default function RoomIndex() {
                             </span>
                             <ChevronUpDownIcon className="h-4 w-4 text-gray-500"/>
                           </Listbox.Button>
-                          <Listbox.Options className="absolute top-10 overflow-y-scroll rounded bg-white border border-gray-200 shadow-md w-full z-10 divide-y">
-                            { roles?.map((role) => (
-                              <Listbox.Option key={role.name} value={role.name} as="button" className="px-3 py-2 block w-full text-left text-sm">
-                                <span className="code">{ role.name }</span>
-                                { localize(lang, `user_filter_role_${role.name}`) ?
-                                  <span className="ml-2 px-2 text-xs bg-gray-100">{ localize(lang, `user_filter_role_${role.name}`) }</span>
-                                  :
-                                  <></>
-                                }
-                              </Listbox.Option>
-                            ))}
-                          </Listbox.Options>
+                          <Transition
+                            enter="transition duration-100 ease-out"
+                            enterFrom="transform scale-95 opacity-0"
+                            enterTo="transform scale-100 opacity-100"
+                            leave="transition duration-75 ease-out"
+                            leaveFrom="transform scale-100 opacity-100"
+                            leaveTo="transform scale-95 opacity-0"
+                          >
+                            <Listbox.Options className="absolute top-1 overflow-y-scroll rounded bg-white border border-gray-200 shadow-md w-full z-10 divide-y">
+                              { roles?.map((role) => (
+                                <Listbox.Option key={role.name} value={role.name} as="button" type="button" className="px-3 py-2 block w-full text-left text-sm">
+                                  <span className="code">{ role.name }</span>
+                                  { localize(lang, `user_filter_role_${role.name}`) ?
+                                    <span className="ml-2 px-2 text-xs bg-gray-100">{ localize(lang, `user_filter_role_${role.name}`) }</span>
+                                    :
+                                    <></>
+                                  }
+                                </Listbox.Option>
+                              ))}
+                            </Listbox.Options>
+                          </Transition>
                         </div>
                       </Listbox>
                     </section>
@@ -283,7 +320,7 @@ export default function RoomIndex() {
                         { newUserFormLabels.map((label) => 
                           <span key={label} className="pl-2 pr-1 bg-blue-500 text-sm text-white">
                             { label }
-                            <button onClick={() => handleNewUserFormLabelDelete(label)}>
+                            <button type="button" onClick={() => handleNewUserFormLabelDelete(label)}>
                               <XMarkIcon className="h-3 w-3 mx-1" />
                             </button>
                           </span>
@@ -307,6 +344,7 @@ export default function RoomIndex() {
                           )}
                         />
                         <button
+                          type="button"
                           className={classNames(
                           "rounded bg-white border border-gray-200 pl-3 pr-4 py-1 mx-2 shadow-sm text-sm flex items-center space-x-2",
                           "focus:outline-none focus:ring focus:ring-blue-500 transition duration-200",
@@ -320,9 +358,32 @@ export default function RoomIndex() {
                       </div>
                     </section>
                   </div>
-                  <section className="flex flex-row items-center justify-end space-x-4 p-4 bg-gray-100">
-                    <Button type="secondary" onClick={() => setNewUserDialogOpen(false)}>{ localize(lang, "cancel") }</Button>
-                    <Button type="primary" submit>{ localize(lang, "create") }</Button>
+                  <section className="flex flex-row items-center justify-between p-4 bg-gray-100">
+                    <span className={classNames(
+                      newUserFormErrorCode !== 0 ? 'text-red-500' : 'text-green-600',
+                      'text-sm font-medium'
+                    )}>
+                      { /* newUserFormError === null represents there's no message */ }
+                      { newUserFormErrorCode === 0 ?
+                        localize(lang, "create_user_success")
+                        : 
+                        newUserFormErrorCode !== null ? localizeError(lang, newUserFormErrorCode) : ""
+                      }
+                    </span>
+                    <div className="flex items-center space-x-4">
+                      <Button type="secondary" onClick={() => setNewUserDialogOpen(false)}>{ localize(lang, "cancel") }</Button>
+                      <Button type="primary" submit disabled={newUserFormLoading}>
+                        { newUserFormLoading ?
+                          <svg className="animate-spin inline-block mx-2 -mt-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          :
+                          <></>
+                        }
+                        <span>{ localize(lang, "create") }</span>
+                      </Button>
+                    </div>
                   </section>
                 </form>
               </Dialog>

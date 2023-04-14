@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"github.com/sheey11/chocolate/common"
 	"github.com/sheey11/chocolate/errors"
 	"github.com/sheey11/chocolate/models"
@@ -129,6 +130,14 @@ func handleFlvPlayback(c *gin.Context) {
 		return
 	}
 
+	user := service.GetUserFromCookie(c)
+	allowed := service.IsUserAllowedForRoom(room, user)
+	if !allowed {
+		c.Abort()
+		c.JSON(http.StatusForbidden, common.SampleResponse(errors.RequestRoomBanned, "you have been banned from watching this stream or login required"))
+		return
+	}
+
 	func() {
 		defer func() {
 			// the most common error is that client closes the connection,
@@ -152,6 +161,9 @@ func handleFlvPlayback(c *gin.Context) {
 			r.URL.Scheme = remote.Scheme
 			r.URL.Host = remote.Host
 			r.URL.Path = fmt.Sprintf("/live/%d.flv", id)
+
+			uid := lo.If(user == nil, 0).ElseF(func() int { return int(user.ID) })
+			r.URL.RawQuery = fmt.Sprintf("u=%d", uid)
 		}
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			logrus.WithError(err).Error("error reverse proxying flv")

@@ -17,8 +17,6 @@ type LogType uint8
 const (
 	LogTypePublish LogType = iota
 	LogTypeUnpublish
-	LogTypePlay
-	LogTypeStop
 	LogTypeCutOff
 )
 
@@ -30,7 +28,7 @@ type Log struct {
 	Detail     string    `json:"detail"`
 }
 
-func RecordEvent[T uint | string](t LogType, subjectId T) cerrors.ChocolateError {
+func RecordLog[T uint | string](t LogType, subjectId T) cerrors.ChocolateError {
 	log := Log{
 		Type:    t,
 		Subject: fmt.Sprintf("%v", subjectId),
