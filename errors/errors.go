@@ -78,6 +78,7 @@ const (
 	DatabaseListAccountsError
 	DatabaseListUserWatchingHistoryError
 	DatabaseListChatMessageError
+	DatabaseListOverlappedUserWatchingHistoryError
 
 	DatabaseDeleteUserError
 	DatabaseDeleteRoomError

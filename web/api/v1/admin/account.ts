@@ -22,3 +22,7 @@ export function fetchAccountDetail(username: string): Promise<AdminAccountDetail
 export function createNewUsers(users: UserCreationInfo[]): Promise<CreateUserResponse> {
     return POST<UserCreationInfo[], CreateUserResponse>(`/api/v1/admin/account/`, users)
 }
+
+export function fetchAccountHistory(username: string): Promise<AccountHistoryResponse> {
+    
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/samber/lo"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type UserWatchingSession struct {
@@ -68,6 +69,85 @@ func UpdateEventEndTime(uid uint, roomid uint, session string) cerrors.Chocolate
 			},
 		}
 	}
+
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	var current = UserWatchingSession{}
+	c = tx.
+		Where("user_id = ?", uid).
+		Where("room_id = ?", roomid).
+		Where("session = ?", session).
+		First(&current)
+
+	if c.Error != nil {
+		logrus.WithError(c.Error).Error("error on getting current UWA")
+		return nil
+	}
+
+	type tmp struct {
+		Start *time.Time
+		End   *time.Time
+	}
+	overlaps := tmp{}
+	c = tx.
+		Model(&UserWatchingSession{}).
+		Select("MIN(start_time) as start, MAX(end_time) as end").
+		Where("user_id = ?", uid).
+		Where("room_id = ?", roomid).
+		Where("end_time IS NOT null").
+		Where("? OR ?",
+			gorm.Expr("end_time >= ? AND end_time <= ?", current.StartTime, current.EndTime),
+			gorm.Expr("start_time >= ? AND start_time <= ?", current.StartTime, current.EndTime),
+		).
+		Find(&overlaps)
+
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseListOverlappedUserWatchingHistoryError,
+			Message:    "error on merge user watching history",
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+			InnerError: c.Error,
+			Context: map[string]interface{}{
+				"user_id": uid,
+				"room_id": roomid,
+				"session": session,
+			},
+		}
+	} else if overlaps.Start == nil || overlaps.End == nil {
+		return nil
+	}
+
+	c = tx.
+		Model(&UserWatchingSession{}).
+		Where("user_id = ?", uid).
+		Where("room_id = ?", roomid).
+		Where("session = ?", session).
+		Updates(map[string]interface{}{
+			"start_time": overlaps.Start,
+			"end_time":   overlaps.End,
+		})
+	if c.Error != nil {
+		logrus.WithError(c.Error).Error("error updating UWS start and end time")
+		return nil
+	}
+
+	c = tx.
+		Where("user_id = ?", uid).
+		Where("room_id = ?", roomid).
+		Where("session <> ?", session).
+		Delete(&UserWatchingSession{}, "? OR ?",
+			gorm.Expr("end_time >= ? AND end_time <= ?", current.StartTime, current.EndTime),
+			gorm.Expr("start_time >= ? AND start_time <= ?", current.StartTime, current.EndTime),
+		)
+
+	if c.Error != nil {
+		logrus.WithError(c.Error).Error("error deleteing overlapped UWS")
+		return nil
+	}
+
+	tx.Commit()
 	return nil
 }
 
@@ -100,12 +180,12 @@ func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([
 	c := db.
 		Table("user_watching_sessions").
 		Select(`user_watching_sessions.start_time as start_time,
-				user_watching_sessions.end_time   as end_time,
-                user_watching_sessions.room_id    as room_id,
-				rooms.title                       as room_title,
-				users.id                          as room_owner_id,
-				users.username                    as room_owner_username,
-				user_watching_sessions.session    as session`).
+user_watching_sessions.end_time   as end_time,
+user_watching_sessions.room_id    as room_id,
+rooms.title                       as room_title,
+users.id                          as room_owner_id,
+users.username                    as room_owner_username,
+user_watching_sessions.session    as session`).
 		Joins("JOIN rooms ON user_watching_sessions.room_id = rooms.id").
 		Joins("JOIN users ON rooms.owner_id = users.id").
 		Where("user_id = ?", uid).
@@ -126,7 +206,7 @@ func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([
 		var chats []*ChatMessage
 		c = db.Model(&ChatMessage{}).
 			Where("room_id = ? AND sender_id = ?", report.RoomID, uid).
-			Where("created_at BETWEEN ? AND ?", startTime, endTime).
+			Where("created_at BETWEEN ? AND ?", report.StartTime, report.EndTime).
 			Find(&chats)
 
 		if c.Error != nil {
@@ -189,10 +269,10 @@ func GetRoomAudienceHistory(rid uint, startTime time.Time, endTime time.Time) ([
 	c := db.
 		Table("user_watching_sessions").
 		Select(`user_watching_sessions.start_time as enter_time,
-				user_watching_sessions.end_time   as leave_time,
-				user_watching_sessions.user_id    as user_id,
-				users.username                    as username,
-				user_watching_sessions.session    as session`).
+user_watching_sessions.end_time   as leave_time,
+user_watching_sessions.user_id    as user_id,
+users.username                    as username,
+user_watching_sessions.session    as session`).
 		Joins("JOIN users ON user_watching_sessions.user_id = users.id").
 		Where("room_id = ?", rid).
 		Where("user_watching_sessions.start_time BETWEEN ? AND ?", startTime, endTime).
@@ -213,7 +293,7 @@ func GetRoomAudienceHistory(rid uint, startTime time.Time, endTime time.Time) ([
 		c = db.
 			Model(&ChatMessage{}).
 			Where("room_id = ? AND sender_id = ?", rid, report.UserID).
-			Where("created_at BETWEEN ? AND ?", endTime, startTime).
+			Where("created_at BETWEEN ? AND ?", report.EnterTime, report.LeaveTime).
 			Find(&chats)
 
 		if c.Error != nil {

@@ -373,3 +373,11 @@ export interface UserCreationInfo {
 export interface CreateUserResponse extends ChocolcateResponse {
     // empty
 }
+
+export interface AccountWatchingReport {
+    room_id: number
+    room_title: 
+}
+export interface AccountHistoryResponse extends ChocolcateResponse {
+    
+}
