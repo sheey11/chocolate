@@ -1,5 +1,5 @@
 import { GET, PATCH, POST, DELETE } from "@/api/v1/api"
-import { AdminRoomDetailResponse, ChocolcateResponse, ListRoomAdminResponse, RoomTimelineResponse } from "../datatypes"
+import { AdminRoomDetailResponse, ChocolcateResponse, ListRoomAdminResponse, RoomHistoryQuery, RoomHistoryResponse, RoomTimelineResponse } from "../datatypes"
 
 export interface FetchRoomOptions {
     search?: string,
@@ -35,4 +35,8 @@ export function cutoffRoomStream(id: string): Promise<ChocolcateResponse> {
 
 export function deleteRoom(id: string): Promise<ChocolcateResponse> {
     return DELETE<ChocolcateResponse>(`/api/v1/admin/room/${id}`)
+}
+
+export function fetchRoomHistory(username: string, query: RoomHistoryQuery): Promise<RoomHistoryResponse> {
+    return GET<RoomHistoryResponse>(`/api/v1/admin/account/${username}/history`, query)
 }

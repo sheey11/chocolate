@@ -132,6 +132,11 @@
 
   "password_format_hint": "密码长度为 8-64，且只能包含数字、字母和符号",
 
+  "the_account": "账号",
+  "delete_account": "删除",
+  "account-info": "账号信息",
+  "account_rooms_title": "房间",
+
   "free_software_note": "注意: 本软件是免费软件，并在 GPLv3 许可证下开放源代码",
   "errors": {
     "1":  "服务器处理请求时出现错误",

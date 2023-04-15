@@ -105,7 +105,7 @@ func GetUserByName(username string, tx *gorm.DB) (*User, cerrors.ChocolateError)
 	}
 
 	user := User{}
-	c := tx.Joins("Role").Preload("Rooms").First(&user, "Username = ?", username)
+	c := tx.Joins("Role").Preload("Labels").Preload("Rooms").First(&user, "Username = ?", username)
 	if c.Error != nil {
 		if errors.Is(c.Error, gorm.ErrRecordNotFound) {
 			return nil, cerrors.RequestError{

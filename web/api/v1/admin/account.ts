@@ -1,5 +1,5 @@
 import { GET, POST } from "../api"
-import { AdminAccountDetail, AdminAccountDetailResponse, AdminListAccountsResponse, CreateUserResponse, ListRoleResponse, UserCreationInfo } from "../datatypes"
+import { AccountHistoryQuery, AccountHistoryResponse, AdminAccountDetail, AdminAccountDetailResponse, AdminListAccountsResponse, CreateUserResponse, ListRoleResponse, UserCreationInfo } from "../datatypes"
 
 interface fetchAccountOptions {
     role?: string
@@ -23,6 +23,6 @@ export function createNewUsers(users: UserCreationInfo[]): Promise<CreateUserRes
     return POST<UserCreationInfo[], CreateUserResponse>(`/api/v1/admin/account/`, users)
 }
 
-export function fetchAccountHistory(username: string): Promise<AccountHistoryResponse> {
-    
+export function fetchAccountHistory(username: string, query: AccountHistoryQuery): Promise<AccountHistoryResponse> {
+    return GET<AccountHistoryResponse>(`/api/v1/admin/account/${username}/history`, query)
 }

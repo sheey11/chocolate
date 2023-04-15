@@ -330,7 +330,7 @@ export interface ListRoleResponse extends ChocolcateResponse {
     roles: Role[]
 }
 
-export interface AdminAccountInfo {
+export interface AdminAccountListingInfo {
     id: number
     role: string
     labels: string[]
@@ -341,10 +341,11 @@ export interface AdminAccountInfo {
 
 export interface AdminListAccountsResponse extends ChocolcateResponse {
     total: number
-    users: AdminAccountInfo[]
+    users: AdminAccountListingInfo[]
 }
 
 export interface AdminAccountDetail {
+    id: number
     role: string
     username: string
     labels: string[]
@@ -374,10 +375,44 @@ export interface CreateUserResponse extends ChocolcateResponse {
     // empty
 }
 
-export interface AccountWatchingReport {
-    room_id: number
-    room_title: 
+export interface ChatHistory {
+    time: string
+    type: "chat" | "admin" | "entering_room" | "gift" | "superchat"
+    content: string
 }
+
+export interface AccountWatchingHistory {
+    room_id: number
+    room_title: string
+    room_owner_id: number
+    room_owner_username: string
+    start_time: string
+    end_time: string
+    chats: ChatHistory[]
+}
+
 export interface AccountHistoryResponse extends ChocolcateResponse {
-    
+    history: AccountWatchingHistory[]
+}
+
+export interface AccountHistoryQuery {
+    start: number
+    end: number
+}
+
+export interface RoomAudienceHistory {
+    uid: number
+    username: string
+    enter_time: string
+    leave_time: string
+    chats: ChatHistory[]
+}
+
+export interface RoomHistoryResponse extends ChocolcateResponse {
+    history: RoomAudienceHistory[]
+}
+
+export interface RoomHistoryQuery {
+    start: number
+    end: number
 }

@@ -269,7 +269,7 @@ export default function RoomDetailPage() {
                     <div className="sm:col-span-1">
                       <dt className="text-sm font-medium text-gray-500">{ localize(lang, "room_owner") }</dt>
                       <dd className="mt-1 text-sm text-gray-900 hover:text-gray-600 transition duration-100">
-                        <Link target="_blank" href={`/dashboard/users/${roomDetail?.rooms.owner_id}`}>
+                        <Link target="_blank" href={`/dashboard/users/${roomDetail?.rooms.owner_username}`}>
                           { roomDetail?.rooms.owner_username }
                           <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4"/>
                         </Link>

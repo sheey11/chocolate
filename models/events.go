@@ -180,12 +180,12 @@ func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([
 	c := db.
 		Table("user_watching_sessions").
 		Select(`user_watching_sessions.start_time as start_time,
-user_watching_sessions.end_time   as end_time,
-user_watching_sessions.room_id    as room_id,
-rooms.title                       as room_title,
-users.id                          as room_owner_id,
-users.username                    as room_owner_username,
-user_watching_sessions.session    as session`).
+				user_watching_sessions.end_time   as end_time,
+				user_watching_sessions.room_id    as room_id,
+				rooms.title                       as room_title,
+				users.id                          as room_owner_id,
+				users.username                    as room_owner_username,
+				user_watching_sessions.session    as session`).
 		Joins("JOIN rooms ON user_watching_sessions.room_id = rooms.id").
 		Joins("JOIN users ON rooms.owner_id = users.id").
 		Where("user_id = ?", uid).
@@ -203,10 +203,12 @@ user_watching_sessions.session    as session`).
 	}
 
 	for _, report := range reports {
+		chatEndTime := lo.If(report.EndTime == nil, endTime).Else(*report.EndTime)
+
 		var chats []*ChatMessage
 		c = db.Model(&ChatMessage{}).
 			Where("room_id = ? AND sender_id = ?", report.RoomID, uid).
-			Where("created_at BETWEEN ? AND ?", report.StartTime, report.EndTime).
+			Where("created_at BETWEEN ? AND ?", report.StartTime, chatEndTime).
 			Find(&chats)
 
 		if c.Error != nil {
@@ -269,10 +271,10 @@ func GetRoomAudienceHistory(rid uint, startTime time.Time, endTime time.Time) ([
 	c := db.
 		Table("user_watching_sessions").
 		Select(`user_watching_sessions.start_time as enter_time,
-user_watching_sessions.end_time   as leave_time,
-user_watching_sessions.user_id    as user_id,
-users.username                    as username,
-user_watching_sessions.session    as session`).
+		user_watching_sessions.end_time   as leave_time,
+		user_watching_sessions.user_id    as user_id,
+		users.username                    as username,
+		user_watching_sessions.session    as session`).
 		Joins("JOIN users ON user_watching_sessions.user_id = users.id").
 		Where("room_id = ?", rid).
 		Where("user_watching_sessions.start_time BETWEEN ? AND ?", startTime, endTime).
@@ -289,11 +291,13 @@ user_watching_sessions.session    as session`).
 	}
 
 	for _, report := range reports {
+		chatEndTime := lo.If(report.LeaveTime == nil, endTime).Else(*report.LeaveTime)
+
 		var chats []*ChatMessage
 		c = db.
 			Model(&ChatMessage{}).
 			Where("room_id = ? AND sender_id = ?", rid, report.UserID).
-			Where("created_at BETWEEN ? AND ?", report.EnterTime, report.LeaveTime).
+			Where("created_at BETWEEN ? AND ?", report.EnterTime, chatEndTime).
 			Find(&chats)
 
 		if c.Error != nil {

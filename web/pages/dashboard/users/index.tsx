@@ -456,7 +456,7 @@ export default function RoomIndex() {
                         </span>
                       </th>
                       <th>
-                        <Button type="link" href={`/dashboard/users/${account.id}`}>
+                        <Button type="link" href={`/dashboard/users/${account.username}`}>
                           { localize(lang, "edit") }
                         </Button>
                       </th>

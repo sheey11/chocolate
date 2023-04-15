@@ -220,6 +220,7 @@ func handleAccountInfoLookup(c *gin.Context) {
 	}
 
 	type userAdminInfo struct {
+		ID       uint                     `json:"id"`
 		Role     string                   `json:"role"`
 		Username string                   `json:"username"`
 		Labels   []string                 `json:"labels"`
@@ -228,6 +229,7 @@ func handleAccountInfoLookup(c *gin.Context) {
 	}
 
 	info := userAdminInfo{
+		ID:       user.ID,
 		Username: user.Username,
 		Role:     user.RoleName,
 		Labels: lo.Map(user.Labels, func(l models.Label, _ int) string {
