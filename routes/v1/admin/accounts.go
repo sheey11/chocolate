@@ -245,12 +245,24 @@ func handleAccountInfoLookup(c *gin.Context) {
 }
 
 func handleAccountHistoryRetrial(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil || id < 0 {
+	username := c.Param("username")
+	if username == "" {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestInvalidParameter, "invalid id"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "invalid username"))
 		return
+	}
+	user, cerr := service.GetUserByUsername(username)
+	if cerr != nil {
+		if rerr, ok := cerr.(cerrors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			logrus.WithError(cerr).Error("error when handling account history")
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
+			return
+		}
 	}
 
 	start := c.Query("start")
@@ -271,7 +283,7 @@ func handleAccountHistoryRetrial(c *gin.Context) {
 	startTime := time.Unix(int64(startTs), 0)
 	endTime := time.Unix(int64(endTs), 0)
 
-	stats, cerr := service.GetUserWatchingHistory(uint(id), startTime, endTime)
+	stats, cerr := service.GetUserWatchingHistory(user.ID, startTime, endTime)
 	if cerr != nil {
 		if rerr, ok := cerr.(cerrors.RequestError); ok {
 			c.Abort()

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/sheey11/chocolate/common"
 	"github.com/sheey11/chocolate/errors"
@@ -163,7 +164,7 @@ func handleFlvPlayback(c *gin.Context) {
 			r.URL.Path = fmt.Sprintf("/live/%d.flv", id)
 
 			uid := lo.If(user == nil, 0).ElseF(func() int { return int(user.ID) })
-			r.URL.RawQuery = fmt.Sprintf("u=%d", uid)
+			r.URL.RawQuery = fmt.Sprintf("u=%d&s=%s", uid, uuid.New().String())
 		}
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			logrus.WithError(err).Error("error reverse proxying flv")

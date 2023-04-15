@@ -6,64 +6,80 @@ import (
 	"github.com/samber/lo"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
-type EventType string
-
-const (
-	EventTypePlay     EventType = "play"
-	EventTypeStopPlay EventType = "stop_play"
-)
-
-type Event struct {
-	gorm.Model
-	EventType EventType `gorm:"not null"`
+type UserWatchingSession struct {
 	User      User
-	UserID    uint `gorm:"not null"`
+	UserID    uint `gorm:"primaryKey"`
 	Room      Room
-	RoomID    uint `gorm:"not null"`
+	RoomID    uint `gorm:"primaryKey"`
 	ClientID  string
+	Session   string `gorm:"primaryKey"`
+	StartTime time.Time
+	EndTime   *time.Time
 }
 
-func RecordEvent(_type EventType, uid uint, roomid uint, clientid string) cerrors.ChocolateError {
-	c := db.Create(&Event{
-		EventType: _type,
+func RecordEvent(uid uint, roomid uint, clientid string, session string) cerrors.ChocolateError {
+	c := db.Create(&UserWatchingSession{
 		UserID:    uid,
 		RoomID:    roomid,
 		ClientID:  clientid,
+		Session:   session,
+		StartTime: time.Now(),
+		EndTime:   nil,
 	})
 
 	if c.Error != nil {
 		return cerrors.DatabaseError{
-			ID:         cerrors.DatabaseCreateEventError,
-			Message:    "error on recording event",
+			ID:         cerrors.DatabaseCreateUserWatchingHistoryError,
+			Message:    "error on recording user watching history",
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			InnerError: c.Error,
 			Context: map[string]interface{}{
-				"type":      _type,
 				"user_id":   uid,
 				"room_id":   roomid,
 				"client_id": clientid,
+				"session":   session,
 			},
 		}
 	}
 	return nil
 }
 
-type RoomWatchingHistory struct {
-	RoomID            uint   `json:"room_id"`
-	RoomTitle         string `json:"room_title"`
-	RoomOwnerID       uint   `json:"room_owner_id"`
-	RoomOwnerUsername string `json:"room_owner_username"`
-	Onlines           []*AudienceOnlineTimeRange
-	Chats             []*PubChatInfo
+func UpdateEventEndTime(uid uint, roomid uint, session string) cerrors.ChocolateError {
+	c := db.
+		Model(&UserWatchingSession{}).
+		Where("user_id = ?", uid).
+		Where("room_id = ?", roomid).
+		Where("session = ?", session).
+		Update("end_time", time.Now())
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseCreateUserWatchingHistoryError,
+			Message:    "error on recording user watching history",
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+			InnerError: c.Error,
+			Context: map[string]interface{}{
+				"user_id": uid,
+				"room_id": roomid,
+				"session": session,
+			},
+		}
+	}
+	return nil
 }
 
-type AudienceOnlineTimeRange struct {
-	Start *time.Time `json:"start"`
-	End   *time.Time `json:"end"`
+type RoomWatchingReport struct {
+	Session           string         `json:"-"` // for diagnostic
+	RoomID            uint           `json:"room_id"`
+	RoomTitle         string         `json:"room_title"`
+	RoomOwnerID       uint           `json:"room_owner_id"`
+	RoomOwnerUsername string         `json:"room_owner_username"`
+	StartTime         time.Time      `json:"start_time"`
+	EndTime           *time.Time     `json:"end_time"`
+	Chats             []*PubChatInfo `json:"chats" gorm:"-"`
 }
 
 type PubChatInfo struct {
@@ -72,7 +88,7 @@ type PubChatInfo struct {
 	Content string          `json:"content"`
 }
 
-func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([]*RoomWatchingHistory, cerrors.ChocolateError) {
+func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([]*RoomWatchingReport, cerrors.ChocolateError) {
 	if startTime.Add(12 * time.Hour).Before(endTime) {
 		return nil, cerrors.RequestError{
 			ID:      cerrors.RequestTimeRangeTooLong,
@@ -80,51 +96,52 @@ func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([
 		}
 	}
 
-	var events []Event
-	c := db.Model(&Event{}).
+	var reports []*RoomWatchingReport
+	c := db.
+		Table("user_watching_sessions").
+		Select(`user_watching_sessions.start_time as start_time,
+				user_watching_sessions.end_time   as end_time,
+                user_watching_sessions.room_id    as room_id,
+				rooms.title                       as room_title,
+				users.id                          as room_owner_id,
+				users.username                    as room_owner_username,
+				user_watching_sessions.session    as session`).
+		Joins("JOIN rooms ON user_watching_sessions.room_id = rooms.id").
+		Joins("JOIN users ON rooms.owner_id = users.id").
 		Where("user_id = ?", uid).
-		Where("created_at BETWEEN ? AND ?", startTime, endTime).
-		Order("created_at DESC").
-		Limit(20).
-		Find(&events)
+		Where("user_watching_sessions.start_time BETWEEN ? AND ?", startTime, endTime).
+		Order("user_watching_sessions.start_time DESC").
+		Find(&reports)
 	if c.Error != nil {
 		return nil, cerrors.DatabaseError{
-			ID:         cerrors.DatabaseListEventsError,
-			Message:    "error on lookup event",
+			ID:         cerrors.DatabaseListUserWatchingHistoryError,
+			Message:    "error on lookup room watching report",
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			InnerError: c.Error,
 		}
 	}
 
-	type roomInfo struct {
-		RoomID            uint
-		RoomTitle         string
-		RoomOwnerID       uint
-		RoomOwnerUsername string
-	}
-	var rooms []roomInfo
-	c = db.Model(&Event{}).
-		Select("DISTINCT events.room_id as room_id, rooms.title as room_title, users.id as room_owner_id, users.username as room_owner_username").
-		Joins("JOIN rooms on events.room_id = rooms.id").
-		Joins("JOIN users ON rooms.owner_id = users.id").
-		Where("user_id = ?", uid).
-		Order("created_at DESC").
-		Limit(20).
-		Find(&rooms)
-
-	return lo.Map(rooms, func(room roomInfo, _ int) *RoomWatchingHistory {
+	for _, report := range reports {
 		var chats []*ChatMessage
 		c = db.Model(&ChatMessage{}).
-			Where("room_id = ? AND sender_id = ?", room.RoomID, uid).
+			Where("room_id = ? AND sender_id = ?", report.RoomID, uid).
 			Where("created_at BETWEEN ? AND ?", startTime, endTime).
 			Find(&chats)
 
 		if c.Error != nil {
-			logrus.
-				WithField("stacktrace", cerrors.GetStackTrace()).
-				WithError(c.Error).
-				Error("error when listing chat messages")
+			return nil, cerrors.DatabaseError{
+				ID:         cerrors.DatabaseListChatMessageError,
+				Message:    "error on finding chat message in time between",
+				Sql:        c.Statement.SQL.String(),
+				StackTrace: cerrors.GetStackTrace(),
+				InnerError: c.Error,
+				Context: map[string]interface{}{
+					"user_id": uid,
+					"room_id": report.RoomID,
+					"session": report.Session,
+				},
+			}
 		}
 
 		chats = lo.Filter(chats, func(item *ChatMessage, index int) bool {
@@ -132,52 +149,35 @@ func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([
 				[]ChatMessageType{
 					ChatMessageTypeMessage,
 					ChatMessageTypeEnteringRoom,
+					ChatMessageTypeGift,
+					ChatMessageTypeSuperChat,
+					ChatMessageTypeAdministration,
 				},
 				item.Type,
 			)
 		})
 
-		chatInfos := lo.Map(chats, func(chat *ChatMessage, _ int) *PubChatInfo {
+		report.Chats = lo.Map(chats, func(chat *ChatMessage, _ int) *PubChatInfo {
 			return &PubChatInfo{
 				Time:    chat.CreatedAt,
 				Content: chat.Message,
 				Type:    chat.Type,
 			}
 		})
-
-		return &RoomWatchingHistory{
-			RoomID:            room.RoomID,
-			RoomTitle:         room.RoomTitle,
-			RoomOwnerID:       room.RoomOwnerID,
-			RoomOwnerUsername: room.RoomOwnerUsername,
-			Chats:             chatInfos,
-			Onlines: lo.ReduceRight(
-				events,
-				func(agg []*AudienceOnlineTimeRange, item Event, _ int) []*AudienceOnlineTimeRange {
-					timeRange := agg[0]
-					if item.EventType == EventTypePlay {
-						timeRange = &AudienceOnlineTimeRange{}
-						agg = append([]*AudienceOnlineTimeRange{timeRange}, agg...)
-						timeRange.Start = &item.CreatedAt
-					} else {
-						timeRange.End = &item.CreatedAt
-					}
-					return agg
-				},
-				make([]*AudienceOnlineTimeRange, 1),
-			),
-		}
-	}), nil
+	}
+	return reports, nil
 }
 
-type AudienceReport struct {
-	UserID   uint                       `json:"uid"`
-	Username string                     `json:"username"`
-	Onlines  []*AudienceOnlineTimeRange `json:"onlines"`
-	Chats    []*PubChatInfo             `json:"chats"`
+type RoomAudienceReport struct {
+	Session   string         `json:"-"` // for diagnostic
+	UserID    uint           `json:"uid"`
+	Username  string         `json:"username"`
+	EnterTime time.Time      `json:"enter_time"`
+	LeaveTime *time.Time     `json:"leave_time"`
+	Chats     []*PubChatInfo `json:"chats" gorm:"-"`
 }
 
-func GetRoomAudience(rid uint, startTime time.Time, endTime time.Time) ([]AudienceReport, cerrors.ChocolateError) {
+func GetRoomAudienceHistory(rid uint, startTime time.Time, endTime time.Time) ([]*RoomAudienceReport, cerrors.ChocolateError) {
 	if startTime.Add(12 * time.Hour).Before(endTime) {
 		return nil, cerrors.RequestError{
 			ID:      cerrors.RequestTimeRangeTooLong,
@@ -185,55 +185,34 @@ func GetRoomAudience(rid uint, startTime time.Time, endTime time.Time) ([]Audien
 		}
 	}
 
-	var events []Event
+	var reports []*RoomAudienceReport
 	c := db.
-		Model(&Event{}).
-		Where("room_id = ?").
-		Where("created_at BETWEEN ? AND ?", startTime, endTime).
-		Order("created_at DESC").
-		Find(&events)
+		Table("user_watching_sessions").
+		Select(`user_watching_sessions.start_time as enter_time,
+				user_watching_sessions.end_time   as leave_time,
+				user_watching_sessions.user_id    as user_id,
+				users.username                    as username,
+				user_watching_sessions.session    as session`).
+		Joins("JOIN users ON user_watching_sessions.user_id = users.id").
+		Where("room_id = ?", rid).
+		Where("user_watching_sessions.start_time BETWEEN ? AND ?", startTime, endTime).
+		Order("user_watching_sessions.start_time DESC").
+		Find(&reports)
 	if c.Error != nil {
 		return nil, cerrors.DatabaseError{
-			ID:         cerrors.DatabaseListEventsError,
-			Message:    "error on listing event",
+			ID:         cerrors.DatabaseListUserWatchingHistoryError,
+			Message:    "error on listing room audience reports",
 			Sql:        c.Statement.SQL.String(),
 			StackTrace: cerrors.GetStackTrace(),
 			InnerError: c.Error,
 		}
 	}
 
-	type audience struct {
-		UserID   uint
-		Username string
-	}
-	var audiences []audience
-
-	c = db.
-		Model(&Event{}).
-		Joins("JOIN users ON events.user_id = users.id").
-		Where("room_id = ?").
-		Where("created_at BETWEEN ? AND ?", endTime, startTime).
-		Select("DISTINCT user_id, username").
-		Find(&audiences)
-	if c.Error != nil {
-		return nil, cerrors.DatabaseError{
-			ID:         cerrors.DatabaseListEventsError,
-			Message:    "error on listing event",
-			Sql:        c.Statement.SQL.String(),
-			StackTrace: cerrors.GetStackTrace(),
-			InnerError: c.Error,
-		}
-	}
-
-	return lo.Map(audiences, func(a audience, _ int) AudienceReport {
-		audiEvents := lo.Filter(events, func(event Event, _ int) bool {
-			return event.UserID == a.UserID
-		})
-
+	for _, report := range reports {
 		var chats []*ChatMessage
 		c = db.
 			Model(&ChatMessage{}).
-			Where("room_id = ? AND sender_id = ?", rid, a.UserID).
+			Where("room_id = ? AND sender_id = ?", rid, report.UserID).
 			Where("created_at BETWEEN ? AND ?", endTime, startTime).
 			Find(&chats)
 
@@ -249,38 +228,21 @@ func GetRoomAudience(rid uint, startTime time.Time, endTime time.Time) ([]Audien
 				[]ChatMessageType{
 					ChatMessageTypeMessage,
 					ChatMessageTypeEnteringRoom,
+					ChatMessageTypeGift,
+					ChatMessageTypeSuperChat,
+					ChatMessageTypeAdministration,
 				},
 				item.Type,
 			)
 		})
 
-		chatInfos := lo.Map(chats, func(chat *ChatMessage, _ int) *PubChatInfo {
+		report.Chats = lo.Map(chats, func(chat *ChatMessage, _ int) *PubChatInfo {
 			return &PubChatInfo{
 				Time:    chat.CreatedAt,
 				Content: chat.Message,
 				Type:    chat.Type,
 			}
 		})
-
-		return AudienceReport{
-			Username: a.Username,
-			UserID:   a.UserID,
-			Chats:    chatInfos,
-			Onlines: lo.ReduceRight(
-				audiEvents,
-				func(agg []*AudienceOnlineTimeRange, item Event, _ int) []*AudienceOnlineTimeRange {
-					timeRange := agg[0]
-					if item.EventType == EventTypePlay {
-						timeRange = &AudienceOnlineTimeRange{}
-						agg = append([]*AudienceOnlineTimeRange{timeRange}, agg...)
-						timeRange.Start = &item.CreatedAt
-					} else {
-						timeRange.End = &item.CreatedAt
-					}
-					return agg
-				},
-				make([]*AudienceOnlineTimeRange, 1),
-			),
-		}
-	}), nil
+	}
+	return reports, nil
 }

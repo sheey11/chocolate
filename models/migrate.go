@@ -50,7 +50,7 @@ func Migrate(connStr string) error {
 		&PermissionItem{},
 		&Log{},
 		&ChatMessage{},
-		&Event{},
+		&UserWatchingSession{},
 	)
 	if err != nil {
 		return err

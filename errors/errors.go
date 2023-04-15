@@ -61,7 +61,7 @@ const (
 	DatabaseCreateChatMessageError
 	DatabaseCreateLabelError
 	DatabaseCreateUserLabelError
-	DatabaseCreateEventError
+	DatabaseCreateUserWatchingHistoryError
 
 	DatabaseCountAdminAccountError
 	DatabaseCountPermissionItemError
@@ -76,7 +76,8 @@ const (
 
 	DatabaseListRoomsError
 	DatabaseListAccountsError
-	DatabaseListEventsError
+	DatabaseListUserWatchingHistoryError
+	DatabaseListChatMessageError
 
 	DatabaseDeleteUserError
 	DatabaseDeleteRoomError

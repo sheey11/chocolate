@@ -197,8 +197,9 @@ func handlePlay(c *gin.Context) {
 		if err != nil || uid <= 0 {
 			return
 		}
+		session := queries.Get("s")
 
-		go service.RecordPlayEvent(uint(uid), uint(roomId), data.ClientID)
+		go service.RecordPlayEvent(uint(uid), uint(roomId), data.ClientID, session)
 	}
 }
 func handleStop(c *gin.Context) {
@@ -245,7 +246,8 @@ func handleStop(c *gin.Context) {
 		if err != nil || uid <= 0 {
 			return
 		}
+		session := queries.Get("s")
 
-		go service.RecordStopPlayEvent(uint(uid), uint(roomId), data.ClientID)
+		go service.RecordStopPlayEvent(uint(uid), uint(roomId), session)
 	}
 }
