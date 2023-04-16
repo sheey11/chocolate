@@ -1,25 +1,27 @@
 import { Nav } from "@/components/Nav/Nav"
 import { AuthContext } from "@/contexts/AuthContext"
 import { useRouter } from "next/router"
-import { Fragment, useCallback, useContext, useEffect } from "react"
+import { Fragment, useCallback, useContext, useEffect, useMemo } from "react"
 import { dashboardNavs } from "@/constants/navs"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import Button from "@/components/Button/Button"
 import { useState } from 'react'
-import { UserIcon, ArrowTopRightOnSquareIcon, QuestionMarkCircleIcon, PlayIcon, PlayPauseIcon, NoSymbolIcon, TagIcon, } from '@heroicons/react/24/solid'
-import { ArrowPathRoundedSquareIcon, SignalIcon, SignalSlashIcon, TrashIcon, UsersIcon } from '@heroicons/react/24/outline'
-import Link from "next/link"
+import {  TagIcon, } from '@heroicons/react/24/solid'
+import { ArrowPathRoundedSquareIcon, TrashIcon, UserIcon, } from '@heroicons/react/24/outline'
 import { Footer } from "@/components/Footer/Footer"
 import { localize, localizeError } from "@/i18n/i18n"
 import Dialog from "@/components/Dialog/Dialog"
-import { AdminAccountDetail, AdminRoomDetailResponse, RoomTimelineResponse } from "@/api/v1/datatypes"
+import { AdminAccountDetail, AccountHistoryResponse } from "@/api/v1/datatypes"
 import { cutoffRoomStream, deleteRoom, fetchRoomDetail, fetchRoomTimeline } from "@/api/v1/admin/room"
-import { Transition } from "@headlessui/react"
 import "humanizer.node"
-import StreamVideoBox from "@/components/StreamVideoBox/StreamVideoBox"
-import { fetchAccountDetail } from "@/api/v1/admin/account"
+import { fetchAccountDetail, fetchAccountHistory } from "@/api/v1/admin/account"
 
-const colorSchemes = [
+import { default as dayjs } from "dayjs"  
+import debounce from "@/utils/debounce"
+import { classNames } from "@/utils/classnames"
+import AccountHistory from "@/components/AccountHistory/AccountHistory"
+
+const colorPattles = [
   "bg-blue-600",
   "bg-green-600",
   "bg-yellow-600",
@@ -33,34 +35,6 @@ const inter = Inter({
   subsets: ['latin-ext'],
 })
 
-function classNames(...classes: any) {
-  return classes.filter(Boolean).join(' ')
-}
-
-function humanizeSize(v: any) {
-  v = Math.abs(v)
-  let size = (v).bytes()
-
-  if(size.kilobytes < 768) {
-    return `${size.kilobytes.toFixed(0)} KB`
-  } else if (size.megabytes < 768) {
-    return `${size.megabytes.toFixed(1)} MB`
-  } else if (size.gigabytes < 768) {
-    return `${size.gigabytes.toFixed(1)} GB`
-  } else if (size.terabytes < 768) {
-    return `${size.terabytes.toFixed(1)} TB`
-  }
-  return `${v} KB`
-}
-
-const eventTypes = [
-  { name: 'publish',   icon: SignalIcon, bgColorClass: 'bg-green-400' },
-  { name: 'unpublish', icon: SignalSlashIcon, bgColorClass: 'bg-blue-500' },
-  { name: 'play',      icon: PlayIcon, bgColorClass: 'bg-gray-500' },
-  { name: 'stop',      icon: PlayPauseIcon, bgColorClass: 'bg-gray-500' },
-  { name: 'cutoff',    icon: NoSymbolIcon, bgColorClass: 'bg-red-500' },
-]
-
 const jbm = JetBrains_Mono({
   subsets: ['latin'],
   weight: '500',
@@ -72,13 +46,7 @@ export default function RoomDetailPage() {
   const lang = router.locale!
 
   const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false)
-  const [CutoffConfirmDialogOpen, setCutoffConfirmDialogOpen] = useState(false)
-
-  const [accountDetail,          setAccountDetail         ] = useState<AdminAccountDetail   | null>(null)
-  const [roomTimeline,                     setRoomTimeline] = useState<RoomTimelineResponse | null>(null)
-  const [permissionTypeHelpShow, setPermissionTypeHelpShow] = useState<boolean>(false)
-
-  const [playbackUrl, setPlaybackUrl] = useState<string | undefined>(undefined)
+  const [accountDetail,           setAccountDetail          ] = useState<AdminAccountDetail     | null>(null)
 
   const { authenticated,    getUser             } = useContext(AuthContext)
   const [ errCode,          setErrCode          ] = useState<number | null>()
@@ -97,33 +65,16 @@ export default function RoomDetailPage() {
       .catch(dealWithFetchError)
   }, [])
 
-  // const loadRoomTimeline = useCallback((username: string | undefined) => {
-  //   if(!username) return
-  //   fetchRoomTimeline(username)
-  //     .then(setRoomTimeline)
-  //     .catch(dealWithFetchError)
-  // }, [])
-
   useEffect(() => {
     if (!username) return
     reloadDetail(username)
     // loadRoomTimeline(username)
   }, [username, reloadDetail])
 
-  const handleCutoff = useCallback(() => {
-    if(!username) return
-    cutoffRoomStream(username)
-      .then(() => {
-        reloadDetail(username)
-        setCutoffConfirmDialogOpen(false)
-      })
-      .catch(dealWithFetchError)
-  }, [username, reloadDetail])
-
   const handleDelete = useCallback(() => {
     if(!username) return
     deleteRoom(username)
-      .then(() => router.push("/dashboard/rooms"))
+      .then(() => router.push("/dashboard/users"))
       .catch(dealWithFetchError)
   }, [username, router])
 
@@ -210,24 +161,24 @@ export default function RoomDetailPage() {
               </button>
             </div>
             <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-                <div className="sm:col-span-1">
+              <dl className="grid grid-cols-1 gap-x-4 gap-y-8 grid-cols-2">
+                <div className="col-span-1">
                   <dt className="text-sm font-medium text-gray-500">ID</dt>
                   <dd className="mt-1 text-gray-900 code">{ accountDetail?.id }</dd>
                 </div>
-                <div className="sm:col-span-1">
+                <div className="col-span-1">
                   <dt className="text-sm font-medium text-gray-500">{ localize(lang, "username") }</dt>
                   <dd className="mt-1 text-md text-gray-900 overflow-x-scroll scrollbar-hidden code select-none">
                     { accountDetail?.username }
                   </dd>
                 </div>
-                <div className="sm:col-span-1">
+                <div className="col-span-1">
                   <dt className="text-sm font-medium text-gray-500">{ localize(lang, "user_role") }</dt>
                   <dd className="mt-1 text-sm text-gray-900 hover:text-gray-600 transition duration-100">
                     { localize(lang, `user_filter_role_${ accountDetail?.role }`) }
                   </dd>
                 </div>
-                <div className="sm:col-span-1">
+                <div className="col-span-1">
                   <dt className="text-sm font-medium flex items-center space-x-1 text-gray-500">
                     <span> { localize(lang, "user_max_rooms") } </span>
                   </dt>
@@ -235,7 +186,7 @@ export default function RoomDetailPage() {
                     { accountDetail?.max_rooms }
                   </dd>
                 </div>
-                <div className="sm:col-span-2">
+                <div className="col-span-2">
                   <dt className="text-sm font-medium flex items-center space-x-1 text-gray-500">
                     <span> { localize(lang, "user_labels") } </span>
                   </dt>
@@ -289,7 +240,7 @@ export default function RoomDetailPage() {
                         >
                           <div className={classNames(
                             "h-16 w-16 p-1 text-white flex-shrink-0 flex items-center justify-around text-md",
-                            colorSchemes[index % colorSchemes.length],
+                            colorPattles[index % colorPattles.length],
                           )}>
                             { room.title.at(0) }
                           </div>
@@ -306,7 +257,7 @@ export default function RoomDetailPage() {
                                 }
                               </div>
                               <div className="w-full flex space-x-1 items-center">
-                                <UsersIcon className="h-3 w-3"/>
+                                <UserIcon className="h-3 w-3"/>
                                 <span className="text-[0.1rem]"> { room.viewers } </span>
                               </div>
                             </div>
@@ -321,53 +272,14 @@ export default function RoomDetailPage() {
           </div>
         </section>
 
-        <section aria-labelledby="timeline-title">
+        <section aria-labelledby="history-title">
           <div className="bg-white px-4 py-5 shadow sm:rounded-lg sm:px-6">
-            <h2 id="timeline-title" className="text-lg font-medium text-gray-900">
-              {  localize(lang, "room_timeline") }
+            <h2 id="history-title" className="text-lg font-medium text-gray-900">
+              {  localize(lang, "account_history") }
             </h2>
 
-            {/* Activity Feed */}
-            <div className="mt-6 flow-root">
-              <ul role="list" className="-mb-8">
-                { roomTimeline?.logs.map((item, itemIdx) => {
-                  const event = eventTypes[item.type]
-                  return (
-                    <li key={item.time}>
-                      <div className="relative pb-8">
-                        {itemIdx !== roomTimeline.logs.length - 1 ? (
-                          <span
-                            className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <div className="relative flex space-x-3">
-                          <div>
-                            <span
-                              className={classNames(
-                                event.bgColorClass,
-                                'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white'
-                              )}
-                            >
-                              <event.icon className="h-5 w-5 text-white" aria-hidden="true" />
-                            </span>
-                          </div>
-                          <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                            <div>
-                              <p className="text-sm text-black">
-                                { localize(lang, event.name) }{' '}
-                              </p>
-                            </div>
-                            <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                              <time dateTime={item.time}>{new Date(item.time).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  )})}
-              </ul>
-            </div>
+            {/* history */}
+            <AccountHistory username={username} onError={dealWithFetchError}/>
           </div>
         </section>
       </main>

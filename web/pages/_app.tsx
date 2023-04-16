@@ -2,7 +2,7 @@ import { AuthContext } from '@/contexts/AuthContext'
 import { useAuth } from '@/hooks/useAuth'
 import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
-import { Inter, Fira_Code, Lato } from 'next/font/google'
+import { Inter, Fira_Code, Lato, Chivo_Mono } from 'next/font/google'
 
 const inter = Inter({
   subsets: ['latin-ext'],
@@ -20,11 +20,17 @@ const lato = Lato({
   weight: '400',
 })
 
+const monoFont = Chivo_Mono({
+  weight: "400",
+  subsets: ['latin'],
+  variable: "--mono-font",
+})
+
 export default function App({ Component, pageProps }: AppProps) {
   const { authenticated, getUser, signin, signout } = useAuth()
 
   return (
-     <div className={`min-h-[100vh] ${inter.className} ${firaMono.variable} ${inter.variable} ${lato.variable}`}>
+    <div className={`min-h-[100vh] ${inter.className} ${firaMono.variable} ${inter.variable} ${lato.variable} ${monoFont.variable}`}>
       <AuthContext.Provider value={{ authenticated, getUser, signin, signout }}>
         <Component {...pageProps} />
       </AuthContext.Provider>

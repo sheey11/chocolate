@@ -76,3 +76,7 @@ table tbody > tr > th:first-child {
 .font-numeric {
     font-family: var(--lato-font);
 }
+
+.font-mono {
+    font-family: var(--mono-font);
+}

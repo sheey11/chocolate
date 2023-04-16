@@ -136,6 +136,16 @@
   "delete_account": "删除",
   "account-info": "账号信息",
   "account_rooms_title": "房间",
+  "account_history": "历史",
+
+  "previous_day": "前一天",
+  "current_day": "选中日期",
+  "next_day": "后一天",
+
+  "previous_month": "上一个月",
+  "next_month": "下一个月",
+
+  "enters_room": "进入房间",
 
   "free_software_note": "注意: 本软件是免费软件，并在 GPLv3 许可证下开放源代码",
   "errors": {

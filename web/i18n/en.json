@@ -136,6 +136,16 @@
   "delete_account": "Delete",
   "account-info": "Acccount Info",
   "account_rooms_title": "Rooms",
+  "account_history": "History",
+
+  "previous_day": "Previous day",
+  "current_day": "Selected day",
+  "next_day": "Next day",
+
+  "previous_month": "Previous Month",
+  "next_month": "Next Month",
+
+  "enters_room": "enters room",
 
   "free_software_note": "Note: This is a free software, source code is published under GPLv3.",
   "errors": {

@@ -9,11 +9,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 
-const timeMonoFont = Chivo_Mono({
-    weight: "400",
-    subsets: ['latin']
-})
-
 function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
@@ -39,7 +34,7 @@ function ChatItem({ username, isHighlighted, content, adminMessageContent, time 
         return (
             <div className="block my-1">
                 <time className={classNames(
-                    timeMonoFont.className,
+                    "mono-font",
                     "mr-1"
                 )} dateTime={time?.toString()}>
                     { time === undefined ? "" : time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, }) }
