@@ -262,7 +262,7 @@ export default function RoomDetailPage() {
                     </div>
                     <div className="sm:col-span-1">
                       <dt className="text-sm font-medium text-gray-500">UID</dt>
-                      <dd className="mt-1 text-md text-gray-900 overflow-x-scroll scrollbar-hidden code select-none">
+                      <dd className="mt-1 text-md text-gray-900 overflow-x-auto code select-none">
                         { roomDetail?.rooms.uid }
                       </dd>
                     </div>

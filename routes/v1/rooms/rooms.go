@@ -274,7 +274,31 @@ func handleRoomInfoRetrievel(c *gin.Context) {
 
 	if user != nil && room.OwnerID == user.ID {
 		response["permission_type"] = room.PermissionType
-		response["permission_items"] = room.PermissionItems
+		response["uid"] = room.UID
+		response["permission_items"] = lo.Map(room.PermissionItems, func(item models.PermissionItem, _ int) map[string]interface{} {
+			var username *string = nil
+			if item.SubjectType == models.PermissionSubjectTypeUser {
+				if item.SubjectUser != nil {
+					username = &item.SubjectUser.Username
+				} else {
+					user := service.GetUserByID(*item.SubjectUserID)
+					if user == nil {
+						logrus.
+							WithField("user_id", item.SubjectUserID).
+							WithField("stack_trace", cerrors.GetStackTrace()).
+							Error("logic: the user is null")
+					} else {
+						username = &user.Username
+					}
+				}
+			}
+			return map[string]interface{}{
+				"username": username,
+				"user_id":  item.SubjectUserID,
+				"label":    item.SubjectLabelName,
+				"type":     item.SubjectType,
+			}
+		})
 	}
 
 	c.JSON(http.StatusOK, response)

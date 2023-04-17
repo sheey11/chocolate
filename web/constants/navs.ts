@@ -12,3 +12,17 @@ export const dashboardNavs = [
     href: "/dashboard/users",
   },
 ]
+
+export const userNavs = [
+  {
+    i18n_key: "rooms_page",
+    href: "/room",
+  },
+]
+
+export const profileNavs = [
+  {
+    i18n_key: "profile_page",
+    href: "/profile",
+  }
+]

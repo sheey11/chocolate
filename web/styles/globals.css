@@ -38,7 +38,16 @@ table tbody > tr > th:first-child {
     display: none;
 }
 
+.hover-show .hover-show-subject , .hover-show ~ .hover-show-subject, .hover-show-subject {
+    opacity: 0;
+    transition: ease-in-out 200ms;
+}
+
 .hover-show:hover .hover-show-subject , .hover-show:hover ~ .hover-show-subject, .hover-show-subject:hover {
+    opacity: 1;
+}
+
+.focus-show:focus .focus-show-subject , .focus-show:focus ~ .focus-show-subject, .focus-show-subject:focus {
     opacity: 1;
 }
 
@@ -79,4 +88,8 @@ table tbody > tr > th:first-child {
 
 .font-mono {
     font-family: var(--mono-font);
+}
+
+.font-jbm {
+    font-family: var(--jbm-font);
 }

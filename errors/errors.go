@@ -75,6 +75,7 @@ const (
 	DatabaseLookupLogsError
 
 	DatabaseListRoomsError
+	DatabaseListPermissionItemsError
 	DatabaseListAccountsError
 	DatabaseListUserWatchingHistoryError
 	DatabaseListChatMessageError

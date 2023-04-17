@@ -149,6 +149,9 @@ func (u *User) SummaryRooms(includePermType bool) []map[string]interface{} {
 			"viewers": room.Viewers,
 		}
 		if includePermType {
+			if room.PermissionItems == nil || len(room.PermissionItems) == 0 {
+				room.LoadPermissionItems()
+			}
 			result[i]["permission_type"] = room.PermissionType
 		}
 	}
@@ -276,7 +279,7 @@ func (u *User) GetAfflicateRoomCount() (uint, cerrors.ChocolateError) {
 
 func AddLabelToUser(username, label string) cerrors.ChocolateError {
 	labelObj := Label{}
-	db.Find(&labelObj, label)
+	db.Where("name = ?", label).First(&labelObj)
 	if labelObj.Name != label {
 		labelObj = Label{
 			Name: label,
@@ -345,7 +348,7 @@ func DeleteUserLabel(username, label string) cerrors.ChocolateError {
 		"user_id":    user.ID,
 	}
 
-	c := db.Table("user_labels").Delete(record)
+	c := db.Table("user_labels").Where(record).Delete(nil)
 	if c.Error != nil {
 		return cerrors.DatabaseError{
 			ID:         cerrors.DatabaseCreateUserLabelError,

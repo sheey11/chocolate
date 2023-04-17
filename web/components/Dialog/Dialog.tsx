@@ -36,7 +36,6 @@ const Actions: React.FC<ActionProps> = ({ children, align = "right" }) => {
 
 interface DialogProps {
     children: JSX.Element | JSX.Element[],
-    backdropClosable?: boolean,
     open: boolean,
     onClose: () => void,
 }
@@ -46,7 +45,7 @@ interface DialogSubComponents {
     Actions: typeof Actions,
 }
 
-const Dialog: React.FC<DialogProps> & DialogSubComponents = ({ children, backdropClosable, open, onClose }: DialogProps) => {
+const Dialog: React.FC<DialogProps> & DialogSubComponents = ({ children, open, onClose }: DialogProps) => {
     const content = getChild(children, Content)
     const actions = getChild(children, Actions)
 
@@ -61,10 +60,10 @@ const Dialog: React.FC<DialogProps> & DialogSubComponents = ({ children, backdro
                     leave="ease-in duration-200"
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0">
-                    <div className="fixed inset-0 bg-black/30 z-20" onClick={backdropClosable ? onClose : () => {}} />
+                    <div className="fixed inset-0 bg-black/30 z-20" aria-hidden/>
                 </Transition.Child>
                 <div className="fixed inset-0 z-20">
-                    <div className="flex w-full h-full items-center justify-center">
+                    <div className="flex w-full h-full items-center justify-center" onClick={(e) => e.preventDefault}>
                         <Transition.Child
                             as={Fragment}
                             enter="ease-out duration-300"

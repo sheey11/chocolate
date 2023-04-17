@@ -31,6 +31,16 @@ export function PATCH<ReqType, ResType extends ChocolcateResponse>(url: string, 
     })
 }
 
+export function PATCH_WithoutData<ResType extends ChocolcateResponse>(url: string): Promise<ResType> {
+    return new Promise(async (resolve, reject) => {
+        api.patch<ResType>(url).then((value) => {
+            resolve(value.data)
+        }).catch((e) => {
+            reject(e)
+        })
+    })
+}
+
 export function DELETE<ResType extends ChocolcateResponse>(url: string): Promise<ResType> {
     return new Promise(async (resolve, reject) => {
         api.delete<ResType>(url).then((value) => {
@@ -44,6 +54,16 @@ export function DELETE<ResType extends ChocolcateResponse>(url: string): Promise
 export function PUT<ReqType, ResType extends ChocolcateResponse>(url: string, data: ReqType): Promise<ResType> {
     return new Promise(async (resolve, reject) => {
         api.put<ResType>(url, data).then((value) => {
+            resolve(value.data)
+        }).catch((e) => {
+            reject(e)
+        })
+    })
+}
+
+export function PUT_WithoutData<ResType extends ChocolcateResponse>(url: string): Promise<ResType> {
+    return new Promise(async (resolve, reject) => {
+        api.put<ResType>(url,).then((value) => {
             resolve(value.data)
         }).catch((e) => {
             reject(e)

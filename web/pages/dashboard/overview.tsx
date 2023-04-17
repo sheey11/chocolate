@@ -360,7 +360,7 @@ export default function AdminPage () {
               { localize(lang, "more") }
             </Button>
           </div>
-          <div className="mt-5 w-full text-gray-600 overflow-x-scroll scrollbar-hidden">
+          <div className="mt-5 w-full text-gray-600 overflow-x-auto">
             <table className={`streaming-table w-full text-left`}>
               <thead className="text-gray-500 text-xs border-b">
                 <tr className="uppercase whitespace-nowrap">

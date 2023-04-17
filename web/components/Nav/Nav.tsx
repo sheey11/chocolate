@@ -8,6 +8,7 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Contrail_One } from "next/font/google"
 import { AuthContext } from "@/contexts/AuthContext"
 import { ArrowSmallRightIcon } from "@heroicons/react/24/solid"
+import { profileNavs } from "@/constants/navs"
 
 const sail = Contrail_One({
     weight: "400",
@@ -46,7 +47,7 @@ export const Nav = ({ navs }: NavProps) => {
         }},
     ]
 
-    const selected = navs.map((item) => pathname.startsWith(item.href))
+    const selected = [...navs, ...profileNavs].map((item) => pathname.startsWith(item.href))
 
     return (
         <Disclosure as="header" className="bg-white shadow-sm">
@@ -137,34 +138,66 @@ export const Nav = ({ navs }: NavProps) => {
                                 }
                             </div>
                         </div>
-                        <nav className="hidden lg:flex lg:space-x-4 lg:pt-2" aria-label="Global">
-                            {navs.map((item, index) => (
-                                <Link
-                                    key={ item.i18n_key }
-                                    href={ item.href }
-                                    className={classNames(
-                                        selected[index] ? 'text-gray-900 border-blue-500' : 'border-transparent text-gray-500 text-black-900 hover:border-gray-200',
-                                        'py-2 px-3 inline-flex items-center text-sm font-medium border-b-2 transition duraion-100'
-                                    )}
-                                    aria-current={selected[index] ? 'page' : undefined}
-                                >
-                                    { localize(lang, item.i18n_key) }
-                                </Link>
-                            ))}
+                        <nav className="hidden lg:flex lg:justify-between lg:pt-2" aria-label="Global">
+                            <div className="flex space-x-4">
+                                {navs.map(item => (
+                                    <Link
+                                        key={ item.i18n_key }
+                                        href={ item.href }
+                                        className={classNames(
+                                            pathname.startsWith(item.href) ? 'text-gray-900 border-blue-500' : 'border-transparent text-gray-500 text-black-900 hover:border-gray-200',
+                                            'py-2 px-3 inline-flex items-center text-sm font-medium border-b-2 transition duraion-100'
+                                        )}
+                                        aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
+                                    >
+                                        { localize(lang, item.i18n_key) }
+                                    </Link>
+                                ))}
+                            </div>
+                            <div className="flex space-x-4">
+                                {profileNavs.map(item => (
+                                    <Link
+                                        key={ item.i18n_key }
+                                        href={ item.href }
+                                        className={classNames(
+                                            pathname.startsWith(item.href) ? 'text-gray-900 border-blue-500' : 'border-transparent text-gray-500 text-black-900 hover:border-gray-200',
+                                            'py-2 px-3 inline-flex items-center text-sm font-medium border-b-2 transition duraion-100'
+                                        )}
+                                        aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
+                                    >
+                                        { localize(lang, item.i18n_key) }
+                                    </Link>
+                                ))}
+                            </div>
                         </nav>
                     </div>
 
                     <Disclosure.Panel as="nav" className="lg:hidden" aria-label="Global">
                         <div className="space-y-1 px-2 pt-2 pb-3">
-                            { navs.map((item, index) => (
+                            { navs.map((item) => (
                                 <Disclosure.Button
                                     key={ item.i18n_key }
                                     as="div"
                                     className={classNames(
-                                        selected[index] ? 'bg-gray-100 text-gray-900' : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900',
+                                        pathname.startsWith(item.href) ? 'bg-gray-100 text-gray-900' : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900',
                                         'block rounded-md text-base font-medium'
                                     )}
-                                    aria-current={selected[index] ? 'page' : undefined}
+                                    aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
+                                >
+                                    <Link className="block py-2 px-3" href={ item.href }>
+                                        { localize(lang, item.i18n_key) }
+                                    </Link>
+                                </Disclosure.Button>
+                            ))}
+                            { profileNavs.map((item) => (
+                                <Disclosure.Button
+                                    key={ item.i18n_key }
+                                    as="div"
+                                    className={classNames(
+                                        pathname.startsWith(item.href) ? 'bg-gray-100 text-gray-900' : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900',
+                                        'block rounded-md text-base font-medium'
+                                    )}
+                                    aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
                                 >
                                     <Link className="block py-2 px-3" href={ item.href }>
                                         { localize(lang, item.i18n_key) }

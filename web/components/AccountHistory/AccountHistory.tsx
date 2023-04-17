@@ -195,6 +195,11 @@ export default function AccountHistory({ username, onError }: AccountHistoryProp
                 <TimeRangeSelector onChange={handleTimeRangeChange}/>
             </div>
             <div className="mt-5 space-y-4 flex flex-col items-stretch" role="list">
+                { accountHistory?.length == 0 ?
+                    <div className="p-10 text-center text-gray-500 font-bold"> { localize(lang, "no_data") } </div>
+                    :
+                    <></>
+                }
                 { accountHistory?.map((h, i) => (
                     <div key={h.start_time + h.end_time} role="listitem" className="p-3 rounded border-2 border-gray-100 flex flex-col items-start space-y-2">
                         <div className="flex items-center space-x-4 w-full">

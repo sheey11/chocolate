@@ -31,11 +31,11 @@ export default function Button({ type = "primary", children, onClick, size, disa
         shadow = false
     }
 
-    let ringClass = "focus:ring-blue-500"
+    let ringClass = "focus:ring-blue-200"
     if (type == "destructive" || ring == "red") {
         ringClass = "focus:ring-red-300"
     } else if (ring == "blue" || ring == undefined)  {
-        ringClass = "focus:ring-blue-500"
+        ringClass = "focus:ring-blue-200"
     }
 
     let sizeClass = "px-4 text-sm font-medium"

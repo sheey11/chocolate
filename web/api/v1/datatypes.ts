@@ -22,8 +22,8 @@ export interface PasswordModificationPayload {
 }
 
 export interface OwnedRoomInformation {
-    id: string
-    permission_type: string
+    id: number
+    permission_type: "whitelist" | "blacklist"
     status: string
     title: string
     uid: string
@@ -48,6 +48,7 @@ export interface SelfInfoResponse extends ChocolcateResponse {
 
 export interface RoomInfoResponse extends ChocolcateResponse {
     id: number
+    last_streaming: string
     playback: {
         flv: string
         hls: string
@@ -55,6 +56,17 @@ export interface RoomInfoResponse extends ChocolcateResponse {
     status: string
     title: string
     viewers: number
+}
+
+export interface OwnedRoomInfoResponse extends RoomInfoResponse {
+    uid: string
+    permission_type: "whitelist" | "blacklist"
+    permission_items: {
+        type: "user" | "label"
+        label: string | null
+        user_id: number | null
+        username: string | null
+    }[]
 }
 
 export interface VersionResponse extends ChocolcateResponse {
@@ -415,4 +427,12 @@ export interface RoomHistoryResponse extends ChocolcateResponse {
 export interface RoomHistoryQuery {
     start: number
     end: number
+}
+
+export interface UserPasswordUpdatePayload {
+    password: string
+}
+
+export interface StartStreamingResponse extends ChocolcateResponse {
+    streamkey: string
 }

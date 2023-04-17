@@ -388,7 +388,7 @@ export default function RoomIndex() {
                 </form>
               </Dialog>
             </div>
-            <div className="w-full h-full overflow-x-scroll scrollbar-hidden">
+            <div className="w-full h-full overflow-x-auto">
               <table className="w-full">
                 <thead className="text-gray-500 text-xs border-b bg-gray-50">
                   <tr className="uppercase whitespace-nowrap text-left">

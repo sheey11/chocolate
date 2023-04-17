@@ -28,7 +28,7 @@ func mountAccountsRoutes(r *gin.RouterGroup) {
 	g.GET("/:username/history", handleAccountHistoryRetrial)
 	g.DELETE("/:username", handleAccountDeletion)
 	g.PUT("/:username/password", handleAccountPasswordModification)
-	g.PUT("/:username/role", handleAccountRoleModification)
+	g.PUT("/:username/role/:role", handleAccountRoleModification)
 	g.PUT("/:username/label/:label", handleAccountLabelAppend)
 	g.DELETE("/:username/label/:label", handleAccountLabelDeletion)
 	g.PUT("/:username/max-room/:count", handleAccountMaxRoomModification)
@@ -358,18 +358,9 @@ func handleAccountPasswordModification(c *gin.Context) {
 
 func handleAccountRoleModification(c *gin.Context) {
 	username := c.Param("username")
+	role := c.Param("role")
 
-	data := struct {
-		Role string `json:"role"`
-	}{}
-	err := c.Bind(&data)
-	if err != nil {
-		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
-		return
-	}
-
-	err = service.UpdateRole(username, data.Role)
+	err := service.UpdateRole(username, role)
 	if err != nil {
 		if rerr, ok := err.(errors.RequestError); ok {
 			c.Abort()
@@ -418,6 +409,7 @@ func handleAccountLabelDeletion(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
 			return
 		} else {
+			logrus.WithError(cerr).Error("error when handling account label deletion")
 			c.Abort()
 			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
 			return

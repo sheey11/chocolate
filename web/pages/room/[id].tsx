@@ -9,18 +9,12 @@ import ChatBox from "@/components/ChatBox/ChatBox";
 import RoomInfo from "@/components/RoomInfo/RoomInfo";
 
 import { JetBrains_Mono } from "next/font/google";
+import { userNavs } from "@/constants/navs";
 
 const jbm = JetBrains_Mono({
   subsets: ['latin'],
   weight: '500',
 })
-
-const userNavs = [
-  {
-    i18n_key: "rooms_page",
-    href: "/room",
-  },
-]
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')

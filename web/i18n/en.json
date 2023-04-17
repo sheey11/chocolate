@@ -19,6 +19,7 @@
   "home_page": "Home",
   "rooms_page": "Rooms",
   "users_page": "Accounts",
+  "profile_page": "Profile",
 
   "traffic": "Host Network Activity",
   "connections": "Connections",
@@ -137,6 +138,10 @@
   "account-info": "Acccount Info",
   "account_rooms_title": "Rooms",
   "account_history": "History",
+  "add_label_prompt": "Add label",
+  "error_occurred": "Error Occurred",
+  "success": "Success",
+  "successfully_saved": "Saved.",
 
   "previous_day": "Previous day",
   "current_day": "Selected day",
@@ -146,6 +151,27 @@
   "next_month": "Next Month",
 
   "enters_room": "enters room",
+  "room-list": "Room list",
+
+  "you-have-no-room": "You didn't have room yet",
+  "hold-key": "Hold",
+  "to-scroll-horizontally": "to scroll horizontally",
+  "new-room-btn": "New",
+  "select-room-to-setup-hint": "Select a room to setup",
+
+  "general-info": "General Info",
+  "stream-setting": "Streaming Settings",
+  "stream-control": "Stream Control",
+  "stop_streaming_btn": "STOP",
+  "start_streaming_btn": "START",
+  "stream-server": "Stream server",
+  "stream-key": "Stream key",
+  "stream-key-hidden": "Re-set room to stream configuration to see stream key",
+  "stream-only-visible-to-streaming-configuration": "Set room to streaming configuration to see stream key.",
+  "permission-items": "Permission Items",
+  "user": "Account",
+  "label": "Label",
+  "add": "Add",
 
   "free_software_note": "Note: This is a free software, source code is published under GPLv3.",
   "errors": {

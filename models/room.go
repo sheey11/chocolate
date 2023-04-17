@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	cerrors "github.com/sheey11/chocolate/errors"
+	"github.com/sirupsen/logrus"
 
 	"gorm.io/gorm"
 )
@@ -65,6 +66,22 @@ type Room struct {
 	LastStreamingAt time.Time
 	SrsClientID     *string `gorm:"default:null"`
 	SrsStreamID     *string `gorm:"default:null"`
+}
+
+func (r *Room) LoadPermissionItems() {
+	c := db.Model(&PermissionItem{}).Where("room_id = ?", r.ID).Find(&r.PermissionItems)
+	if c.Error != nil {
+		err := cerrors.DatabaseError{
+			ID:         cerrors.DatabaseListAccountsError,
+			InnerError: c.Error,
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+			Context: map[string]interface{}{
+				"room_id": r.ID,
+			},
+		}
+		logrus.WithError(err).Error("error on finding room permission items")
+	}
 }
 
 func (r Room) GetPlaybackInfo() map[string]interface{} {
