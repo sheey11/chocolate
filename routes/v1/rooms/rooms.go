@@ -31,6 +31,8 @@ func mountRoomsRoutes(r *gin.RouterGroup) {
 
 	r.PUT("/:id/permission/:subtype/:subject", handleRoomPermissionSubjectAppend)
 	r.DELETE("/:id/permission/:subtype/:subject", handleRoomPermissionSubjectDelete)
+
+	r.GET("/:id/permission/:subtype/auto-complete", handlePermissionAutoComplete)
 }
 
 func handleRoomCreation(c *gin.Context) {
@@ -44,7 +46,7 @@ func handleRoomCreation(c *gin.Context) {
 		Title string `json:"title"`
 	}{}
 	err := c.Bind(&data)
-	if err != nil {
+	if err != nil || data.Title == "" {
 		c.Abort()
 		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
 		return
@@ -238,7 +240,7 @@ func handleRoomInfoRetrievel(c *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id < 0 {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad parameter room id"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad request parameter"))
 		return
 	}
 
@@ -315,7 +317,7 @@ func handleRoomAction(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id < 0 {
 		c.Abort()
-		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "bad request payload"))
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad request parameter"))
 		return
 	}
 	action := RoomAction(c.Param("action"))
@@ -373,7 +375,12 @@ func handleRoomAction(c *gin.Context) {
 }
 
 func handleRoomPermissionModification(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil || id < 0 {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad request parameter"))
+		return
+	}
 	permissionType := models.RoomPermissionType(c.Param("type"))
 
 	data := struct {
@@ -388,7 +395,7 @@ func handleRoomPermissionModification(c *gin.Context) {
 		}
 	}
 
-	err := service.ChangeRoomPermission(uint(id), permissionType, data.ClearPrevious)
+	err = service.ChangeRoomPermission(uint(id), permissionType, data.ClearPrevious)
 	if err != nil {
 		if rerr, ok := err.(errors.RequestError); ok {
 			c.Abort()
@@ -406,24 +413,21 @@ func handleRoomPermissionModification(c *gin.Context) {
 }
 
 func handleRoomPermissionSubjectAppend(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil || id < 0 {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad request parameter"))
+		return
+	}
 	permissionType := models.PermissionSubjectType(c.Param("subtype"))
 	subject := c.Param("subject")
-
-	var err error
 
 	if permissionType == models.PermissionSubjectTypeLabel {
 		label := string(subject)
 		err = service.AddRoomPermissionItem_Label(uint(id), label)
 	} else if permissionType == models.PermissionSubjectTypeUser {
-		var uid int
-		uid, err = strconv.Atoi(subject)
-		if err != nil || uid < 0 {
-			c.Abort()
-			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "invalid subject"))
-			return
-		}
-		err = service.AddRoomPermissionItem_User(uint(id), uint(uid))
+		username := string(subject)
+		err = service.AddRoomPermissionItem_User(uint(id), username)
 	} else {
 		c.Abort()
 		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUnknownRoomPermissionItemType, "unknown permission item type"))
@@ -447,24 +451,21 @@ func handleRoomPermissionSubjectAppend(c *gin.Context) {
 }
 
 func handleRoomPermissionSubjectDelete(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil || id < 0 {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad request parameter"))
+		return
+	}
 	permissionType := models.PermissionSubjectType(c.Param("subtype"))
 	subject := c.Param("subject")
-
-	var err error
 
 	if permissionType == models.PermissionSubjectTypeLabel {
 		label := string(subject)
 		err = service.DeleteRoomPermissionItem_Label(uint(id), label)
 	} else if permissionType == models.PermissionSubjectTypeUser {
-		var uid int
-		uid, err = strconv.Atoi(subject)
-		if err != nil {
-			c.Abort()
-			c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidRequestData, "invalid subject"))
-			return
-		}
-		err = service.DeleteRoomPermissionItem_User(uint(id), uint(uid))
+		username := string(subject)
+		err = service.DeleteRoomPermissionItem_User(uint(id), username)
 	} else {
 		c.Abort()
 		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestUnknownRoomPermissionItemType, "unknown permission item type"))
@@ -484,4 +485,43 @@ func handleRoomPermissionSubjectDelete(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, common.OkResponse)
+}
+
+func handlePermissionAutoComplete(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil || id < 0 {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad request parameter"))
+		return
+	}
+	permissionType := models.PermissionSubjectType(c.Param("subtype"))
+	prefix := c.Query("prefix")
+
+	if permissionType != models.PermissionSubjectTypeLabel && permissionType != models.PermissionSubjectTypeUser {
+		c.Abort()
+		c.JSON(http.StatusBadRequest, common.SampleResponse(errors.RequestInvalidParameter, "bad request data"))
+		return
+	}
+
+	user := service.GetUserFromContext(c)
+	autoComplete, cerr := service.PermItemAutoCompelete(user, uint(id), permissionType, prefix)
+
+	if cerr != nil {
+		if rerr, ok := cerr.(errors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			logrus.WithError(cerr).Error("error when handling room permission autoCompelete")
+			c.Abort()
+			c.JSON(http.StatusInternalServerError, cerr.ToResponse())
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, common.Response{
+		"code":          0,
+		"message":       "ok",
+		"auto_complete": autoComplete,
+	})
 }

@@ -1,4 +1,6 @@
 {
+  "slogan": "What you love is your life.",
+
   "second": "s",
   "minute": "m",
   "hour": "h",
@@ -15,6 +17,7 @@
   "or_continue_with": "Or continue with",
 
   "dashboard": "Dashboard",
+  "profile": "Profile",
 
   "home_page": "Home",
   "rooms_page": "Rooms",
@@ -151,12 +154,14 @@
   "next_month": "Next Month",
 
   "enters_room": "enters room",
+  "leaves_room": "leaves room",
   "room-list": "Room list",
 
   "you-have-no-room": "You didn't have room yet",
   "hold-key": "Hold",
   "to-scroll-horizontally": "to scroll horizontally",
   "new-room-btn": "New",
+  "create-room-btn": "Create",
   "select-room-to-setup-hint": "Select a room to setup",
 
   "general-info": "General Info",
@@ -172,6 +177,8 @@
   "user": "Account",
   "label": "Label",
   "add": "Add",
+
+  "room-deletion": "Delete room",
 
   "free_software_note": "Note: This is a free software, source code is published under GPLv3.",
   "errors": {

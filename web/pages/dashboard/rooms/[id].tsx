@@ -17,6 +17,7 @@ import { cutoffRoomStream, deleteRoom, fetchRoomDetail, fetchRoomTimeline } from
 import { Transition } from "@headlessui/react"
 import "humanizer.node"
 import StreamVideoBox from "@/components/StreamVideoBox/StreamVideoBox"
+import RoomHistory from "@/components/RoomHistory/RoomHistory"
 
 const inter = Inter({
   subsets: ['latin-ext'],
@@ -440,49 +441,22 @@ export default function RoomDetailPage() {
                   </div>
                   }
                 </div>
-                {/*
-                <div className="bg-gray-50 px-4 py-6 sm:px-6">
-                  <div className="flex space-x-3">
-                    <div className="flex-shrink-0">
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <form action="#">
-                        <div>
-                          <label htmlFor="comment" className="sr-only">
-                            About
-                          </label>
-                          <textarea
-                            id="comment"
-                            name="comment"
-                            rows={3}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                            placeholder="Add a note"
-                            defaultValue={''}
-                          />
-                        </div>
-                        <div className="mt-3 flex items-center justify-between">
-                          <a
-                            href="#"
-                            className="group inline-flex items-start space-x-2 text-sm text-gray-500 hover:text-gray-900"
-                          >
-                            <QuestionMarkCircleIcon
-                              className="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
-                              aria-hidden="true"
-                            />
-                            <span>Some HTML is okay.</span>
-                          </a>
-                          <button
-                            type="submit"
-                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          >
-                            Comment
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              */ }
+              </div>
+            </section>
+            <section aria-labelledby="history-title">
+              <div className="bg-white px-4 py-5 shadow sm:rounded-lg sm:px-6">
+                <h2 id="history-title" className="text-lg font-medium text-gray-900">
+                  {  localize(lang, "account_history") }
+                </h2>
+
+                {/* history */}
+                <RoomHistory
+                  id={id}
+                  title={roomDetail!.rooms.title}
+                  ownerUsername={roomDetail!.rooms.owner_username}
+                  ownerId={roomDetail!.rooms.owner_id} 
+                  onError={dealWithFetchError}
+                />
               </div>
             </section>
           </div>

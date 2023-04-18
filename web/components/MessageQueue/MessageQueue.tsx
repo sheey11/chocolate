@@ -19,12 +19,10 @@ const MessageQueue = forwardRef<MessageQueueHandle>(function MessageQueue(props,
                     q[message.key] = message
                     return Object.assign({}, q)
                 })
-                setTimeout(() => {
-                    setMessageShow((s: any) => {
-                        s[message.key] = true
-                        return Object.assign({}, s)
-                    })
-                }, 10)
+                setMessageShow((s: any) => {
+                    s[message.key] = true
+                    return Object.assign({}, s)
+                })
             },
             error(content: string, title: string, autoClose?: boolean) {
                 const message: MessageType = { key: id.current++, title, content, type: "error", autoClose }

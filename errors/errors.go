@@ -39,6 +39,7 @@ const (
 	RequestRoomBanned
 	RequestRoomNotPublishingStream
 	RequestTimeRangeTooLong
+	RequestAutoCompletePrefixTooLong
 )
 
 const (
@@ -49,6 +50,7 @@ const (
 	LogicReadingHttpResponseBodyError
 	LogicUnmarshalingHttpResponseBodyError
 	LogicSRSRepondNonZero
+	LogicUnknownPermItemSubjectType
 )
 
 const (
@@ -99,4 +101,6 @@ const (
 	DatabaseClearRoomPermissionItemError
 	DatabaseClearRoomViewersError
 	DatabaseClearRoomSrsRelatedIDError
+
+	DatabasePermItemAutoComepelteLookupError
 )

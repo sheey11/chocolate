@@ -77,23 +77,30 @@ func AddRoomPermissionItem_Label(id uint, label string) cerrors.ChocolateError {
 	return models.AddRoomPermissionItem_Label(id, label)
 }
 
-func AddRoomPermissionItem_User(id uint, uid uint) cerrors.ChocolateError {
-	u := models.GetUserByID(uid)
+func AddRoomPermissionItem_User(id uint, username string) cerrors.ChocolateError {
+	u, _ := models.GetUserByName(username, nil)
 	if u == nil {
 		return cerrors.RequestError{
 			ID:      cerrors.RequestUserNotFound,
 			Message: "user not found",
 		}
 	}
-	return models.AddRoomPermissionItem_User(id, uid)
+	return models.AddRoomPermissionItem_User(id, u.ID)
 }
 
 func DeleteRoomPermissionItem_Label(id uint, label string) cerrors.ChocolateError {
 	return models.DeleteRoomPermissionItem_Label(id, label)
 }
 
-func DeleteRoomPermissionItem_User(id uint, uid uint) cerrors.ChocolateError {
-	return models.DeleteRoomPermissionItem_User(id, uid)
+func DeleteRoomPermissionItem_User(id uint, username string) cerrors.ChocolateError {
+	u, _ := models.GetUserByName(username, nil)
+	if u == nil {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestUserNotFound,
+			Message: "user not found",
+		}
+	}
+	return models.DeleteRoomPermissionItem_User(id, u.ID)
 }
 
 func CreateRoomForUser(user *models.User, title string) (*models.Room, cerrors.ChocolateError) {
@@ -547,4 +554,25 @@ func GetRoomStreamSRSInfo(room *models.Room) (*SRSStreamInfo, cerrors.ChocolateE
 	}
 
 	return &data.Stream, nil
+}
+
+func PermItemAutoCompelete(user *models.User, roomId uint, permType models.PermissionSubjectType, prefix string) ([]*models.PermItemAutoCompeleteItem, cerrors.ChocolateError) {
+	if len(prefix) == 0 || len(prefix) > 32 {
+		return nil, cerrors.RequestError{
+			ID:      cerrors.RequestInternalServerError,
+			Message: "prefix < 32 char",
+		}
+	}
+
+	room, err := models.GetRoomByID(roomId, []string{})
+	if err != nil {
+		return nil, err
+	} else if room.OwnerID != user.ID {
+		return nil, cerrors.RequestError{
+			ID:      cerrors.RequestNotRoomOwner,
+			Message: "not room owner",
+		}
+	}
+
+	return models.RermItemAutoComplete(roomId, permType, prefix)
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Dialog } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Button from "@/components/Button/Button";
@@ -6,7 +6,7 @@ import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { localize } from "@/i18n/i18n";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { LanguageSwitcher } from "@/components/LanguageSwticher/LanguageSwitcher";
+import { AuthContext } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer/Footer";
 
 export default function Home() {
@@ -14,8 +14,11 @@ export default function Home() {
   const router = useRouter()
   const lang = router.locale!
 
+  const { authenticated } = useContext(AuthContext)
+
   const navigation = [
     { name: localize(lang, 'dashboard'), href: '/dashboard/overview' },
+    { name: localize(lang, 'profile'), href: '/profile' },
   ]
 
   const [id, setId] = useState('')
@@ -27,11 +30,11 @@ export default function Home() {
           <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
             <div className="flex lg:flex-1">
               <a href="#" className="-m-1.5 p-1.5">
-                <span className="sr-only">Your Company</span>
+                <span className="sr-only">Chocolate</span>
                 <img
                   className="h-8 w-auto"
                   src="https://tailwindui.com/img/logos/mark.svg?color=blue&shade=600"
-                  alt=""
+                  alt="Chocolate"
                 />
               </a>
             </div>
@@ -52,19 +55,23 @@ export default function Home() {
                 </a>
               ))}
             </div>
-            <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-              <Link href="/signin" className="text-sm font-semibold leading-6 text-gray-900 text flex items-center">
-                { localize(lang, "signin") }
-                <ArrowRightIcon className="inline h-3 w-3 ml-1" /> 
-              </Link>
-            </div>
+            { !authenticated ? 
+              <div className="hidden lg:flex lg:flex-1 lg:justify-end">
+                <Link href="/signin" className="text-sm font-semibold leading-6 text-gray-900 text flex items-center">
+                  { localize(lang, "signin") }
+                  <ArrowRightIcon className="inline h-3 w-3 ml-1" /> 
+                </Link>
+              </div>
+              :
+              <></>
+            }
           </nav>
           <Dialog as="div" className="lg:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
             <div className="fixed inset-0 z-50" />
             <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
               <div className="flex items-center justify-between">
                 <a href="#" className="-m-1.5 p-1.5">
-                  <span className="sr-only">Your Company</span>
+                  <span className="sr-only">Chocolate</span>
                   <img
                     className="h-8 w-auto"
                     src="https://tailwindui.com/img/logos/mark.svg?color=blue&shade=600"
@@ -136,11 +143,10 @@ export default function Home() {
           <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
             <div className="text-center">
               <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                Data to enrich your online business
+                The best private streaming solution.
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt amet
-                fugiat veniam occaecat fugiat aliqua.
+                { localize(lang, 'slogan') }
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
                 <input

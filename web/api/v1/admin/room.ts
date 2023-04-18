@@ -1,5 +1,6 @@
 import { GET, PATCH, POST, DELETE } from "@/api/v1/api"
-import { AdminRoomDetailResponse, ChocolcateResponse, ListRoomAdminResponse, RoomHistoryQuery, RoomHistoryResponse, RoomTimelineResponse } from "../datatypes"
+import { resourceUsage } from "process"
+import { AdminRoomDetailResponse, ChocolcateResponse, ListRoomAdminResponse, RoomChatCompact, RoomHistoryQuery, RoomHistoryResponse, RoomTimelineResponse } from "../datatypes"
 
 export interface FetchRoomOptions {
     search?: string,
@@ -37,6 +38,41 @@ export function deleteRoom(id: string): Promise<ChocolcateResponse> {
     return DELETE<ChocolcateResponse>(`/api/v1/admin/room/${id}`)
 }
 
-export function fetchRoomHistory(username: string, query: RoomHistoryQuery): Promise<RoomHistoryResponse> {
-    return GET<RoomHistoryResponse>(`/api/v1/admin/account/${username}/history`, query)
+export function fetchRoomHistory(id: number, query: RoomHistoryQuery): Promise<RoomChatCompact[]> {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const response = await GET<RoomHistoryResponse>(`/api/v1/admin/room/${id}/history`, query)
+            const result: RoomChatCompact[] = []
+            response.history.forEach((history) => {
+                result.push({
+                    username: history.username,
+                    uid: history.uid,
+                    type: 'entering_room',
+                    time: history.enter_time,
+                    content: "",
+                })
+                
+                history.chats.forEach(c => {
+                    result.push({
+                        username: history.username,
+                        uid: history.uid,
+                        type: c.type,
+                        time: c.time,
+                        content: c.content,
+                    })
+                })
+
+                result.push({
+                    username: history.username,
+                    uid: history.uid,
+                    type: 'leaving_room',
+                    time: history.enter_time,
+                    content: "",
+                })
+            })
+            resolve(result)
+        } catch (e) {
+            reject(e)
+        }
+    })
 }

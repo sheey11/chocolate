@@ -1,4 +1,4 @@
-import { SelfInfoResponse, OwnedRoomInformation, OwnedRoomInfoResponse, ChocolcateResponse } from "@/api/v1/datatypes";
+import { SelfInfoResponse, OwnedRoomInformation, OwnedRoomInfoResponse, ChocolcateResponse, PermItemAutoComplete } from "@/api/v1/datatypes";
 import { Footer } from "@/components/Footer/Footer";
 import { Nav } from "@/components/Nav/Nav";
 import { dashboardNavs, userNavs } from "@/constants/navs";
@@ -7,15 +7,27 @@ import { localize, localizeError } from "@/i18n/i18n";
 import { classNames } from "@/utils/classnames";
 import { useRouter } from "next/router";
 import { fetchCurrentUserInfo } from "@/api/v1/account";
-import { ChangeEvent, Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronUpDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ChangeEvent, FormEvent, Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronUpDownIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { TagIcon, UserIcon } from '@heroicons/react/24/solid'
-import { Dialog, Listbox, Transition } from "@headlessui/react";
-import { addRoomPermissionItem, deleteRoomPermissionItem, fetchOwnedRoomInfo, startStreaming, stopStreaming, updateRoomPermissionType, updateRoomTitle } from "@/api/v1/room";
+import { Combobox, Listbox, Popover, Transition } from "@headlessui/react";
+import { addRoomPermissionItem,
+  autoCompletePermItem,
+  createRoom,
+  deleteRoomPermissionItem,
+  fetchOwnedRoomInfo,
+  startStreaming,
+  stopStreaming,
+  updateRoomPermissionType,
+  updateRoomTitle,
+  deleteRoom
+} from "@/api/v1/room";
 import { PlayCircleIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import MessageQueue, { MessageQueueHandle } from "@/components/MessageQueue/MessageQueue";
 import { AxiosError } from "axios";
 import debounce from "@/utils/debounce";
+import Button from "@/components/Button/Button";
+import Dialog from "@/components/Dialog/Dialog";
 
 function SelectRoomFirstHint() {
   const lang = useRouter().locale!
@@ -27,6 +39,125 @@ function SelectRoomFirstHint() {
       </div>
     </div>
   );
+}
+
+type PermItemType = "label" | "user"
+interface PermItemAppendInputProps {
+  id: number
+  onAppend: (id: number, type: PermItemType, value: string) => boolean
+}
+
+function PermItemAppendInput({ id, onAppend }: PermItemAppendInputProps) {
+  const lang = useRouter().locale!
+
+  const [selectedType, setSelectedType] = useState<PermItemType>("label")
+  const [inputValue, setInputValue] = useState<string>("")
+
+  const [autoCompleteItems, setAutoCompleteItems] = useState<PermItemAutoComplete[]>([])
+
+  const handleAutoCompletePrefixChange = debounce((id: number, type: PermItemType, p: string) => {
+    if(p.length === 0 || p.length > 32) return
+    autoCompletePermItem(id, type, p)
+    .then(r => setAutoCompleteItems(r.auto_complete))
+    .catch(() => setAutoCompleteItems([]))
+  }, 200);
+
+  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const ok = onAppend(id, selectedType, inputValue)
+    if(ok) {
+      setInputValue("")
+    }
+  }
+
+  return (
+    <form className="flex items-stretch my-6" onSubmit={handleFormSubmit}>
+      <Listbox name="type" defaultValue="label" value={selectedType} onChange={(v: PermItemType) => setSelectedType(v)}>
+        <Listbox.Button className="relative px-2 py-2 rounded-l-lg border border-gray-300 flex items-center space-x-2">
+          {({ value }) => (
+            <>
+              { value == 'label' ?
+                <div className="h-5 w-5 p-1 rounded-full bg-yellow-500 text-white flex-shrink-0">
+                  <TagIcon />
+                </div>
+                :
+                <div className="h-5 w-5 p-1 rounded-full bg-blue-500 text-white flex-shrink-0">
+                  <UserIcon />
+                </div>
+              }
+              <ChevronUpDownIcon className="h-4 w-4"/>
+            </>
+          )}
+        </Listbox.Button>
+
+        <Transition
+          enter="transition duration-100 ease-out"
+          enterFrom="transform scale-95 opacity-0"
+          enterTo="transform scale-100 opacity-100"
+          leave="transition duration-75 ease-out"
+          leaveFrom="transform scale-100 opacity-100"
+          leaveTo="transform scale-95 opacity-0"
+        >
+          <Listbox.Options className="absolute top-[calc(2.5rem+1px)] -left-16 w-32 bg-white border shadow rounded text-sm text-gray-900 flex flex-col">
+            <Listbox.Option as="button" type="button" value="label" className="px-3 py-2 flex flex space-x-4 hover:bg-gray-50">
+              <div className="h-5 w-5 p-1 rounded-full bg-yellow-500 text-white flex-shrink-0">
+                <TagIcon />
+              </div>
+              <span>{ localize(lang, "label") }</span>
+            </Listbox.Option>
+
+            <Listbox.Option as="button" type="button" value="user" className="px-3 py-2 flex flex space-x-4 hover:bg-gray-50">
+              <div className="h-5 w-5 p-1 rounded-full bg-blue-500 text-white flex-shrink-0">
+                <UserIcon />
+              </div>
+              <span>{ localize(lang, "user") }</span>
+            </Listbox.Option>
+          </Listbox.Options>
+        </Transition>
+      </Listbox>
+      <Combobox value={{type: selectedType, name: inputValue }} name="subject" onChange={(v: PermItemAutoComplete) => {
+        setInputValue(v.name)
+        setSelectedType(v.type)
+        console.log(v)
+      }}>
+        <div className="relative">
+          <Combobox.Input
+            className="p-2 w-64 border border-l-0 border-gray-300 focus:ring focus:ring-blue-500 focus:outline-none relative focus:z-10 text-sm"
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value)
+              handleAutoCompletePrefixChange(id, selectedType, e.target.value)
+            }}
+          />
+          <Combobox.Options className="absolute w-full border rounded shadow py-1 bg-white">
+            { autoCompleteItems.map(v => (
+              <Combobox.Option
+                className="px-4 py-2 w-full text-left text-sm flex flex-row items-center space-x-2"
+                key={`${v.type}-${v.name}`}
+                value={v} as="button" type="button"
+              >
+                { v.type === 'label' ?
+                  <div className="h-5 w-5 p-1 rounded-full bg-yellow-500 text-white flex-shrink-0">
+                    <TagIcon />
+                  </div>
+                  :
+                  <div className="h-5 w-5 p-1 rounded-full bg-blue-500 text-white flex-shrink-0">
+                    <UserIcon />
+                  </div>
+                }
+                <span>{ v.name }</span>
+              </Combobox.Option>
+            ))}
+
+          </Combobox.Options>
+        </div>
+      </Combobox>
+      <button type='submit' className="px-3 bg-blue-600 rounded-r text-white flex items-center space-x-2 text-sm focus:ring focus:ring-blue-200 focus:z-10">
+        <PlusIcon className="h-4 w-4"/>
+        <span> { localize(lang, "add") }</span>
+      </button>
+    </form>
+  )
 }
 
 const colorPattles = [
@@ -43,16 +174,19 @@ export default function ProfilePage() {
   const lang = useRouter().locale!
   const mqRef = useRef<MessageQueueHandle | null>(null)
   const titleRef = useRef<HTMLInputElement | null>(null)
+  const roomCreationTitleRef = useRef<HTMLInputElement | null>(null)
 
   const { authenticated,    getUser             } = useContext(AuthContext)
   const [ errCode,          setErrCode          ] = useState<number | null>()
   const [ httpErrCode,      setHttpErrCode      ] = useState<number | null>()
 
-  const [ selectedRoom, setSelectedRoom ] = useState<OwnedRoomInformation | null>()
-  const [ selectedRoomDetail, setSelectedRoomDetail ] = useState<OwnedRoomInfoResponse | null>()
+  const [ selectedRoom, setSelectedRoom ] = useState<OwnedRoomInformation | null>(null)
+  const [ selectedRoomDetail, setSelectedRoomDetail ] = useState<OwnedRoomInfoResponse | null>(null)
   const [ permissionTypeHelpShow, setPermissionTypeHelpShow ] = useState<boolean>(false)
   const [ roomPermissionType, setRoomPermissionType ] = useState<'blacklist' | 'whitelist'>('blacklist')
   const [ roomStreamKey, setRoomStreamKey] = useState<string | null>(null)
+
+  const [ deleteConfirmDialogOpen, setDeleteConfirmDialogOpen ] = useState<boolean>(false)
 
   const [ user, setUser ] = useState<SelfInfoResponse | null>(null)
 
@@ -91,7 +225,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if(!titleRef.current || !selectedRoomDetail) return
-    titleRef.current.value = selectedRoomDetail.title
   }, [titleRef, selectedRoomDetail]);
 
   useEffect(() => {
@@ -103,6 +236,9 @@ export default function ProfilePage() {
     setRoomPermissionType(selectedRoom.permission_type)
     setRoomStreamKey(null)
     reloadSelectedRoomDetail(selectedRoom.id)
+    if(titleRef.current) {
+      titleRef.current.value = selectedRoom.title
+    }
   }, [selectedRoom, reloadSelectedRoomDetail]);
 
   const handleRoomPermissionTypeChange = (type: "whitelist" | "blacklist") => {
@@ -159,14 +295,46 @@ export default function ProfilePage() {
       .catch(showErrorMessage)
   };
 
-  const handlePermItemAdd = (type: "label" | "user", subject: string) => {
-    if(!selectedRoomDetail) return
-    addRoomPermissionItem(selectedRoomDetail.id, type, subject)
+  const handleRoomPermissionItemAppend = (id: number, type: PermItemType, subject: string): boolean => {
+    if(!selectedRoomDetail) return false
+    addRoomPermissionItem(id, type, subject)
       .then(() => {
         showSuccessMessage()
-        reloadSelectedRoomDetail(selectedRoomDetail.id)
+        reloadSelectedRoomDetail(id)
       })
       .catch(showErrorMessage)
+    return false
+  };
+
+  const handleRoomCreation = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    createRoom(roomCreationTitleRef.current!.value)
+      .then((r) => {
+        showSuccessMessage()
+        reloadInfo()
+        setSelectedRoom({
+          id: r.room_id,
+          permission_type: "whitelist",
+          status: "idle",
+          title: r.title,
+          uid: "",
+          viewers: 0,
+        })
+      })
+      .catch(showErrorMessage)
+  };
+
+  const handleRoomDeletion = () => {
+    if(!selectedRoomDetail) return
+    deleteRoom(selectedRoomDetail.id)
+      .then(() => {
+        showSuccessMessage()
+        reloadInfo()
+        setSelectedRoom(null)
+        setSelectedRoomDetail(null)
+      })
+    .catch(showErrorMessage)
+    .finally(() => setDeleteConfirmDialogOpen(false))
   };
 
   const isWindows = () => {
@@ -222,15 +390,45 @@ export default function ProfilePage() {
               <h2 id="room-list-title" className="text-lg font-medium leading-6 text-gray-900">
                 { localize(lang, "room-list") }
               </h2>
-              <button className={classNames(
-                "px-3 py-1 rounded border border-blue-600 bg-blue-600 text-sm text-white flex item-center space-x-2",
-                "focus:ring focus:ring-blue-200",
-                "transition duration-200",
-                "hover:bg-blue-700",
-              )}>
-                <PlusIcon className="h-5 w-5"/>
-                <span>{ localize(lang, "new-room-btn") }</span>
-              </button>
+              <Popover>
+                <div className="relative flex flex-col items-center">
+                  <Popover.Button className={classNames(
+                    "px-3 py-1 rounded border border-blue-600 bg-blue-600 text-sm text-white flex item-center space-x-2",
+                    "focus:ring focus:ring-blue-200",
+                    "transition duration-200",
+                    "hover:bg-blue-700",
+                  )}>
+                    <PlusIcon className="h-5 w-5"/>
+                    <span>{ localize(lang, "new-room-btn") }</span>
+                  </Popover.Button>
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-50 origin-top"
+                    enterFrom="opacity-0 scale-95"
+                    enterTo="opacity-100 scale-100"
+                    leave="transition ease-in duration-50 origin-top"
+                    leaveFrom="opacity-100 scale-100"
+                    leaveTo="opacity-0 scale-95"
+                  >
+                    <Popover.Panel className="absolute w-64 top-10 bg-white rounded shadow-lg ring-1 ring-gray-300 flex flex-col items-center">
+                      <div className="h-2 w-4 absolute -top-2 bg-gray-300" style={{ clipPath: "polygon(0 100%, 50% 0, 100% 100%)" }}/>
+                      <div className="h-2 w-4 absolute -top-1.5 bg-white" style={{ clipPath: "polygon(0 100%, 50% 0, 100% 100%)" }}/>
+                      <form className="flex items-center space-x-4 w-full p-4" onSubmit={handleRoomCreation}>
+                        <input
+                          ref={roomCreationTitleRef}
+                          type="text"
+                          className="px-4 py-1 w-32 text-sm border border-gray-300 rounded focus:ring focus:ring-blue-500 focus:outline-none grow"
+                          placeholder={localize(lang, "room_title")}
+                          required
+                        />
+                        <button type="submit" className="text-sm bg-white border border-blue-600 text-blue-600 hover:bg-gray-50 rounded shadow-sm px-4 py-1 font-medium flex-shrink-0 focus:ring focus:ring-blue-200">
+                          { localize(lang, "create") }
+                        </button>
+                      </form>
+                    </Popover.Panel>
+                  </Transition>
+                </div>
+              </Popover>
             </div>
             { user?.rooms.length === 0 ?
               <div className="p-8 flex flex-col space-around items-center space-y-2">
@@ -315,6 +513,7 @@ export default function ProfilePage() {
                               minLength={1}
                               maxLength={32}
                               ref={titleRef}
+                              defaultValue={selectedRoomDetail.title}
                               onChange={handleTitleChange}
                               className={classNames(
                                 "max-w-full w-64 text-sm px-0",
@@ -379,7 +578,7 @@ export default function ProfilePage() {
                                 >
                                   <Listbox.Options className={classNames(
                                     "absolute top-1 overflow-y-scroll rounded bg-white border border-gray-200",
-                                    "shadow-md w-full max-w-[16rem] z-10 divide-y",
+                                    "shadow-md w-full max-w-[16rem] divide-y",
                                   )}>
                                     <Listbox.Option value="blacklist" as="button" type="button" className="px-3 py-2 block w-full text-left text-sm hover:bg-gray-50">
                                       { localize(lang, "room_permission_type_blacklist") }
@@ -392,6 +591,44 @@ export default function ProfilePage() {
                               </div>
                             </Listbox>
 
+                          </dd>
+                        </div>
+                        <div className="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                          <dt className="text-sm font-medium leading-6 text-gray-900">{ localize(lang, "room-deletion") }</dt>
+                          <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                            <button
+                              onClick={() => setDeleteConfirmDialogOpen(true)}
+                              className={classNames(
+                                "px-4 py-1 rounded border-red-600 text-sm text-red-600 font-bold",
+                                "flex flex-row items-center space-x-2",
+                                "hover:bg-red-50 focus:ring focus:ring-red-200",
+                                "transition duration-200"
+                              )}
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                              <span>{ localize(lang, "delete_room") }</span>
+                            </button>
+                            <Dialog open={deleteConfirmDialogOpen} onClose={() => setDeleteConfirmDialogOpen(false)}>
+                              <Dialog.Content>
+                                <div className="flex flex-row space-x-4 items-start">
+                                  <span className="p-2 rounded-full bg-red-200">
+                                    <TrashIcon className="h-6 w-6 text-red-500"/>
+                                  </span>
+                                  <div className="w-full">
+                                    <h2 className="font-semibold text-md">{ localize(lang, "delete_confirm") }</h2>
+                                    <p>
+                                      { localize(lang, "the_room") } {' '}
+                                      <code className="code">{ selectedRoomDetail.id }</code>
+                                      {' '}{ localize(lang, "delete_cannot_be_undone") }
+                                    </p>
+                                  </div>
+                                </div>
+                              </Dialog.Content>
+                              <Dialog.Actions>
+                                <Button type="secondary" onClick={() => setDeleteConfirmDialogOpen(false)}>{ localize(lang, "cancel") }</Button>
+                                <Button type="destructive" onClick={handleRoomDeletion}>{ localize(lang, "delete_confirm_btn") }</Button>
+                              </Dialog.Actions>
+                            </Dialog>
                           </dd>
                         </div>
                       </dl>
@@ -410,7 +647,7 @@ export default function ProfilePage() {
                                   onClick={() => turnOffStream(selectedRoomDetail.id)}
                                   className={classNames(
                                     "px-4 rounded text-blue-600 font-bold py-1 text-sm",
-                                    "flex flex-row items-center space-x-2 border border-blue-600",
+                                    "flex flex-row items-center space-x-2",
                                     "focus:ring-blue-200 focus:ring transtion duration-200",
                                     "hover:bg-blue-600 hover:text-white",
                                   )}>
@@ -422,9 +659,9 @@ export default function ProfilePage() {
                                   onClick={() => turnOnStream(selectedRoomDetail.id)}
                                   className={classNames(
                                     "px-4 rounded text-blue-600 font-bold py-1 text-sm",
-                                    "flex flex-row items-center space-x-2 border border-blue-600",
+                                    "flex flex-row items-center space-x-2",
                                     "focus:ring-blue-200 focus:ring transtion duration-200",
-                                    "hover:bg-blue-600 hover:text-white hover:shadow",
+                                    "hover:bg-blue-50",
                                   )}>
                                   <PlayCircleIcon className="h-4 w-4"/>
                                   <span>{ localize(lang, "start_streaming_btn") }</span>
@@ -489,60 +726,8 @@ export default function ProfilePage() {
                           </li>
                         ))}
                       </ul>
-                      <form className="flex items-stretch">
-                        <Listbox name="type" defaultValue="label">
-                          <Listbox.Button className="relative px-2 py-2 rounded-l-lg border border-gray-300 flex items-center space-x-2">
-                            {({ value }) => (
-                              <>
-                                { value == 'label' ?
-                                  <div className="h-5 w-5 p-1 rounded-full bg-yellow-500 text-white flex-shrink-0">
-                                    <TagIcon />
-                                  </div>
-                                  :
-                                  <div className="h-5 w-5 p-1 rounded-full bg-blue-500 text-white flex-shrink-0">
-                                    <UserIcon />
-                                  </div>
-                                }
-                                <ChevronUpDownIcon className="h-4 w-4"/>
-                              </>
-                            )}
-                          </Listbox.Button>
-
-                          <Transition
-                            enter="transition duration-100 ease-out"
-                            enterFrom="transform scale-95 opacity-0"
-                            enterTo="transform scale-100 opacity-100"
-                            leave="transition duration-75 ease-out"
-                            leaveFrom="transform scale-100 opacity-100"
-                            leaveTo="transform scale-95 opacity-0"
-                          >
-                            <Listbox.Options className="absolute top-[calc(2.5rem+1px)] -left-16 w-32 bg-white border shadow rounded text-sm text-gray-900 flex flex-col">
-                              <Listbox.Option as="button" type="button" value="label" className="px-3 py-2 flex flex space-x-4 hover:bg-gray-50">
-                                <div className="h-5 w-5 p-1 rounded-full bg-yellow-500 text-white flex-shrink-0">
-                                  <TagIcon />
-                                </div>
-                                <span>Label</span>
-                              </Listbox.Option>
-
-                              <Listbox.Option as="button" type="button" value="user" className="px-3 py-2 flex flex space-x-4 hover:bg-gray-50">
-                                <div className="h-5 w-5 p-1 rounded-full bg-blue-500 text-white flex-shrink-0">
-                                  <UserIcon />
-                                </div>
-                                <span>User</span>
-                              </Listbox.Option>
-                            </Listbox.Options>
-                          </Transition>
-                        </Listbox>
-                        <input
-                          type="input"
-                          name="subject"
-                          className="p-2 w-64 border border-l-0 border-gray-300 focus:ring focus:ring-blue-500 focus:outline-none relative focus:z-10 text-sm"
-                        />
-                        <button type='submit' className="px-3 bg-blue-600 rounded-r text-white flex items-center space-x-2 text-sm focus:ring focus:ring-blue-200 focus:z-10">
-                          <PlusIcon className="h-4 w-4"/>
-                          <span> { localize(lang, "add") }</span>
-                        </button>
-                      </form>
+                      <PermItemAppendInput id={selectedRoomDetail.id} onAppend={handleRoomPermissionItemAppend}/>
+                      { /* TODO */ }
                     </section>
                   </>
                   :

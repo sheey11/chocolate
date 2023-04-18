@@ -60,7 +60,7 @@ export const Nav = ({ navs }: NavProps) => {
                                     <img
                                         className="block h-8 w-auto"
                                         src="https://tailwindui.com/img/logos/mark.svg?color=blue&shade=600"
-                                        alt="Your Company"
+                                        alt="Chocolate"
                                     />
                                     <span className={`px-2 text-xl pt-1 ${sail.className}`}>
                                         Chocolate

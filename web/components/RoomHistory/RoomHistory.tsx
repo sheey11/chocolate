@@ -2,7 +2,7 @@ import dayjs from "dayjs"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Disclosure, Popover, Transition } from "@headlessui/react"
 import TimeRangeSelector from "@/components/TimeRangeSelector/TimeRangeSelector"
-import { AccountHistoryResponse, AccountWatchingHistory, ChocolcateResponse } from "@/api/v1/datatypes"
+import { AccountHistoryResponse, AccountWatchingHistory, ChocolcateResponse, RoomChatCompact } from "@/api/v1/datatypes"
 import { useRouter } from "next/router"
 import { ChevronLeftIcon, ChevronRightIcon, } from '@heroicons/react/24/outline'
 import { localize } from "@/i18n/i18n"
@@ -10,6 +10,7 @@ import { classNames } from "@/utils/classnames"
 import { fetchAccountHistory } from "@/api/v1/admin/account"
 import debounce from "@/utils/debounce"
 import Link from "next/link"
+import { fetchRoomHistory } from "@/api/v1/admin/room"
 
 interface Day {
   year: number,
@@ -17,8 +18,11 @@ interface Day {
   day: number,
 }
 
-interface AccountHistoryProps {
-    username: string | undefined,
+interface RoomHistoryProps {
+    id: string | undefined,
+    title: string,
+    ownerUsername: string,
+    ownerId: number,
     onError: (arg0: ChocolcateResponse) => void,
 }
 
@@ -32,12 +36,14 @@ const colorPattles = [
   "bg-orange-600",
 ]
 
-export default function AccountHistory({ username, onError }: AccountHistoryProps) {
+export default function RoomHistory({ id, title, ownerUsername, ownerId, onError }: RoomHistoryProps) {
     const now = dayjs()
     const [calanderShowingDate,    setCalanderShowingDate   ] = useState<number[]                       >([now.year(), now.month()])
     const [currentSelectedDate,    setCurrentSelectedDate   ] = useState<number[]                       >([now.year(), now.month(), now.date()])
     const [timeRange,              setTimeRange             ] = useState<number[]                       >([6 * 60 * 60, 18 * 60 * 60])
-    const [accountHistory,         setAccountHistory        ] = useState<AccountWatchingHistory[] | null>(null)
+    const [roomHistory,            setRoomHistory           ] = useState<RoomChatCompact[]        | null>(null)
+
+    const [highlightUsername, setHighlightUsername] = useState<string>("")
 
     const lang = useRouter().locale!
 
@@ -83,21 +89,21 @@ export default function AccountHistory({ username, onError }: AccountHistoryProp
 
     const handleTimeRangeChange = debounce((v: number[]) => setTimeRange(v), 500)
 
-    const fetchHistory = useCallback((username: string, selectedDate: number[], timeRange: number[]) => {
+    const fetchHistory = useCallback((id: number, selectedDate: number[], timeRange: number[]) => {
         const [y, m, d] = selectedDate
         const selectedDateTimestamp = dayjs(new Date(y, m, d)).unix()
-        fetchAccountHistory(username, {
+        fetchRoomHistory(id, {
             start: selectedDateTimestamp + timeRange[0],
             end: selectedDateTimestamp + timeRange[1],
         })
-            .then(r => setAccountHistory(r.history))
+            .then(setRoomHistory)
             .catch(onError)
     }, [onError])
 
     useEffect(() => {
-        if(!username) return
-        fetchHistory(username, currentSelectedDate, timeRange)
-    }, [username, currentSelectedDate, timeRange, fetchHistory])
+        if(!id) return
+        fetchHistory(parseInt(id), currentSelectedDate, timeRange)
+    }, [id, currentSelectedDate, timeRange, fetchHistory])
 
     return(
         <>
@@ -194,51 +200,30 @@ export default function AccountHistory({ username, onError }: AccountHistoryProp
                 </div>
                 <TimeRangeSelector onChange={handleTimeRangeChange}/>
             </div>
-            <div className="mt-5 space-y-4 flex flex-col items-stretch" role="list">
-                { accountHistory?.length == 0 ?
+            <div className="mt-5 p-3 rounded flex flex-col w-full">
+                { roomHistory?.length == 0 ?
                     <div className="p-10 text-center text-gray-500 font-bold"> { localize(lang, "no_data") } </div>
                     :
                     <></>
                 }
-                { accountHistory?.map((h, i) => (
-                    <div key={h.start_time + h.end_time} role="listitem" className="p-3 rounded border-2 border-gray-100 flex flex-col items-start space-y-2">
-                        <div className="flex items-center space-x-4 w-full">
-                            <div aria-hidden className={classNames(
-                                "h-16 w-16 rounded text-white text-lg font-bold flex items-center justify-around flex-shrink-0",
-                                colorPattles[i % colorPattles.length]
-                            )}>
-                                {h.room_title.at(0)}
-                            </div>
-                            <div className="w-full flex-shrink-1 text-left">
-                                <h2 className="font-medium">
-                                    <Link href={`/dashboard/users/${h.room_owner_username}`}>
-                                        { h.room_owner_username }
-                                    </Link>
-                                    {" / "}
-                                    <Link href={`/dashboard/rooms/${h.room_id}`}>
-                                        { h.room_title }
-                                    </Link>
-                                </h2>
-                                <span className="text-sm text-gray-500">
-                                    <time dateTime={h.start_time}>{ new Date(h.start_time).toLocaleTimeString(lang) }</time>
-                                    {" - "}
-                                    <time dateTime={h.end_time}>{ new Date(h.end_time).toLocaleTimeString(lang) }</time>
-                                </span>
-                            </div>
-                        </div>
-                        <div className="ml-[5rem] flex flex-col space-y-1 w-full">
-                            <div key={h.start_time} className="w-full flex items-center space-x-2 text-sm">
-                                <time dateTime={h.start_time} className="font-mono"> { new Date(h.start_time).toLocaleTimeString(lang) } </time>
-                                <span>{ username } { localize(lang, "enters_room") }</span>
-                            </div>
-                            { h.chats.map(c => (
-                                <div key={c.time} className="w-full flex items-center space-x-2 text-sm">
-                                    <time dateTime={c.time} className="font-mono"> { new Date(c.time).toLocaleTimeString(lang) } </time>
-                                    <span>{ username }:</span>
-                                    <span>{ c.content }</span>
-                                </div>
-                            ))}
-                        </div>
+                { roomHistory?.map(c => (
+                    <div
+                        key={c.time}
+                        className={classNames(
+                            "w-full flex items-center space-x-2 text-sm py-1",
+                            highlightUsername === c.username ? "bg-gray-50" : "",
+                        )}
+                        onMouseEnter={() => setHighlightUsername(c.username)}
+                        onMouseLeave={() => setHighlightUsername("")}
+                    >
+                        <time dateTime={c.time} className="font-mono"> { new Date(c.time).toLocaleTimeString(lang) } </time>
+                        <span>{ c.username }:</span>
+                        <span>
+                            {
+                                c.type === "entering_room" ? localize(lang, "enters_room") : 
+                                    c.type === "leaving_room" ? localize(lang, "enters_room") : c.content
+                            }
+                        </span>
                     </div>
                 ))}
             </div>

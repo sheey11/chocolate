@@ -37,6 +37,7 @@ export default function Message({ message, show, onClose }: MessageProps) {
             <div className="flex w-full flex-col items-center space-y-4 sm:items-end">
                 {/* Notification panel, dynamically insert this into the live region when it needs to be displayed */}
                 <Transition
+                    appear={true}
                     show={show === true}
                     as={Fragment}
                     enter="transform ease-out duration-300 transition-all"

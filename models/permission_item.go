@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/samber/lo"
 	cerrors "github.com/sheey11/chocolate/errors"
 	"github.com/sirupsen/logrus"
@@ -153,4 +155,77 @@ func IsUserAllowedForRoom(room *Room, user *User) bool {
 		return count == 0
 	}
 	return false
+}
+
+type PermItemAutoCompeleteItem struct {
+	Type PermissionSubjectType `json:"type"`
+	Name string                `json:"name"`
+}
+
+func RermItemAutoComplete(roomId uint, permType PermissionSubjectType, prefix string) ([]*PermItemAutoCompeleteItem, cerrors.ChocolateError) {
+	switch permType {
+	case PermissionSubjectTypeLabel:
+		labelLookup := db.
+			Model(&Label{}).
+			Where("name LIKE ?", fmt.Sprintf("%%%s%%", prefix)).
+			Select("name, 'label' as type").
+			Limit(10)
+		userLookup := db.
+			Model(&User{}).
+			Where("username = ?", prefix).
+			Select("username as name, 'user' as type").
+			Limit(10)
+
+		var result []*PermItemAutoCompeleteItem
+		c := db.Raw("(?) UNION (?)", userLookup, labelLookup).Find(&result)
+		if c.Error != nil {
+			return nil, cerrors.DatabaseError{
+				ID:         cerrors.DatabasePermItemAutoComepelteLookupError,
+				Sql:        c.Statement.SQL.String(),
+				InnerError: c.Error,
+				StackTrace: cerrors.GetStackTrace(),
+				Context: map[string]interface{}{
+					"room_id": roomId,
+					"type":    permType,
+					"prefix":  prefix,
+				},
+			}
+		}
+		return result, nil
+	case PermissionSubjectTypeUser:
+		labelLookup := db.
+			Model(&Label{}).
+			Where("name = ?", prefix).
+			Select("name, 'label' as type").
+			Limit(10)
+		userLookup := db.
+			Model(&User{}).
+			Where("username LIKE ?", fmt.Sprintf("%%%s%%", prefix)).
+			Select("username as name, 'user' as type").
+			Limit(10)
+
+		var result []*PermItemAutoCompeleteItem
+		c := db.Raw("(?) UNION (?)", labelLookup, userLookup).Find(&result)
+		if c.Error != nil {
+			return nil, cerrors.DatabaseError{
+				ID:         cerrors.DatabasePermItemAutoComepelteLookupError,
+				Sql:        c.Statement.SQL.String(),
+				InnerError: c.Error,
+				StackTrace: cerrors.GetStackTrace(),
+				Context: map[string]interface{}{
+					"room_id": roomId,
+					"type":    permType,
+					"prefix":  prefix,
+				},
+			}
+		}
+		return result, nil
+	}
+	return nil, cerrors.LogicError{
+		ID:      cerrors.LogicUnknownPermItemSubjectType,
+		Message: "unknown perm item subject type",
+		Context: map[string]interface{}{
+			"type": permType,
+		},
+	}
 }

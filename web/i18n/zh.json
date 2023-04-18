@@ -1,4 +1,6 @@
 {
+  "slogan": "你所热爱的，就是你的生活。",
+
   "second": "秒",
   "minute": "分钟",
   "hour": "小时",
@@ -15,6 +17,7 @@
   "or_continue_with": "或使用其他账号",
 
   "dashboard": "仪表板",
+  "profile": "个人中心",
 
   "home_page": "主页",
   "rooms_page": "房间",
@@ -151,12 +154,14 @@
   "next_month": "下一个月",
 
   "enters_room": "进入房间",
+  "leaves_room": "离开房间",
   "room-list": "房间列表",
 
   "you-have-no-room": "你还没有房间",
   "hold-key": "按住",
   "to-scroll-horizontally": "来横向滚动",
   "new-room-btn": "新增",
+  "create-room-btn": "创建",
   "select-room-to-setup-hint": "选择一个房间来设置",
 
   "general-info": "基本信息",
@@ -172,6 +177,8 @@
   "user": "账号",
   "label": "标签",
   "add": "添加",
+
+  "room-deletion": "删除房间",
 
   "free_software_note": "注意: 本软件是免费软件，并在 GPLv3 许可证下开放源代码",
   "errors": {

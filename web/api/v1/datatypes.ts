@@ -436,3 +436,25 @@ export interface UserPasswordUpdatePayload {
 export interface StartStreamingResponse extends ChocolcateResponse {
     streamkey: string
 }
+
+export interface PermItemAutoComplete {
+    type: "label" | "user",
+    name: string
+}
+
+export interface PermItemAutoCompleteResponse extends ChocolcateResponse {
+    auto_complete: PermItemAutoComplete[]
+}
+
+export interface CreateRoomResponse extends ChocolcateResponse {
+    room_id: number
+    title: string
+}
+
+export interface RoomChatCompact {
+    username: string
+    uid: number
+    type: "chat" | "admin" | "entering_room" | "leaving_room" | "gift" | "superchat"
+    time: string
+    content: string
+}
