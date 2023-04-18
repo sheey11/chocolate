@@ -452,9 +452,6 @@ export default function RoomDetailPage() {
                 {/* history */}
                 <RoomHistory
                   id={id}
-                  title={roomDetail!.rooms.title}
-                  ownerUsername={roomDetail!.rooms.owner_username}
-                  ownerId={roomDetail!.rooms.owner_id} 
                   onError={dealWithFetchError}
                 />
               </div>

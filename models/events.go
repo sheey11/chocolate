@@ -203,7 +203,7 @@ func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([
 	}
 
 	for _, report := range reports {
-		chatEndTime := lo.If(report.EndTime == nil, endTime).Else(*report.EndTime)
+		chatEndTime := lo.If(report.EndTime == nil, endTime).ElseF(func() time.Time { return *report.EndTime })
 
 		var chats []*ChatMessage
 		c = db.Model(&ChatMessage{}).
@@ -291,7 +291,7 @@ func GetRoomAudienceHistory(rid uint, startTime time.Time, endTime time.Time) ([
 	}
 
 	for _, report := range reports {
-		chatEndTime := lo.If(report.LeaveTime == nil, endTime).Else(*report.LeaveTime)
+		chatEndTime := lo.If(report.LeaveTime == nil, endTime).ElseF(func() time.Time { return *report.LeaveTime })
 
 		var chats []*ChatMessage
 		c = db.

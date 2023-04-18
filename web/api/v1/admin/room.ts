@@ -70,6 +70,9 @@ export function fetchRoomHistory(id: number, query: RoomHistoryQuery): Promise<R
                     content: "",
                 })
             })
+            result.sort((a: RoomChatCompact, b: RoomChatCompact) => {
+                return (new Date(a.time) as unknown as number) - (new Date(b.time) as unknown as number)
+            })
             resolve(result)
         } catch (e) {
             reject(e)

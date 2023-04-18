@@ -20,9 +20,6 @@ interface Day {
 
 interface RoomHistoryProps {
     id: string | undefined,
-    title: string,
-    ownerUsername: string,
-    ownerId: number,
     onError: (arg0: ChocolcateResponse) => void,
 }
 
@@ -36,12 +33,12 @@ const colorPattles = [
   "bg-orange-600",
 ]
 
-export default function RoomHistory({ id, title, ownerUsername, ownerId, onError }: RoomHistoryProps) {
+export default function RoomHistory({ id, onError }: RoomHistoryProps) {
     const now = dayjs()
     const [calanderShowingDate,    setCalanderShowingDate   ] = useState<number[]                       >([now.year(), now.month()])
     const [currentSelectedDate,    setCurrentSelectedDate   ] = useState<number[]                       >([now.year(), now.month(), now.date()])
     const [timeRange,              setTimeRange             ] = useState<number[]                       >([6 * 60 * 60, 18 * 60 * 60])
-    const [roomHistory,            setRoomHistory           ] = useState<RoomChatCompact[]        | null>(null)
+    const [roomHistory,            setRoomHistory           ] = useState<RoomChatCompact[]              >([])
 
     const [highlightUsername, setHighlightUsername] = useState<string>("")
 
@@ -204,28 +201,29 @@ export default function RoomHistory({ id, title, ownerUsername, ownerId, onError
                 { roomHistory?.length == 0 ?
                     <div className="p-10 text-center text-gray-500 font-bold"> { localize(lang, "no_data") } </div>
                     :
-                    <></>
+                    <ul>
+                        { roomHistory?.map(c => (
+                            <div
+                                key={c.time}
+                                className={classNames(
+                                    "w-full flex items-center space-x-2 text-sm py-1",
+                                    highlightUsername === c.username ? "bg-gray-50" : "",
+                                )}
+                                onMouseEnter={() => setHighlightUsername(c.username)}
+                                onMouseLeave={() => setHighlightUsername("")}
+                            >
+                                <time dateTime={c.time} className="font-mono"> { new Date(c.time).toLocaleTimeString(lang) } </time>
+                                <span>{ c.username }:</span>
+                                <span>
+                                    {
+                                        c.type === "entering_room" ? localize(lang, "enters_room") : 
+                                            c.type === "leaving_room" ? localize(lang, "enters_room") : c.content
+                                    }
+                                </span>
+                            </div>
+                        ))}
+                    </ul>
                 }
-                { roomHistory?.map(c => (
-                    <div
-                        key={c.time}
-                        className={classNames(
-                            "w-full flex items-center space-x-2 text-sm py-1",
-                            highlightUsername === c.username ? "bg-gray-50" : "",
-                        )}
-                        onMouseEnter={() => setHighlightUsername(c.username)}
-                        onMouseLeave={() => setHighlightUsername("")}
-                    >
-                        <time dateTime={c.time} className="font-mono"> { new Date(c.time).toLocaleTimeString(lang) } </time>
-                        <span>{ c.username }:</span>
-                        <span>
-                            {
-                                c.type === "entering_room" ? localize(lang, "enters_room") : 
-                                    c.type === "leaving_room" ? localize(lang, "enters_room") : c.content
-                            }
-                        </span>
-                    </div>
-                ))}
             </div>
         </>
     )
