@@ -130,7 +130,8 @@ func AbilityRequired(ability models.Role) gin.HandlerFunc {
 			return
 		}
 
-		role, err := service.GetRoleByName(payload.UserRole)
+		user := service.GetUserByID(payload.User)
+		role, err := service.GetRoleByName(user.RoleName)
 		if err != nil {
 			if _, ok := err.(errors.RequestError); ok {
 				c.Abort()
