@@ -6,7 +6,7 @@ import { AuthContext } from "@/contexts/AuthContext";
 import { localize, localizeError } from "@/i18n/i18n";
 import { classNames } from "@/utils/classnames";
 import { useRouter } from "next/router";
-import { fetchCurrentUserInfo } from "@/api/v1/account";
+import { fetchCurrentUserInfo, updateAccountPassword } from "@/api/v1/account";
 import { ChangeEvent, FormEvent, Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronUpDownIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { TagIcon, UserIcon } from '@heroicons/react/24/solid'
@@ -122,6 +122,7 @@ function PermItemAppendInput({ id, onAppend }: PermItemAppendInputProps) {
       }}>
         <div className="relative">
           <Combobox.Input
+            required
             className="p-2 w-64 border border-l-0 border-gray-300 focus:ring focus:ring-blue-500 focus:outline-none relative focus:z-10 text-sm"
             value={inputValue}
             onChange={(e) => {
@@ -129,25 +130,30 @@ function PermItemAppendInput({ id, onAppend }: PermItemAppendInputProps) {
               handleAutoCompletePrefixChange(id, selectedType, e.target.value)
             }}
           />
-          <Combobox.Options className="absolute w-full border rounded shadow py-1 bg-white">
-            { autoCompleteItems.map(v => (
-              <Combobox.Option
-                className="px-4 py-2 w-full text-left text-sm flex flex-row items-center space-x-2"
-                key={`${v.type}-${v.name}`}
-                value={v} as="button" type="button"
-              >
-                { v.type === 'label' ?
-                  <div className="h-5 w-5 p-1 rounded-full bg-yellow-500 text-white flex-shrink-0">
-                    <TagIcon />
-                  </div>
-                  :
-                  <div className="h-5 w-5 p-1 rounded-full bg-blue-500 text-white flex-shrink-0">
-                    <UserIcon />
-                  </div>
-                }
-                <span>{ v.name }</span>
-              </Combobox.Option>
-            ))}
+          <Combobox.Options className="absolute w-full border rounded shadow py-1 bg-white max-h-64 overflow-y-auto">
+            { autoCompleteItems.length === 0 ?
+              <div className="py-4 px-8 text-sm">
+                { localize(lang, "no-result") }
+              </div>
+              :
+              autoCompleteItems.map(v => (
+                <Combobox.Option
+                  className="px-4 py-2 w-full text-left text-sm flex flex-row items-center space-x-2"
+                  key={`${v.type}-${v.name}`}
+                  value={v} as="button" type="button"
+                >
+                  { v.type === 'label' ?
+                    <div className="h-5 w-5 p-1 rounded-full bg-yellow-500 text-white flex-shrink-0">
+                      <TagIcon />
+                    </div>
+                    :
+                    <div className="h-5 w-5 p-1 rounded-full bg-blue-500 text-white flex-shrink-0">
+                      <UserIcon />
+                    </div>
+                  }
+                  <span>{ v.name }</span>
+                </Combobox.Option>
+              ))}
 
           </Combobox.Options>
         </div>
@@ -176,6 +182,11 @@ export default function ProfilePage() {
   const titleRef = useRef<HTMLInputElement | null>(null)
   const roomCreationTitleRef = useRef<HTMLInputElement | null>(null)
 
+  const oldPasswordRef = useRef<HTMLInputElement | null>(null)
+  const newPasswordRef = useRef<HTMLInputElement | null>(null)
+  const repeatNewPasswordRef = useRef<HTMLInputElement | null>(null)
+  const logoutRef = useRef<HTMLInputElement | null>(null)
+
   const { authenticated,    getUser             } = useContext(AuthContext)
   const [ errCode,          setErrCode          ] = useState<number | null>()
   const [ httpErrCode,      setHttpErrCode      ] = useState<number | null>()
@@ -185,6 +196,7 @@ export default function ProfilePage() {
   const [ permissionTypeHelpShow, setPermissionTypeHelpShow ] = useState<boolean>(false)
   const [ roomPermissionType, setRoomPermissionType ] = useState<'blacklist' | 'whitelist'>('blacklist')
   const [ roomStreamKey, setRoomStreamKey] = useState<string | null>(null)
+  const [ passwordChangeErrorI18nKey, setPasswordChangeErrorI18nKey ] = useState<string | undefined>(undefined)
 
   const [ deleteConfirmDialogOpen, setDeleteConfirmDialogOpen ] = useState<boolean>(false)
 
@@ -333,21 +345,32 @@ export default function ProfilePage() {
         setSelectedRoom(null)
         setSelectedRoomDetail(null)
       })
-    .catch(showErrorMessage)
-    .finally(() => setDeleteConfirmDialogOpen(false))
+      .catch(showErrorMessage)
+      .finally(() => setDeleteConfirmDialogOpen(false))
   };
 
-  const isWindows = () => {
-    if(!navigator) return undefined
+  const handlePasswordChange = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if(!user) return
+    if(!oldPasswordRef.current || !newPasswordRef.current || !repeatNewPasswordRef.current || !logoutRef.current) return
 
-    // experimental feature,
-    // see https://developer.mozilla.org/en-US/docs/Web/API/NavigatorUAData/platform
-    if((navigator as any).userAgentData?.platform) {
-      return (navigator as any).userAgentData.platform === 'Windows'
-    } else {
-      return navigator.platform.indexOf("Windows") != -1
+    const oldPassword = oldPasswordRef.current.value
+    const newPassword = newPasswordRef.current.value
+    const repeatPassword = repeatNewPasswordRef.current.value
+    const logout = logoutRef.current.checked
+
+    if (newPassword != repeatPassword){ 
+      setPasswordChangeErrorI18nKey("password-not-same")
+      return
     }
-  }
+
+    updateAccountPassword(oldPassword, newPassword, logout)
+      .then(() => {
+        showSuccessMessage()
+        setPasswordChangeErrorI18nKey(undefined)
+      })
+      .catch(showErrorMessage)
+  };
 
   if(!authenticated) {
     return (
@@ -386,7 +409,7 @@ export default function ProfilePage() {
       <main className="pt-10 pb-10 mx-auto max-w-7xl px-2 sm:px-4 lg:px-8 space-y-5 w-full grow">
         <section aria-labelledby="room-list-title">
           <div className="md:pb-2 bg-white shadow sm:rounded-lg">
-            <div className="px-4 pb-2 py-5 sm:px-6 flex items-center justify-between">
+            <div className="px-4 py-5 sm:px-6 flex items-center justify-between">
               <h2 id="room-list-title" className="text-lg font-medium leading-6 text-gray-900">
                 { localize(lang, "room-list") }
               </h2>
@@ -455,6 +478,7 @@ export default function ProfilePage() {
                       )}>
                       <button
                         type="button"
+                        aria-label="select"
                         className="w-56 flex items-stretch rounded-lg overflow-hidden shadow-sm hover:shadow-md transition ease-in-out duration-300"
                         onClick={() => setSelectedRoom(room)}
                       >
@@ -528,6 +552,7 @@ export default function ProfilePage() {
                           <dt className="text-sm font-medium leading-6 text-gray-900 flex items-center space-x-1">
                             <span> { localize(lang, "room_permission_type") } </span>
                             <button
+                              aria-label="help"
                               className="relative cursor-default"
                               onMouseEnter={() => setPermissionTypeHelpShow(true)}
                               onMouseLeave={() => setPermissionTypeHelpShow(false)}
@@ -683,7 +708,7 @@ export default function ProfilePage() {
                           </dt>
                           <dd className={classNames(
                             "mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0",
-                            "whitespace-nowrap overflow-x-auto",
+                            "whitespace-nowrap overflow-x-auto scrollbar-hidden",
                             roomStreamKey ? "select-all code" : ""
                           )}>
                             { roomStreamKey ? roomStreamKey : 
@@ -719,6 +744,7 @@ export default function ProfilePage() {
                               { item.username ? item.username : item.label }
                             </div>
                             <button
+                              aria-label="delete"
                               className="h-4 w-4 rounded-full hover:bg-red-500 hover:text-white trantision duration-200"
                               onClick={() => handlePermItemDelete(item.type, (item.username || item.label)!)}>
                               <XMarkIcon />
@@ -735,6 +761,110 @@ export default function ProfilePage() {
                 }
               </div>
             }
+          </div>
+        </section>
+        <section aria-labelledby="password-modification-title">
+          <div className="md:pb-2 bg-white shadow sm:rounded-lg">
+            <div className="px-4 py-5 sm:px-6 flex items-center justify-between">
+              <h2 id="password-modification-title" className="text-lg font-medium leading-6 text-gray-900">
+                { localize(lang, "change-password") }
+              </h2>
+            </div>
+            <form
+              className="px-14 border-t border-gray-200"
+              onSubmit={handlePasswordChange}
+            >
+              { /* see https://goo.gl/9p2vKq */ }
+              <input type="hidden" name="username" defaultValue={user?.username} />
+              <dl className="divide-y divide-gray-100">
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <dt className="text-sm font-medium leading-6 text-gray-900 py-0.5">
+                    { localize(lang, "old-password") }
+                  </dt>
+                  <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                    <input
+                      ref={oldPasswordRef}
+                      className="text-sm border rounded focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
+                      type="password"
+                      autoComplete="old-password"
+                      required
+                    />
+                  </dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <dt className="text-sm font-medium leading-6 text-gray-900 py-0.5">
+                    { localize(lang, "new-password") }
+                  </dt>
+                  <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                    <input
+                      ref={newPasswordRef}
+                      className="text-sm border rounded focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                      maxLength={64}
+                      pattern={`[0-9a-zA-Z_-~!@#$%^&*()_+=\`\\[\\]{}\|;:'",.<>\/\\?]{8,64}`}
+                      title={localize(lang, "password_format_hint")}
+                    />
+                  </dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <dt className="text-sm font-medium leading-6 text-gray-900 py-0.5">
+                    { localize(lang, "repeat-new-password") }
+                  </dt>
+                  <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                    <input
+                      ref={repeatNewPasswordRef}
+                      className="text-sm border rounded focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                      maxLength={64}
+                      pattern={`[0-9a-zA-Z_-~!@#$%^&*()_+=\`\\[\\]{}\|;:'",.<>\/\\?]{8,64}`}
+                      title={localize(lang, "password_format_hint")}
+                    />
+                  </dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <dt className="text-sm font-medium leading-6 text-gray-900 py-0.5">
+                    { localize(lang, "logout-other-session") }
+                  </dt>
+                  <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0 flex flex-row items-center space-x-2">
+                    <input
+                      ref={logoutRef}
+                      defaultChecked={true}
+                      id="logout-other-session-checkbox"
+                      name="logout-other-session"
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring focus:ring-offset-0 focus:ring-blue-300 transition ease duration-200"
+                      data-1p-ignore
+                    />
+                    <label htmlFor="logout-other-session-checkbox">
+                      { localize(lang, "signout") }
+                    </label>
+                  </dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                  <div className="w-fit mt-1 text-sm leading-6 sm:col-start-2 sm:mt-0 flex flex-row items-center space-x-4">
+                    <button
+                      type="submit"
+                      className={classNames(
+                        "text-white font-medium",
+                        "bg-blue-600 rounded focus:ring focus:ring-blue-200 px-4 py-1 text-center"
+                      )}>
+                      { localize(lang, "submit") }
+                    </button>
+                    { passwordChangeErrorI18nKey ? 
+                      <span className="text-red-600 font-medium">{ localize(lang, passwordChangeErrorI18nKey) }</span>
+                      :
+                      <></>
+                    }
+                  </div>
+                </div>
+              </dl>
+            </form>
           </div>
         </section>
       </main>

@@ -1,7 +1,7 @@
 import { Nav } from "@/components/Nav/Nav"
 import { AuthContext } from "@/contexts/AuthContext"
 import { useRouter } from "next/router"
-import { ChangeEvent, Fragment, useCallback, useContext, useEffect, useMemo, useRef } from "react"
+import { ChangeEvent, FormEvent, FormEventHandler, Fragment, useCallback, useContext, useEffect, useMemo, useRef } from "react"
 import { dashboardNavs } from "@/constants/navs"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import Button from "@/components/Button/Button"
@@ -13,7 +13,7 @@ import { localize, localizeError } from "@/i18n/i18n"
 import Dialog from "@/components/Dialog/Dialog"
 import { AdminAccountDetail, Role, ChocolcateResponse } from "@/api/v1/datatypes"
 import "humanizer.node"
-import { deleteUser, fetchAccountDetail, addUserLabel, fetchRoles, updateUserMaxRoom, updateUserRole, deleteUserLabel } from "@/api/v1/admin/account"
+import { deleteAccount, fetchAccountDetail, addAccountLabel, fetchRoles, updateAccountMaxRoom, updateAccountRole, deleteAccountLabel, updateAccountPassword } from "@/api/v1/admin/account"
 import debounce from "@/utils/debounce"
 import { classNames } from "@/utils/classnames"
 import AccountHistory from "@/components/AccountHistory/AccountHistory"
@@ -43,6 +43,7 @@ export default function RoomDetailPage() {
   const mqRef      = useRef<MessageQueueHandle | null>(null)
   const maxRoomRef = useRef<HTMLInputElement   | null>(null)
   const labelRef   = useRef<HTMLInputElement   | null>(null)
+  const passwordRef = useRef<HTMLInputElement  | null>(null)
 
   const [roles,            setRoles           ] = useState<Role[] | null>(null)
 
@@ -65,8 +66,10 @@ export default function RoomDetailPage() {
     mqRef.current?.error(localizeError(lang, e.response?.data!.code), localize(lang, "error_occurred"))
   }
 
-  const showSuccessMessage = () => {
-    mqRef.current?.success(localize(lang, "successfully_saved"), localize(lang, "success"), true)
+  const showSuccessMessage = (content?: string, title?: string) => {
+    if (!content) content = localize(lang, "successfully_saved")
+    if (!title)   title   = localize(lang, "success")
+    mqRef.current?.success(content, title, true)
   }
 
   const reloadDetail = useCallback((username: string | undefined) => {
@@ -95,10 +98,10 @@ export default function RoomDetailPage() {
 
   const handleUserRoleChange = (role: string | undefined) => {
     if(!role || !username) return
-    updateUserRole(username, role)
+    updateAccountRole(username, role)
       .then(() => { 
         setAccountRoleSelectionValue(role)
-        showSuccessMessage()
+        showSuccessMessage(localize(lang, "updated"))
         reloadDetail(username)
       })
       .catch(showErrorMessage)
@@ -106,14 +109,18 @@ export default function RoomDetailPage() {
 
   const handleDelete = useCallback(() => {
     if(!username) return
-    deleteUser(username)
+    deleteAccount(username)
       .then(() => router.push("/dashboard/users"))
       .catch(dealWithFetchError)
   }, [username, router])
 
   const handleMaxRoomChange = debounce((e: ChangeEvent<HTMLInputElement>) => {
     if (!username) return
-    updateUserMaxRoom(username, parseInt(e.target.value))
+
+    const value = parseInt(e.target.value)
+    if (!value || value < 0 || value > 50) return
+
+    updateAccountMaxRoom(username, value)
       .then(() => {
         showSuccessMessage()
       })
@@ -123,7 +130,7 @@ export default function RoomDetailPage() {
   const addNewLabel = () => {
     if (!username || !labelRef.current) return
     const label = labelRef.current.value.replaceAll(/\s+/g, "-")
-    addUserLabel(username, label)
+    addAccountLabel(username, label)
       .then(() => {
         showSuccessMessage()
         reloadDetail(username)
@@ -133,7 +140,7 @@ export default function RoomDetailPage() {
 
   const handleLabelDelete = (label: string) => {
     if (!username) return
-    deleteUserLabel(username, label)
+    deleteAccountLabel(username, label)
       .then(() => {
         showSuccessMessage()
         reloadDetail(username)
@@ -141,16 +148,18 @@ export default function RoomDetailPage() {
       .catch(showErrorMessage)
   }
 
-  const isWindows = () => {
-    if(!navigator) return undefined
+  const handleAccountPasswordModification = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if(!username) return
+    if(!passwordRef.current) return
+    const password = passwordRef.current.value
 
-    // experimental features,
-    // see https://developer.mozilla.org/en-US/docs/Web/API/NavigatorUAData/platform
-    if((navigator as any).userAgentData?.platform) {
-      return (navigator as any).userAgentData.platform === 'Windows'
-    } else {
-      return navigator.platform.indexOf("Windows") != -1
-    }
+    updateAccountPassword(username, password)
+      .then(() => {
+        showSuccessMessage(localize(lang, "updated"))
+        if(passwordRef.current) passwordRef.current.value = ""
+      })
+      .catch(showErrorMessage)
   }
 
   if(!authenticated || getUser()?.role != "administrator") {
@@ -315,6 +324,41 @@ export default function RoomDetailPage() {
                         "hover:shadow focus:shadow",
                         "focus:outline-none focus:ring focus:ring-blue-500",
                       )}/>
+                  </dd>
+                </div>
+                <div className="col-span-1">
+                  <dt className="text-sm font-medium flex items-center space-x-1 text-gray-500">
+                    <span> { localize(lang, "account-password") } </span>
+                  </dt>
+                  <dd className="mt-1 text-sm text-gray-900 transition duration-100">
+                    <form onSubmit={handleAccountPasswordModification}>
+                      <input
+                        type="text"
+                        ref={passwordRef}
+                        autoComplete="new-password"
+                        required
+                        placeholder={ localize(lang, "password-click-to-modify-placeholder") }
+                        onFocus={() => {
+                          if (passwordRef.current)
+                          passwordRef.current.placeholder = localize(lang, "password-enter-to-save")
+                        }}
+                        onBlur={() => {
+                          if (passwordRef.current)
+                          passwordRef.current.placeholder = localize(lang,  "password-click-to-modify-placeholder")
+                        }}
+                        minLength={8}
+                        maxLength={64}
+                        pattern={`[0-9a-zA-Z_-~!@#$%^&*()_+=\`\\[\\]{}\|;:'",.<>\/\\?]{8,64}`}
+                        title={localize(lang, "password_format_hint")}
+                        className={classNames(
+                          "placeholder:text-gray-400",
+                          "max-w-full w-64 text-sm px-0",
+                          "transition-all duraion-200 rounded py-1 hover:px-2 focus:px-2",
+                          "border border-white/0 hover:border-gray-300 focus:border-gray-300",
+                          "hover:shadow focus:shadow",
+                          "focus:outline-none focus:ring focus:ring-blue-500",
+                        )}/>
+                    </form>
                   </dd>
                 </div>
                 <div className="col-span-2">

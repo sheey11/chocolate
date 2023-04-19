@@ -46,7 +46,7 @@ export default function RoomInfo({ id, onError, setStatus }: RoomInfoProps) {
                 </div>
             </div>
             <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-                TODO
+                { /* TODO */ }
             </div>
         </>
     )

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/samber/lo"
 	cerrors "github.com/sheey11/chocolate/errors"
@@ -442,4 +443,53 @@ func GetUsersNum() uint {
 	var count int64
 	db.Model(&User{}).Count(&count)
 	return uint(count)
+}
+
+func ChangeUserPassword(user *User, _new string, salt string, logout bool, session *Session) cerrors.ChocolateError {
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	c := tx.
+		Model(&User{}).
+		Where("id = ?", user.ID).
+		Updates(map[string]interface{}{
+			"password": _new,
+			"salt":     salt,
+		})
+
+	if c.Error != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseUpdateUserPasswordError,
+			Message:    "error while updating user password",
+			Sql:        c.Statement.SQL.String(),
+			StackTrace: cerrors.GetStackTrace(),
+			InnerError: c.Error,
+		}
+	}
+
+	if logout {
+		c := tx.Model(&Session{}).
+			Where("id <> ?", session.ID).
+			Where("user_id = ?", user.ID).
+			Update("valid_until", time.Now().Add(-1*time.Hour))
+		if c.Error != nil {
+			return cerrors.DatabaseError{
+				ID:         cerrors.DatabaseInvalidateSessionError,
+				Message:    "error while updating sessions",
+				Sql:        c.Statement.SQL.String(),
+				StackTrace: cerrors.GetStackTrace(),
+				InnerError: c.Error,
+			}
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return cerrors.DatabaseError{
+			ID:         cerrors.DatabaseCommitTransactionError,
+			Message:    "error while updating sessions",
+			StackTrace: cerrors.GetStackTrace(),
+			InnerError: err,
+		}
+	}
+	return nil
 }

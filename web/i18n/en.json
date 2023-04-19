@@ -1,5 +1,5 @@
 {
-  "slogan": "What you love is your life.",
+  "slogan": "Everything you beloved, goes into your life.",
 
   "second": "s",
   "minute": "m",
@@ -179,6 +179,20 @@
   "add": "Add",
 
   "room-deletion": "Delete room",
+
+  "updated": "Updated",
+  "deleted": "Deleted",
+  "account-password": "Account Password",
+  "password-click-to-modify-placeholder": "Click to edit",
+  "password-enter-to-save": "Press Enter to save",
+  "no-result": "No Result",
+  "change-password": "Change Password",
+  "old-password": "Old password",
+  "new-password": "New password",
+  "repeat-new-password": "Repeat new password",
+  "logout-other-session": "Logout other session",
+  "submit": "Submit",
+  "password-not-same": "Password not same",
 
   "free_software_note": "Note: This is a free software, source code is published under GPLv3.",
   "errors": {

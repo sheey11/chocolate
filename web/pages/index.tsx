@@ -8,13 +8,14 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { AuthContext } from "@/contexts/AuthContext";
 import { Footer } from "@/components/Footer/Footer";
+import { locale } from "dayjs";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const lang = router.locale!
 
-  const { authenticated } = useContext(AuthContext)
+  const { authenticated, signout, getUser } = useContext(AuthContext)
 
   const navigation = [
     { name: localize(lang, 'dashboard'), href: '/dashboard/overview' },
@@ -101,12 +102,18 @@ export default function Home() {
                     ))}
                   </div>
                   <div className="py-6">
-                    <a
-                      href="#"
-                      className="-mx-3 block rounded-lg py-2.5 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
-                    >
-                      Log in
-                    </a>
+                    { authenticated ?
+                      <button
+                      onClick={() => signout()}>
+                        { localize(lang, "sign_out") }
+                      </button>
+                      :
+                      <a href="#"
+                        className="-mx-3 block rounded-lg py-2.5 px-3 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                      >
+                        Log in
+                      </a>
+                    }
                   </div>
                 </div>
               </div>

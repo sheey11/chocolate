@@ -19,7 +19,7 @@ export function fetchAccountDetail(username: string): Promise<AdminAccountDetail
     return GET<AdminAccountDetailResponse>(`/api/v1/admin/account/${username}`)
 }
 
-export function createNewUsers(users: UserCreationInfo[]): Promise<CreateUserResponse> {
+export function createNewAccounts(users: UserCreationInfo[]): Promise<CreateUserResponse> {
     return POST<UserCreationInfo[], CreateUserResponse>(`/api/v1/admin/account/`, users)
 }
 
@@ -27,27 +27,27 @@ export function fetchAccountHistory(username: string, query: AccountHistoryQuery
     return GET<AccountHistoryResponse>(`/api/v1/admin/account/${username}/history`, query)
 }
 
-export function deleteUser(username: string): Promise<ChocolcateResponse> {
+export function deleteAccount(username: string): Promise<ChocolcateResponse> {
     return DELETE<ChocolcateResponse>(`/api/v1/admin/account/${username}`)
 }
 
-export function updateUserRole(username: string, role: string): Promise<ChocolcateResponse> {
+export function updateAccountRole(username: string, role: string): Promise<ChocolcateResponse> {
     return PUT_WithoutData<ChocolcateResponse>(`/api/v1/admin/account/${username}/role/${role}`)
 }
 
-export function updateUserMaxRoom(username: string, count: number): Promise<ChocolcateResponse> {
+export function updateAccountMaxRoom(username: string, count: number): Promise<ChocolcateResponse> {
     return PUT_WithoutData<ChocolcateResponse>(`/api/v1/admin/account/${username}/max-room/${count}`)
 }
 
-export function addUserLabel(username: string, label: string): Promise<ChocolcateResponse> {
+export function addAccountLabel(username: string, label: string): Promise<ChocolcateResponse> {
     return PUT_WithoutData<ChocolcateResponse>(`/api/v1/admin/account/${username}/label/${label}`)
 }
 
-export function deleteUserLabel(username: string, label: string): Promise<ChocolcateResponse> {
+export function deleteAccountLabel(username: string, label: string): Promise<ChocolcateResponse> {
     return DELETE<ChocolcateResponse>(`/api/v1/admin/account/${username}/label/${label}`)
 }
 
-export function updateUserPassword(username: string, password: string): Promise<ChocolcateResponse> {
+export function updateAccountPassword(username: string, password: string): Promise<ChocolcateResponse> {
     return PUT<UserPasswordUpdatePayload, ChocolcateResponse>(`/api/v1/admin/account/${username}/password`, { password })
 }
 

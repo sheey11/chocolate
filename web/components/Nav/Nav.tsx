@@ -39,8 +39,7 @@ export const Nav = ({ navs }: NavProps) => {
     const { authenticated, getUser, signout } = useContext(AuthContext)
 
     const userNavigation = [
-        { name: localize(lang, "your_profile"), handler: () => { router.push('#') } },
-        { name: localize(lang, "settings"),     handler: () => { router.push('#') } },
+        { name: localize(lang, "your_profile"), handler: () => { router.push('/profile') } },
         { name: localize(lang, "sign_out"),     handler: () => {
             signout()
             router.push('/')
@@ -109,6 +108,10 @@ export const Nav = ({ navs }: NavProps) => {
                                                 leaveTo="transform opacity-0 scale-95"
                                             >
                                                 <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                                    <div className="w-full text-left font-medium block py-2 px-4 text-sm border-b border-gray-200 text-base">
+                                                        <span className="block">{ getUser()?.username }</span>
+                                                        <span className="block text-gray-500 capitalize">{ getUser()?.role }</span>
+                                                    </div>
                                                     {userNavigation.map((item) => (
                                                         <Menu.Item key={item.name}>
                                                             {({ active }) => (
@@ -175,21 +178,6 @@ export const Nav = ({ navs }: NavProps) => {
                     <Disclosure.Panel as="nav" className="lg:hidden" aria-label="Global">
                         <div className="space-y-1 px-2 pt-2 pb-3">
                             { navs.map((item) => (
-                                <Disclosure.Button
-                                    key={ item.i18n_key }
-                                    as="div"
-                                    className={classNames(
-                                        pathname.startsWith(item.href) ? 'bg-gray-100 text-gray-900' : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900',
-                                        'block rounded-md text-base font-medium'
-                                    )}
-                                    aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
-                                >
-                                    <Link className="block py-2 px-3" href={ item.href }>
-                                        { localize(lang, item.i18n_key) }
-                                    </Link>
-                                </Disclosure.Button>
-                            ))}
-                            { profileNavs.map((item) => (
                                 <Disclosure.Button
                                     key={ item.i18n_key }
                                     as="div"

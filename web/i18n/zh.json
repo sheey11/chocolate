@@ -6,7 +6,7 @@
   "hour": "小时",
 
   "signin": "登陆",
-  "signout": "注销",
+  "signout": "登出",
   "username": "用户名",
   "password": "密码",
   "sign_in_to_your_account": "登陆到 Chocolate",
@@ -180,6 +180,20 @@
 
   "room-deletion": "删除房间",
 
+  "updated": "已更新",
+  "deleted": "已删除",
+  "account-password": "账号密码",
+  "password-click-to-modify-placeholder": "单击修改",
+  "password-enter-to-save": "按回车保存",
+  "no-result": "没有结果",
+  "change-password": "修改密码",
+  "old-password": "旧密码",
+  "new-password": "新密码",
+  "repeat-new-password": "重复密码",
+  "logout-other-session": "登出其他设备",
+  "submit": "提交",
+  "password-not-same": "两次输入的密码不同",
+
   "free_software_note": "注意: 本软件是免费软件，并在 GPLv3 许可证下开放源代码",
   "errors": {
     "1":  "服务器处理请求时出现错误",
@@ -212,7 +226,7 @@
     "28": "房间权限项不存在",
     "29": "限制数量太大",
     "30": "无效时间范围",
-    "31": "已创建最大数量的房间",
+    "31": "房间数量已达到上限",
     "32": "房间标题太长",
     "33": "标签已存在",
     "34": "用户不存在该标签",

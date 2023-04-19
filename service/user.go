@@ -431,3 +431,22 @@ func GetUserFromCookie(c *gin.Context) *models.User {
 		return nil
 	}
 }
+
+func ChangePassword(user *models.User, old string, _new string, logout bool, session *models.Session) cerrors.ChocolateError {
+	if err := PasswordFitConstraint(_new); err != nil {
+		return err
+	}
+
+	oldEncrypted := encryptPassword(old, user.Salt)
+	if oldEncrypted != user.Password {
+		return cerrors.RequestError{
+			ID:      cerrors.RequestPasswordIncorrect,
+			Message: "password incorrect",
+		}
+	}
+
+	newSalt := models.GenSalt()
+	newEncrypted := encryptPassword(_new, newSalt)
+
+	return models.ChangeUserPassword(user, newEncrypted, newSalt, logout, session)
+}

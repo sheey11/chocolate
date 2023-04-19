@@ -97,10 +97,14 @@ const (
 	DatabaseUpdateRoomSrsStreamIDError
 	DatabaseIncreaseRoomViewersError
 	DatabaseDecreaseRoomViewersError
+	DatabaseUpdateUserPasswordError
+	DatabaseInvalidateSessionError
 
 	DatabaseClearRoomPermissionItemError
 	DatabaseClearRoomViewersError
 	DatabaseClearRoomSrsRelatedIDError
 
 	DatabasePermItemAutoComepelteLookupError
+
+	DatabaseCommitTransactionError
 )

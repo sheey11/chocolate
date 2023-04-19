@@ -10,11 +10,13 @@ import (
 	"github.com/sheey11/chocolate/middleware"
 	"github.com/sheey11/chocolate/models"
 	"github.com/sheey11/chocolate/service"
+	"github.com/sirupsen/logrus"
 )
 
 func mountUserRoutes(r *gin.RouterGroup) {
 	r.GET("/me", middleware.AuthRequired(), handleMe)
 	r.GET("/:username", handleInfoLookup)
+	r.PUT("/password/:new", handlePasswordChange)
 }
 
 func handleMe(c *gin.Context) {
@@ -53,6 +55,7 @@ func handleInfoLookup(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, rerr.ToResponse())
 			return
 		} else {
+			logrus.WithError(err).Error("error while lookup user info")
 			c.JSON(http.StatusBadRequest, err.ToResponse())
 			c.Abort()
 			return
@@ -67,4 +70,44 @@ func handleInfoLookup(c *gin.Context) {
 		"labels":   user.Labels,
 		"rooms":    user.SummaryRooms(false),
 	})
+}
+
+func handlePasswordChange(c *gin.Context) {
+	data := struct {
+		Old    string `json:"old"`
+		Logout bool   `json:"logout"`
+	}{}
+
+	err := c.ShouldBind(&data)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, common.SampleResponse(cerrors.RequestInvalidRequestData, "invalid data"))
+		c.Abort()
+		return
+	}
+
+	newPassword := c.Param("new")
+
+	user := service.GetUserFromContext(c)
+	if user == nil {
+		c.Abort()
+		c.Status(http.StatusForbidden)
+		return
+	}
+	session := service.GetSessionFromContext(c)
+
+	cerr := service.ChangePassword(user, data.Old, newPassword, data.Logout, session)
+	if cerr != nil {
+		if rerr, ok := cerr.(cerrors.RequestError); ok {
+			c.Abort()
+			c.JSON(http.StatusBadRequest, rerr.ToResponse())
+			return
+		} else {
+			logrus.WithError(cerr).Error("error while updating user password")
+			c.JSON(http.StatusBadRequest, cerr.ToResponse())
+			c.Abort()
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, common.OkResponse)
 }
