@@ -411,7 +411,7 @@ func VerifySessionCookie(payload string) (*models.Session, bool) {
 	}
 
 	session := models.GetSessionByID(uint(id))
-	if session.Sign() == values[1] {
+	if session != nil && session.Sign() == values[1] {
 		return session, true
 	} else {
 		return nil, false
