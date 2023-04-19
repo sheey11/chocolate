@@ -56,10 +56,14 @@ export default function AdminPage () {
   const [rooms,             setRooms            ] = useState<RoomAdminInfo[]>([])
 
   const dealWithFetchError = (e: any) => {
-        console.error(e)
-        setHostInformation(null)
-        setErrCode(e.response?.data!.code)
-        setHttpErrCode(e.response?.status)
+    console.error(e)
+    if(!e.response || !e.response.data || !e.response.data.code) {
+      setErrCode(-1)
+      setHttpErrCode(503)
+      return
+    }
+    setErrCode(e.response.data.code)
+    setHttpErrCode(e.response.status)
   }
 
   const refreshStats = useCallback(async () => {

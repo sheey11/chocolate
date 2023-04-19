@@ -12,7 +12,6 @@ import { MagnifyingGlassIcon,
   UserCircleIcon,
   AcademicCapIcon,
   PlusIcon,
-  EyeIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline"
 import { localize, localizeError } from "@/i18n/i18n";
@@ -25,7 +24,7 @@ import { classNames } from "@/utils/classnames";
 import { JetBrains_Mono } from "next/font/google";
 import Pagination from "@/components/Pagination/Pagination";
 import debounce from "@/utils/debounce";
-import { createNewUsers, fetchAccounts, fetchRoles } from "@/api/v1/admin/account";
+import { createNewAccounts, fetchAccounts, fetchRoles } from "@/api/v1/admin/account";
 import Dialog from "@/components/Dialog/Dialog";
 
 const presetRoles = [
@@ -74,8 +73,13 @@ export default function RoomIndex() {
 
   const dealWithFetchError = (e: any) => {
     console.error(e)
-    setErrCode(e.response?.data!.code)
-    setHttpErrCode(e.response?.status)
+    if(!e.response || !e.response.data || !e.response.data.code) {
+      setErrCode(-1)
+      setHttpErrCode(503)
+      return
+    }
+    setErrCode(e.response.data.code)
+    setHttpErrCode(e.response.status)
   }
 
   const refreshStats = useCallback((search: string | undefined, role: 'administrator' | 'user' | 'all', page: number) => {
@@ -122,7 +126,7 @@ export default function RoomIndex() {
     }
     setNewUserFormLoading(true)
 
-    createNewUsers([payload]) 
+    createNewAccounts([payload]) 
       .then((data) => {
         setNewUserFormErrorCode(data.code)
         newUserFormLabelInputRef.current!.value = ''

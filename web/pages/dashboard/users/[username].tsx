@@ -57,8 +57,13 @@ export default function RoomDetailPage() {
 
   const dealWithFetchError = (e: any) => {
     console.error(e)
-    setErrCode(e.response?.data!.code)
-    setHttpErrCode(e.response?.status)
+    if(!e.response || !e.response.data || !e.response.data.code) {
+      setErrCode(-1)
+      setHttpErrCode(503)
+      return
+    }
+    setErrCode(e.response.data.code)
+    setHttpErrCode(e.response.status)
   }
 
   const showErrorMessage = (e: AxiosError<ChocolcateResponse>) => {

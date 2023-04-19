@@ -217,8 +217,13 @@ export default function ProfilePage() {
 
   const dealWithFetchError = (e: any) => {
     console.error(e)
-    setErrCode(e.response?.data!.code)
-    setHttpErrCode(e.response?.status)
+    if(!e.response || !e.response.data || !e.response.data.code) {
+      setErrCode(-1)
+      setHttpErrCode(503)
+      return
+    }
+    setErrCode(e.response.data.code)
+    setHttpErrCode(e.response.status)
   }
 
   const reloadInfo = useCallback(() => {
@@ -784,7 +789,7 @@ export default function ProfilePage() {
                   <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                     <input
                       ref={oldPasswordRef}
-                      className="text-sm border rounded focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
+                      className="text-sm border border-gray-300 rounded focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
                       type="password"
                       autoComplete="old-password"
                       required
@@ -798,7 +803,7 @@ export default function ProfilePage() {
                   <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                     <input
                       ref={newPasswordRef}
-                      className="text-sm border rounded focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
+                      className="text-sm border rounded border-gray-300 focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
                       type="password"
                       autoComplete="new-password"
                       required
@@ -816,7 +821,7 @@ export default function ProfilePage() {
                   <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                     <input
                       ref={repeatNewPasswordRef}
-                      className="text-sm border rounded focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
+                      className="text-sm border rounded border-gray-300 focus:ring-blue-200 focus:ring px-2 py-1 max-w-full w-64"
                       type="password"
                       autoComplete="new-password"
                       required

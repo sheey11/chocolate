@@ -196,6 +196,7 @@
 
   "free_software_note": "Note: This is a free software, source code is published under GPLv3.",
   "errors": {
+    "-1": "Connection Error",
     "1":  "Internal Server Error",
     "2":  "Invalid request data",
     "3":  "Invalid request parameters",
