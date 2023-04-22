@@ -19,7 +19,7 @@ type User struct {
 	RoleName     string  `gorm:"not null;default:'user';"`
 	Labels       []Label `gorm:"many2many:user_labels;foreiginKey:ID;joinForeignKey:user_id;References:Name;joinReferences:label_name;constraint:OnDelete:CASCADE"`
 	Username     string  `gorm:"type:varchar(32);not null;uniqueIndex" json:"userneam"`
-	Password     string  `gorm:"type:varchar(128);not null" json:"-"`
+	Password     string  `gorm:"type:varchar(256);not null" json:"-"`
 	Salt         string  `gorm:"type:varchar(8);not null" json:"-"`
 	MaxRoomCount uint    `gorm:"not null;default:0;" json:"max_room_count"`
 	Rooms        []Room  `gorm:"foreignKey:owner_id;constraint:OnDelete:CASCADE"`

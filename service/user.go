@@ -1,7 +1,7 @@
 package service
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -38,7 +38,7 @@ func CreateAdminAccount(username, password string) cerrors.ChocolateError {
 }
 
 func encryptPassword(raw, salt string) string {
-	hash1 := sha1.New().Sum([]byte(raw))
+	hash1 := sha256.New().Sum([]byte(raw))
 
 	hash2 := make([]byte, len(hash1))
 	var j = 0
@@ -48,7 +48,7 @@ func encryptPassword(raw, salt string) string {
 		j = j % len(salt)
 	}
 
-	hash3 := sha1.New().Sum(hash2)
+	hash3 := sha256.New().Sum(hash2)
 	return hex.EncodeToString(hash3)
 }
 
@@ -193,7 +193,7 @@ func TryLogin(username, password, ip, ua string) (*models.User, *models.Session,
 func TryGetUserFromContext(c *gin.Context) *models.User {
 	auth := c.GetHeader("Authorization")
 	if len(auth) <= 8 {
-		return nil
+		return GetUserFromCookie(c)
 	}
 	jwt := auth[7:]
 	payload, err := common.DecryptJwt(jwt)

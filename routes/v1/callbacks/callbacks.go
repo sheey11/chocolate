@@ -151,7 +151,7 @@ func handleUnpublish(c *gin.Context) {
 	}
 
 	respondeOk(c)
-	service.RecordUnpublishEvent(uint(roomId), MarshalJSON(data))
+	go service.RecordUnpublishEvent(uint(roomId), MarshalJSON(data))
 }
 func handlePlay(c *gin.Context) {
 	data := struct {
@@ -167,7 +167,7 @@ func handlePlay(c *gin.Context) {
 	}{}
 	err := c.Bind(&data)
 	if err != nil {
-		logrus.WithError(err).Errorf("error when parse body at on_unpublish callback")
+		logrus.WithError(err).Errorf("error when parse body at on_paly callback")
 		respondeErr(c)
 		return
 	}
@@ -200,6 +200,8 @@ func handlePlay(c *gin.Context) {
 		session := queries.Get("s")
 
 		go service.RecordPlayEvent(uint(uid), uint(roomId), data.ClientID, session)
+	} else {
+		logrus.WithField("client_id", data.ClientID).Warn("there's a client carries no param trying to play flv")
 	}
 }
 func handleStop(c *gin.Context) {

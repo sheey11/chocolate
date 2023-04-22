@@ -177,7 +177,7 @@ func GetUserWatchingHistory(uid uint, startTime time.Time, endTime time.Time) ([
 	}
 
 	var reports []*RoomWatchingReport
-	c := db.
+	c := db.Debug().
 		Table("user_watching_sessions").
 		Select(`user_watching_sessions.start_time as start_time,
 				user_watching_sessions.end_time   as end_time,
@@ -268,7 +268,7 @@ func GetRoomAudienceHistory(rid uint, startTime time.Time, endTime time.Time) ([
 	}
 
 	var reports []*RoomAudienceReport
-	c := db.
+	c := db.Debug().
 		Table("user_watching_sessions").
 		Select(`user_watching_sessions.start_time as enter_time,
 		user_watching_sessions.end_time   as leave_time,
