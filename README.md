@@ -15,9 +15,10 @@ $ curl --request POST \
   "password": "your-favorite-password"
 }'
 ```
+Then navigate to `http://localhost/signin` to sign in and manage the Chocolate.
 
-Then navigate to `http://localhost/signin` to get started with Chocolate.
+You can also get started at `http://localhost/profile` to create your first streaming room.
 
-## license
+## License
 
 GPLv3.
