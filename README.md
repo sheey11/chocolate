@@ -2,7 +2,7 @@ Chocolate is a simple streaming solution ships with authentication & authorizati
 
 ## Features
 
-- [x] Auccounts.
+- [x] Accounts.
 - [x] Separated Streaming Rooms.
 - [x] Blacklists & Whitelists.
 - [x] Room censership. e.g. Cutoff
