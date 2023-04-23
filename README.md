@@ -17,3 +17,7 @@ $ curl --request POST \
 ```
 
 Then navigate to `http://localhost/signin` to get started with Chocolate.
+
+## license
+
+GPLv3.
