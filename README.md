@@ -1,4 +1,14 @@
-Chocolate is a simple streaming solution ships with authorization.
+Chocolate is a simple streaming solution ships with authentication & authorization.
+
+## Features
+
+[x] Auccounts.
+[x] Separated Streaming Rooms.
+[x] Blacklists & Whitelists.
+[x] Room censership. e.g. Cutoff
+[x] Chats & History Views.
+[x] Activity Views.
+[x] I18N with English and 简体中文.
 
 ## Deploy
 see [`deploy/README.md`](https://github.com/sheey11/chocolate/tree/master/deploy)
