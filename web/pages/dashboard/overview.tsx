@@ -20,6 +20,7 @@ import { JetBrains_Mono } from "next/font/google"
 import * as predefinedData from "@/utils/charts-predefind-data"
 import { ChatStats, ClientInformation, RoomAdminInfo, StreamInformation } from "@/api/v1/datatypes"
 import { fetchRooms } from "@/api/v1/admin/room"
+import { TitleContext } from "@/contexts/TitleContext"
 
 ChartJS.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip)
 
@@ -54,6 +55,11 @@ export default function AdminPage () {
   const [chatStat,          setChatStat         ] = useState<ChatStats | null>(null)
 
   const [rooms,             setRooms            ] = useState<RoomAdminInfo[]>([])
+
+  const { setTitle } = useContext(TitleContext)
+  useEffect(() => {
+    setTitle(["dashboard", "overview"].map((v) => localize(lang, v)))
+  }, [])
 
   const dealWithFetchError = (e: any) => {
     console.error(e)

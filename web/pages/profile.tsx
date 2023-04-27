@@ -28,6 +28,7 @@ import { AxiosError } from "axios";
 import debounce from "@/utils/debounce";
 import Button from "@/components/Button/Button";
 import Dialog from "@/components/Dialog/Dialog";
+import { TitleContext } from "@/contexts/TitleContext";
 
 function SelectRoomFirstHint() {
   const lang = useRouter().locale!
@@ -201,6 +202,11 @@ export default function ProfilePage() {
   const [ deleteConfirmDialogOpen, setDeleteConfirmDialogOpen ] = useState<boolean>(false)
 
   const [ user, setUser ] = useState<SelfInfoResponse | null>(null)
+
+  const { setTitle } = useContext(TitleContext)
+  useEffect(() => {
+    setTitle([localize(lang, "profile")])
+  }, [])
 
   const showErrorMessage = (e: AxiosError<ChocolcateResponse>) => {
     console.error(e)
@@ -478,7 +484,7 @@ export default function ProfilePage() {
                     <li
                       key={room.id}
                       className={classNames(
-                        "rounded-lg w-full transition-shadow duration-200",
+                        "rounded-lg w-fit transition-shadow duration-200",
                         selectedRoom?.id === room.id ? "ring ring-blue-500 ring-offset-2" : "",
                       )}>
                       <button

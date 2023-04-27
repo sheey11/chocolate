@@ -18,6 +18,7 @@ import { Transition } from "@headlessui/react"
 import "humanizer.node"
 import StreamVideoBox from "@/components/StreamVideoBox/StreamVideoBox"
 import RoomHistory from "@/components/RoomHistory/RoomHistory"
+import { TitleContext } from "@/contexts/TitleContext"
 
 const inter = Inter({
   subsets: ['latin-ext'],
@@ -73,6 +74,11 @@ export default function RoomDetailPage() {
   const { authenticated,    getUser             } = useContext(AuthContext)
   const [ errCode,          setErrCode          ] = useState<number | null>()
   const [ httpErrCode,      setHttpErrCode      ] = useState<number | null>()
+
+  const { setTitle } = useContext(TitleContext)
+  useEffect(() => {
+    setTitle(["dashboard", "rooms_page"].map((v) => localize(lang, v)))
+  }, [])
 
   const dealWithFetchError = (e: any) => {
     console.error(e)

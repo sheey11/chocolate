@@ -20,6 +20,7 @@ import AccountHistory from "@/components/AccountHistory/AccountHistory"
 import { Listbox, Transition } from "@headlessui/react"
 import MessageQueue, { MessageQueueHandle } from "@/components/MessageQueue/MessageQueue"
 import { AxiosError } from "axios"
+import { TitleContext } from "@/contexts/TitleContext"
 
 const colorPattles = [
   "bg-blue-600",
@@ -54,6 +55,11 @@ export default function RoomDetailPage() {
   const { authenticated,    getUser             } = useContext(AuthContext)
   const [ errCode,          setErrCode          ] = useState<number | null>()
   const [ httpErrCode,      setHttpErrCode      ] = useState<number | null>()
+
+  const { setTitle } = useContext(TitleContext)
+  useEffect(() => {
+    setTitle(["dashboard", "users_page"].map((v) => localize(lang, v)))
+  }, [])
 
   const dealWithFetchError = (e: any) => {
     console.error(e)

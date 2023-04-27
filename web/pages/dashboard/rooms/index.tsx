@@ -28,6 +28,7 @@ import { fetchRooms } from "@/api/v1/admin/room";
 import Pagination from "@/components/Pagination/Pagination";
 import Link from "next/link";
 import debounce from "@/utils/debounce";
+import { TitleContext } from "@/contexts/TitleContext";
 
 const roomStatus = [
   { name: "all", indicator_class: "bg-blue-500" },
@@ -58,6 +59,11 @@ export default function RoomIndex() {
   const [maxPage,          setMaxPage         ] = useState<number>(1)
 
   const searchRef = useRef<HTMLInputElement | null>(null)
+
+  const { setTitle } = useContext(TitleContext)
+  useEffect(() => {
+    setTitle(["dashboard", "rooms_page"].map((v) => localize(lang, v)))
+  }, [])
 
   const humanizeTimeDiff = (millisec: number) => {
     const sec = Math.floor(millisec / 1000)

@@ -10,6 +10,7 @@ import RoomInfo from "@/components/RoomInfo/RoomInfo";
 
 import { JetBrains_Mono } from "next/font/google";
 import { userNavs } from "@/constants/navs";
+import { TitleContext } from "@/contexts/TitleContext";
 
 const jbm = JetBrains_Mono({
   subsets: ['latin'],
@@ -36,6 +37,11 @@ export default function Room() {
   const [httpErrCode, setHttpErrCode] = useState<number | null>(null)
 
   const [streamingStatus, setStreamingStatus] = useState<string>("idle")
+
+  const { setTitle } = useContext(TitleContext)
+  useEffect(() => {
+    setTitle(["rooms_page"].map((v) => localize(lang, v)))
+  }, [])
 
   const onCutoff = () => {
     setStreamingStatus("idle")

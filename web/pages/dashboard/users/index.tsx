@@ -26,6 +26,7 @@ import Pagination from "@/components/Pagination/Pagination";
 import debounce from "@/utils/debounce";
 import { createNewAccounts, fetchAccounts, fetchRoles } from "@/api/v1/admin/account";
 import Dialog from "@/components/Dialog/Dialog";
+import { TitleContext } from "@/contexts/TitleContext";
 
 const presetRoles = [
   { name: "all", indicator_class: "bg-blue-500" },
@@ -66,6 +67,11 @@ export default function RoomIndex() {
   const searchRef = useRef<HTMLInputElement | null>(null)
 
   const [newUserDialogOpen, setNewUserDialogOpen] = useState<boolean>(false)
+
+  const { setTitle } = useContext(TitleContext)
+  useEffect(() => {
+    setTitle(["dashboard", "users_page"].map((v) => localize(lang, v)))
+  }, [])
 
   const handleSearchInputChange = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value)

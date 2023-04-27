@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Dialog } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import Button from "@/components/Button/Button";
@@ -23,6 +23,10 @@ export default function Home() {
   ]
 
   const [id, setId] = useState('')
+
+  useEffect(() => {
+    document.title = "Chocolate"
+  }, [])
 
   return (
     <>

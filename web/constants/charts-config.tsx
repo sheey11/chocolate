@@ -254,6 +254,6 @@ export function getDiskChartOptions(lang: string, delay?: number) {
   return {
     ...getNetworkChartOptions(lang),
     ...animations(75, delay),
-    ...tooltips(lang, humanizeSpeedKB),
+    ...tooltips(lang, humanizeSpeed),
   }
 }

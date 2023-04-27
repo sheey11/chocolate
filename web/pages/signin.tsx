@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 
 import { useRouter } from 'next/router'
 import { localize, localizeError } from '@/i18n/i18n'
@@ -8,6 +8,7 @@ import { Footer } from '@/components/Footer/Footer'
 import { AuthContext } from '@/contexts/AuthContext'
 import { ExclamationCircleIcon, HandRaisedIcon } from '@heroicons/react/24/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import { TitleContext } from '@/contexts/TitleContext'
 
 export default function Login() {
   const router = useRouter()
@@ -23,6 +24,10 @@ export default function Login() {
   const [isSigninOnGoing, setIsSigninOnGoing] = React.useState(false)
 
   const { signin } = React.useContext(AuthContext)
+  const { setTitle } = React.useContext(TitleContext)
+  useEffect(() => {
+    setTitle([localize(lang, "signin")])
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,8 +97,8 @@ export default function Login() {
             {
               welcomeMsg != '' ? (
                 <div className='py-2 px-3 mb-4 rounded bg-green-500 text-white font-semibold flex items-center'>
-                    <HandRaisedIcon className="h-4 w-4 ml-1 mr-2 rotate-[30deg] inline-block"/>
-                    { `${localize(lang, 'welcome_back')}${welcomeMsg}` }
+                  <HandRaisedIcon className="h-4 w-4 ml-1 mr-2 rotate-[30deg] inline-block"/>
+                  { `${localize(lang, 'welcome_back')}${welcomeMsg}` }
                 </div> 
               ) : <></>
             }
