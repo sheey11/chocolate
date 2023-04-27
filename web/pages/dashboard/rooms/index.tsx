@@ -287,7 +287,7 @@ export default function RoomIndex() {
                       <th className="code">{ room.id }</th>
                       <th>{ room.viewers }</th>
                       <th>
-                        <Link href={`/dashboard/users/${room.owner_id}`} className="hover:text-gray-500 transition duration-200">
+                        <Link href={`/dashboard/users/${room.owner_username}`} className="hover:text-gray-500 transition duration-200">
                           { room.owner_username }
                           <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4"/>
                         </Link>
