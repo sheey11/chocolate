@@ -17,8 +17,8 @@ import (
 )
 
 func mountRoomRoutes(r *gin.RouterGroup) {
-	r.Use(middleware.AbilityRequired(models.Role{AbilityManageRoom: true}))
 	g := r.Group("room")
+	g.Use(middleware.AbilityRequired(models.Role{AbilityManageRoom: true}))
 	g.GET("/", handleListRooms)
 	g.GET("/:id", handleRoomInfoRetrival)
 	g.GET("/:id/history", handleRoomHistoryRetrival)

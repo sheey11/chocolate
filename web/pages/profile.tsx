@@ -266,7 +266,7 @@ export default function ProfilePage() {
 
   const handleRoomPermissionTypeChange = (type: "whitelist" | "blacklist") => {
     if(!selectedRoomDetail) return
-    updateRoomPermissionType(selectedRoomDetail.id, roomPermissionType)
+    updateRoomPermissionType(selectedRoomDetail.id, type)
       .then(() => {
         setRoomPermissionType(type)
         showSuccessMessage()
@@ -277,7 +277,7 @@ export default function ProfilePage() {
   };
 
   const handleTitleChange = debounce((e: ChangeEvent<HTMLInputElement>) => {
-    if(!selectedRoom) return
+    if(!selectedRoom || !e.target.value) return
     updateRoomTitle(selectedRoom.id, e.target.value)
       .then(() => {
         showSuccessMessage()

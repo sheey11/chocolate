@@ -11,6 +11,7 @@ export interface FetchRoomOptions {
 
 export function fetchRooms({ search, status, limit = 10, page = 1}: FetchRoomOptions): Promise<ListRoomAdminResponse> {
     const params = { search, status, limit, page }
+    // filter null, undefined, empty array etc. items
     const params_filtered = Object.entries(params).reduce((a: any, [k, v]) => (v || v === 0 ? (a[k] = v, a) : a), {})
     return new Promise(async (resolve, reject) => {
         try {

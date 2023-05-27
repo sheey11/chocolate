@@ -55,7 +55,7 @@ const MessageQueue = forwardRef<MessageQueueHandle>(function MessageQueue(props,
     }
 
     return (
-        <div className="fixed right-4 top-8 w-96 max-w-[calc(100%-2rem)] space-y-4 point-events-none">
+        <div className="fixed z-10 right-4 top-8 w-96 max-w-[calc(100%-2rem)] space-y-4 point-events-none">
             { Object.keys(messageQueue).reverse().map((k: string) => {
                 const m = messageQueue[k as unknown as number]
                 return (

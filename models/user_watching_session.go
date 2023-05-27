@@ -268,7 +268,7 @@ func GetRoomAudienceHistory(rid uint, startTime time.Time, endTime time.Time) ([
 	}
 
 	var reports []*RoomAudienceReport
-	c := db.Debug().
+	c := db.
 		Table("user_watching_sessions").
 		Select(`user_watching_sessions.start_time as enter_time,
 		user_watching_sessions.end_time   as leave_time,
